@@ -1,0 +1,38 @@
+@use "_variables.scss" as *;
+@use "normalize.scss";
+
+:root {
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  background-color: $background;
+  color: $dark-text;
+  font-family: "Rubik", sans-serif;
+  font-optical-sizing: 1rem;
+  font-weight: 300;
+  font-style: normal;
+
+  
+}
+
+.btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  color: $light;
+  background-color: $background-dark;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.btn.light {
+  background-color: $accent-color-1;
+  color: $background-dark;
+}
