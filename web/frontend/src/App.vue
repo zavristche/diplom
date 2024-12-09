@@ -4,13 +4,26 @@ import Footer from "./components/Footer.vue";
 </script>
 
 <template>
-  <body>
-    <Header />
-    <main>
-      <router-view />
-    </main>
-    <Footer />
-  </body>
+  <Header />
+  <main><router-view /></main>
+  <Footer />
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+@use "../src/assets/styles/_variables" as *;
+@use "../src/assets/styles/normalize.scss";
+
+main {
+  // position: sticky;
+  // z-index: -2;
+  top: 6.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 75.13rem;
+  max-width: 75.13rem;
+  min-width: 27.5rem;
+  margin-top: 50px;
+  // color: inherit;
+}
+</style>

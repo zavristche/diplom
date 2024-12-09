@@ -1,38 +1,116 @@
 @use "_variables.scss" as *;
 @use "normalize.scss";
 
-:root {
-}
-
-body {
+#app {
   display: flex;
+  justify-content: center;
   flex-direction: column;
-  max-width: 100%;
-  background-color: $background;
-  color: $dark-text;
-  font-family: "Rubik", sans-serif;
-  font-optical-sizing: 1rem;
-  font-weight: 300;
-  font-style: normal;
-
-  
+  align-items: center;
 }
 
-.btn {
+.search {
   display: flex;
+  justify-content: space-between;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  color: $light;
-  background-color: $background-dark;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
+  padding-left: 10px;
 
-  cursor: pointer;
+  input {
+    width: 100%;
+  }
+
+  background-color: $background;
+  width: 550px;
+  height: 2.8rem;
+  border-radius: 0.5rem;  
+  ::placeholder {
+    font-weight: 300;
+    color: $background-dark;
+  }
+
+  button {
+    height: 100%;
+    // border-radius: 0 0.5rem 0.5rem 0;
+    font-weight: 400;
+    align-self: flex-end;
+    box-shadow: none;
+  }
 }
 
-.btn.light {
-  background-color: $accent-color-1;
-  color: $background-dark;
+nav {
+  display: flex;
+  flex-direction: row;
+
+  .label-item {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 1rem;
+  }
+}
+
+.container-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.container-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  // align-items: flex-start;
+}
+
+a {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+@function contrast-color($background-color) {
+  $luminance: ((red($background-color) * 0.299) + (green($background-color) * 0.587) + (blue($background-color) * 0.114)) / 255;
+  @if $luminance > 0.8 {
+    @return #fff; // Тёмный текст для светлого фона
+  } @else {
+    @return #383502; // Светлый текст для тёмного фона
+  }
+}
+
+@each $name, $color in $colors {
+  .btn-#{$name} {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    color: contrast-color($color);
+    background-color: #{$color};
+    padding: 1rem;
+    border-radius: $border;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: $shadow;
+  }
+}
+
+.line {
+  background-color: $background;
+  border: 1px solid $text-info-light;
+  font-weight: 400;
+  padding: 0 0.7rem 0 0;
+  box-shadow: none;
+}
+
+@each $name, $color in $colors {
+  @for $size from 35 through 55 { // Диапазон размеров (например, от 1 до 100 px)
+    @for $stroke from 0 through 3 { // Диапазон толщин линии
+      .icon-#{$name}-#{$size}-#{$stroke} {
+        width: #{$size}px;
+        height: #{$size}px;
+        stroke: $color;
+        stroke-width: #{$stroke};
+        fill: none; // Для SVG, чтобы заливка была прозрачной
+      }
+    }
+  }
 }

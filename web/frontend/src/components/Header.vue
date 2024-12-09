@@ -1,12 +1,12 @@
 <script setup>
-// import BaseIcon from "./BaseIcon.vue";
+import BaseIcon from "./BaseIcon.vue";
 </script>
 
 <template>
   <header>
     <div class="container">
       <a href="/">
-        <use xlink:href="../assets/sprite.svg#logo"></use>
+        <BaseIcon class="logo"  name="logo"/>
       </a>
       <nav class="labels left">
         <a href="/recept/all">
@@ -20,14 +20,27 @@
         </a>
       </nav>
       <div class="search">
+        <div class="btn icon">
+          <BaseIcon class="icon-dark-45-1" viewBox="0 0 45 45" name="search"/>
+        </div>
         <input
           type="text"
           id="search"
           placeholder="Поиск по рецептам, подборкам и авторам"
         />
-        <a href="/search"><button type="button" class="btn">✏️</button></a>
-        <button type="submit" id="btn-search" class="btn light">Найти</button>
+        <div class="btn-container">
+          <button type="button"><BaseIcon viewBox="0 0 45 45" class="icon-dark-45-1" name="filter"/></button>
+          <button type="submit" id="btn-search" class="btn-salat">Найти</button>
+        </div>
       </div>
+      <nav class="labels left">
+        <a href="/register">
+          <div class="label-item">Регистрация</div>
+        </a>
+        <a href="/login">
+          <div class="label-item">Вход</div>
+        </a>
+      </nav>
     </div>
   </header>
 </template>
@@ -35,7 +48,22 @@
 <style lang="scss">
 @use "../assets/styles/_variables.scss" as *;
 
+.logo {
+  width: 57px;
+  height: 64px;
+}
+
+.btn-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 100%;
+}
+
 header {
+  position: sticky;
+  top: 0;
+  bottom: 50px;
   display: flex;
   justify-content: center;
   background-color: $background-dark;
@@ -55,37 +83,9 @@ header {
     max-width: 75rem;
     min-width: 28.75rem;
 
-    nav {
-      display: flex;
-      flex-direction: row;
 
-      .label-item {
-        display: flex;
-        align-items: center;
-        height: 100%;
-        padding: 0 1rem;
-      }
-    }
   }
 }
 
-.search {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
 
-  background-color: $background;
-  height: 2.8rem;
-  border-radius: 0.5rem;
-  ::placeholder {
-    font-weight: 300;
-    color: $background-dark;
-  }
-
-  .btn {
-    height: 100%;
-    border-radius: 0 0.5rem 0.5rem 0;
-    font-weight: 400;
-  }
-}
 </style>

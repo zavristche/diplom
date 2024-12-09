@@ -1,13 +1,20 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import svgLoader from 'vite-svg-loader';
 
 export default defineConfig({
-    plugins: [vue()],
+    plugins: [vue(), svgLoader()],
+    alias: {
+        '@': '/src',
+      },
     server: {
         css: {
             preprocessorOptions: {
               scss: {
                 additionalData: `@use "./src/assets/styles/_variables.scss" as *;`,
+                test: /\.scss$/,
+                use: ["style-loader", "css-loader", "sass-loader"],
+                // isCustomElement: (tag) => ['container'].includes(tag),
               },
             },
         },

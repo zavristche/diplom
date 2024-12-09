@@ -37,13 +37,6 @@ table {
   width: 100%;
 }
 
-/* Настройка шрифтов */
-body {
-  font-family: Arial, sans-serif;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
 
 /* Убираем стили для заголовков */
 h1,
@@ -69,12 +62,6 @@ img {
   display: block;
 }
 
-/* Форматирование кнопок */
-// button {
-//   cursor: pointer;
-//   background-color: transparent;
-// }
-
 /* Поддержка для адаптивных элементов */
 input[type="checkbox"],
 input[type="radio"] {
@@ -84,5 +71,15 @@ input[type="radio"] {
 /* Стили для основного контейнера */
 body {
   display: flex;
+  justify-content: center;
   flex-direction: column;
+  max-width: 100%;
+  background-color: $background;
+  color: $dark-text;
+  font-family: "Rubik", sans-serif;
+  font-optical-sizing: 1rem;
+  font-weight: 300;
+  font-style: normal;
 }
+
+
