@@ -18,10 +18,11 @@ main {
   // z-index: -2;
   top: 6.25rem;
   display: flex;
+  gap: 50px;
   flex-direction: column;
   justify-content: center;
-  width: 75.13rem;
-  max-width: 75.13rem;
+  width: 1200px;
+  max-width: 1200rem;
   min-width: 27.5rem;
   margin-top: 50px;
   // color: inherit;

@@ -1,0 +1,58 @@
+<?php
+
+namespace app\models;
+
+use Yii;
+use app\models\Mark;
+
+
+/**
+ * This is the model class for table "mark_type".
+ *
+ * @property int $id
+ * @property string $title
+ *
+ * @property Mark[] $marks
+ */
+class MarkType extends \yii\db\ActiveRecord
+{
+    /**
+     * {@inheritdoc}
+     */
+    public static function tableName()
+    {
+        return 'mark_type';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function rules()
+    {
+        return [
+            [['title'], 'required'],
+            [['title'], 'string', 'max' => 255],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'title' => 'Title',
+        ];
+    }
+
+    /**
+     * Gets query for [[Marks]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getMarks()
+    {
+        return $this->hasMany(Mark::class, ['type_id' => 'id']);
+    }
+}

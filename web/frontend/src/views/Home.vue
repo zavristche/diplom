@@ -1,5 +1,13 @@
 <script setup>
 import BaseIcon from "../components/BaseIcon.vue";
+import Recipe from "../components/Recipe.vue";
+import RecipeService from '../api/RecipeService';
+
+RecipeService.getAll().then((recipes) => {
+    console.log('Recipes:', recipes);
+}).catch((error) => {
+    console.error('Error fetching recipes:', error);
+});
 </script>
 <template>
   <section class="hero">
@@ -16,20 +24,36 @@ import BaseIcon from "../components/BaseIcon.vue";
           placeholder="Поиск по рецептам, подборкам и авторам"
         />
         <div class="btn-container">
-          <button type="button"><BaseIcon viewBox="0 0 45 45" class="icon-dark-45-1" name="filter"/></button>
           <button type="submit" id="btn-search" class="btn-salat">Найти</button>
         </div>
       </div>
       <button type="submit" id="" class="btn-dark line"><BaseIcon viewBox="0 0 45 45" class="icon-dark-45-1" name="random" />Случайный рецепт</button>
     </div>
-    <div class="mascot">
+    <!-- <div class="mascot"> -->
       <img src="/img/mascot.png" alt="Test Image">
-    </div>
+    <!-- </div> -->
+  </section>
+  <section class="content-container">
+    <!-- <Recipe />
+    <Recipe />
+    <Recipe />
+    <Recipe />
+    <Recipe />
+    <Recipe /> -->
   </section>
 </template>
 
 <style lang="scss">
 @use "../assets/styles/variables" as *;
+@use "../assets/styles/style";
+
+.content-container {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, 1fr); // Три равные колонки
+  gap: 40px; // Расстояние между карточками
+  // margin-top: 50px;
+}
 
 .hero {
   display: flex;
@@ -42,7 +66,7 @@ import BaseIcon from "../components/BaseIcon.vue";
 
   h1 {
     font-weight: 600;
-    font-size: 6.25rem;
+    font-size: 100px;
   }
 
   .search {
@@ -57,7 +81,7 @@ import BaseIcon from "../components/BaseIcon.vue";
 
 .slogan {
   font-weight: 300;
-  font-size: 2rem;
+  font-size: 32px;
 }
 
 .mascot {

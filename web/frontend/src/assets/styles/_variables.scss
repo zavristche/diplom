@@ -8,14 +8,15 @@ $dark-text: #000;
 
 $text-info: #605f4b;
 $text-info-light: #9a997b;
-$light: #e3e2d8;
+$light: #ECECE4;
 
 $shadow: 0rem 0rem 0.61rem 0rem rgba(0, 0, 0, 0.1);
 
 $colors: (
   "black": $dark-text,
   "dark": $background-dark,
-  "light": $light-text,
+  "white": $light-text,
+  "light": $text-info,
   "pale": $text-info-light,
   "salat": $accent-color-1,
   "orange": $accent-color-2,

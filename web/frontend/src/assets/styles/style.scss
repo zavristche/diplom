@@ -8,21 +8,31 @@
   align-items: center;
 }
 
+.btn-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 100%;
+}
+
 .search {
   display: flex;
   justify-content: space-between;
   flex-direction: row;
   align-items: center;
   padding-left: 10px;
-
+  font-weight: 400;
+  font-size: 16px;
   input {
     width: 100%;
   }
 
+
+
   background-color: $background;
   width: 550px;
   height: 2.8rem;
-  border-radius: 0.5rem;  
+  border-radius: $border;  
   ::placeholder {
     font-weight: 300;
     color: $background-dark;
@@ -68,6 +78,7 @@ a {
   height: 100%;
 }
 
+
 @function contrast-color($background-color) {
   $luminance: ((red($background-color) * 0.299) + (green($background-color) * 0.587) + (blue($background-color) * 0.114)) / 255;
   @if $luminance > 0.8 {
@@ -88,6 +99,7 @@ a {
     padding: 1rem;
     border-radius: $border;
     font-weight: 500;
+    font-size: 16px;
     cursor: pointer;
     box-shadow: $shadow;
   }
@@ -102,14 +114,14 @@ a {
 }
 
 @each $name, $color in $colors {
-  @for $size from 35 through 55 { // Диапазон размеров (например, от 1 до 100 px)
+  @for $size from 10 through 55 { // Диапазон размеров (например, от 1 до 100 px)
     @for $stroke from 0 through 3 { // Диапазон толщин линии
       .icon-#{$name}-#{$size}-#{$stroke} {
         width: #{$size}px;
         height: #{$size}px;
-        stroke: $color;
-        stroke-width: #{$stroke};
-        fill: none; // Для SVG, чтобы заливка была прозрачной
+        stroke: $color !important;
+        stroke-width: #{$stroke} !important;
+        fill: none !important; // Для SVG, чтобы заливка была прозрачной
       }
     }
   }

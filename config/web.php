@@ -52,7 +52,12 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                '<path:.+>' => 'site/index',
+                'GET api/recipe' => 'recipe/index',
+                // '<path:.+>' => 'site/index',
+                // 'GET recipe/<id>' => 'recipe/<id>',
+                // 'POST recipe' => 'recipe',
+                // 'PATCH recipe/<id>' => 'recipe/<id>',
+                // 'DELETE recipe/<id>' => 'recipe/<id>',
             ],
         ],
         'on beforeSend' => function ($event) {

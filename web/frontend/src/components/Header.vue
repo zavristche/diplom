@@ -9,13 +9,13 @@ import BaseIcon from "./BaseIcon.vue";
         <BaseIcon class="logo"  name="logo"/>
       </a>
       <nav class="labels left">
-        <a href="/recept/all">
+        <a href="/search/recipe">
           <div class="label-item">Рецепты</div>
         </a>
-        <a href="/collection/all">
+        <a href="/search/collection">
           <div class="label-item">Коллекции</div>
         </a>
-        <a href="/author/all">
+        <a href="/search/author">
           <div class="label-item">Авторы</div>
         </a>
       </nav>
@@ -29,7 +29,6 @@ import BaseIcon from "./BaseIcon.vue";
           placeholder="Поиск по рецептам, подборкам и авторам"
         />
         <div class="btn-container">
-          <button type="button"><BaseIcon viewBox="0 0 45 45" class="icon-dark-45-1" name="filter"/></button>
           <button type="submit" id="btn-search" class="btn-salat">Найти</button>
         </div>
       </div>
@@ -53,21 +52,16 @@ import BaseIcon from "./BaseIcon.vue";
   height: 64px;
 }
 
-.btn-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  height: 100%;
-}
-
 header {
   position: sticky;
+  z-index: 20;
   top: 0;
   bottom: 50px;
   display: flex;
   justify-content: center;
   background-color: $background-dark;
   color: $light-text;
+  box-shadow: $shadow;
   font-weight: 500;
   width: 100%;
   height: 6.25rem;
