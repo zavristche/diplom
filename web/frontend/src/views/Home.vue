@@ -1,10 +1,15 @@
 <script setup>
+import { ref } from 'vue';
+
 import BaseIcon from "../components/BaseIcon.vue";
 import Recipe from "../components/Recipe.vue";
 import RecipeService from '../api/RecipeService';
 
+const myRecipes = ref([]);
+
 RecipeService.getAll().then((recipes) => {
     console.log('Recipes:', recipes);
+    myRecipes.value = recipes.data.data;
 }).catch((error) => {
     console.error('Error fetching recipes:', error);
 });
@@ -29,17 +34,10 @@ RecipeService.getAll().then((recipes) => {
       </div>
       <button type="submit" id="" class="btn-dark line"><BaseIcon viewBox="0 0 45 45" class="icon-dark-45-1" name="random" />Случайный рецепт</button>
     </div>
-    <!-- <div class="mascot"> -->
-      <img src="/img/mascot.png" alt="Test Image">
-    <!-- </div> -->
+    <img src="/img/mascot.png" alt="Test Image">
   </section>
-  <section class="content-container">
-    <!-- <Recipe />
-    <Recipe />
-    <Recipe />
-    <Recipe />
-    <Recipe />
-    <Recipe /> -->
+  <section v-for="recipe in myRecipes" :key="recipe.id" class="content-container">
+    <Recipe v-if="recipe" :recipe="recipe" />
   </section>
 </template>
 

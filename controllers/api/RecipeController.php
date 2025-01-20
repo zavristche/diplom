@@ -1,5 +1,5 @@
 <?php
-namespace app\controllers;
+namespace app\controllers\api;
 
 use app\models\Recipe;
 use Yii;

@@ -1,25 +1,32 @@
 <script setup>
 import BaseIcon from "./BaseIcon.vue";
-
 import { ref } from 'vue';
+import { defineProps } from 'vue';
 
 const isMenuVisible = ref(false);
 const toggleMenu = () => {
   isMenuVisible.value = !isMenuVisible.value;
 };
+
+defineProps({
+  recipe: {
+    type: Object,
+    required: true, // Обязательный prop
+  },
+});
 </script>
 
 <template>
   <section class="card recipe">
     <div class="card__preview">
-        <img src="../../img/recipe.png" alt="">
+        <img :src="`/img/${recipe.photo}`" alt="">
     </div>
     <div class="card__info">
         <div class="card__title">
-            <img src="../../img/avatar.png" alt="">
+            <img src="/img/avatar.png" alt="">
             <div class="card__text">
-                <h3>Суп Харчо по-грузински</h3>
-                <span class="card__author">AmirBlago</span>
+                <h3>{{ recipe.title }}</h3>
+                <span class="card__author">{{ recipe.user_id }}</span>
                 <div class="card__metadata">
                     <span class="date">4 часа назад</span>
                     <span class="marker">•</span>

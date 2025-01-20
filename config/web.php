@@ -34,9 +34,9 @@ $config = [
         'mailer' => [
             'class' => \yii\symfonymailer\Mailer::class,
             'viewPath' => '@app/mail',
-            // send all mails to a file by default.
             'useFileTransport' => true,
         ],
+
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
             'targets' => [
@@ -52,12 +52,18 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                'GET api/recipe' => 'recipe/index',
-                // '<path:.+>' => 'site/index',
-                // 'GET recipe/<id>' => 'recipe/<id>',
-                // 'POST recipe' => 'recipe',
-                // 'PATCH recipe/<id>' => 'recipe/<id>',
-                // 'DELETE recipe/<id>' => 'recipe/<id>',
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'api/recipe',
+                    'pluralize' => false,
+                    'extraPatterns' => [
+                        'GET recipes' => 'index', // Список рецептов
+                        'GET recipe/<id:\d+>' => 'view', // Просмотр рецепта по ID
+                        'POST recipe' => 'create', // Создание рецепта
+                        'PATCH recipe/<id:\d+>' => 'update', // Обновление рецепта
+                        'DELETE recipe/<id:\d+>' => 'delete', // Удаление рецепта
+                    ],
+                ],
             ],
         ],
         'on beforeSend' => function ($event) {
