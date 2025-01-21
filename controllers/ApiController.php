@@ -1,12 +1,19 @@
 <?php
-namespace app\controllers\api;
+namespace app\controllers;
 
 use Yii;
-use yii\rest\Controller;
+// use yii\rest\Controller;
+use yii\rest\ActiveController;
 use yii\web\Response;
 
-class ApiController extends Controller
+class ApiController extends ActiveController
 {
+
+    // public function __construct($modelClass)
+    // {
+    //     $this->modelClass = $modelClass;
+    // }
+
     public $enableCsrfValidation = false;
 
     public function behaviors()

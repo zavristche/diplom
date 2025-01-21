@@ -57,7 +57,7 @@ use app\models\UserAllergen;
  * @property UserSubscribe[] $userSubscribes
  * @property UserSubscribe[] $userSubscribes0
  */
-class User extends \yii\db\ActiveRecord
+class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {
     /**
      * {@inheritdoc}
@@ -103,6 +103,43 @@ class User extends \yii\db\ActiveRecord
             'photo_header' => 'Photo Header',
             'auth_key' => 'Auth Key',
         ];
+    }
+
+    //identity
+    public function validatePassword($password)
+    {
+        // return Yii::$app->security->validatePassword($password, $this->password);
+        return $this->password === $password;
+    }
+
+    public static function findByUsername($login)
+    {
+        return self::findOne(['login' => $login]);
+    }
+
+    public static function findIdentity($id)
+    {
+        return static::findOne($id);
+    }
+
+    public static function findIdentityByAccessToken($token, $type = null)
+    {
+        return static::findOne(['auth_key' => $token]);
+    }
+
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    public function getAuthKey()
+    {
+        return $this->auth_key;
+    }
+
+    public function validateAuthKey($auth_key)
+    {
+        return $this->auth_key === $auth_key;
     }
 
     /**
