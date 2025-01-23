@@ -1,117 +1,77 @@
 <?php
 namespace app\controllers;
-
+use yii\filters\AccessControl;
+use yii\helpers\ArrayHelper;
+use yii\web\NotFoundHttpException;
 use app\models\Recipe;
-use app\models\User;
 use Yii;
 use yii\rest\ActiveController;
-use yii\web\Response;
+use app\resources\RecipeResource;
 
 class RecipeController extends ActiveController
 {
     public $modelClass = "app\models\Recipe";
 
     public $enableCsrfValidation = false;
-
+    
+    public function actions()
+    {
+        return ArrayHelper::merge(parent::actions(), [
+            'index' => [
+                'pagination' => [
+                    'pageSize' => 10,
+                ],
+                'sort' => [
+                    'defaultOrder' => [
+                        'created_at' => SORT_DESC,
+                    ],
+                ],
+            ],
+        ]);
+    }
+     
     public function behaviors()
     {
         $behaviors = parent::behaviors();
         $behaviors['authenticator'] = [
             'class' => \yii\filters\auth\HttpBearerAuth::class,
-            // 'auth' => function($username, $password){
-            //     $user = User::find()->where(['login' => $username])->one();
-            //     if($user && $user->validatePassword($password)) {
-            //         return $user;
-            //     }
-            //     return null;
-            // }
+            'except' => ['index', 'view',],
+        ];
+        $behaviors['access'] = [
+            'class' => AccessControl::class,
+            'rules' => [
+                [
+                    'allow' => true,
+                    'actions' => ['index', 'view'],
+                ],
+                [
+                    'allow' => true,
+                    'actions' => ['create', 'update', 'delete'],
+                    'roles' => ['@'],
+                ],
+                [
+                    'allow' => true,
+                    'actions' => ['update', 'delete'],
+                    'matchCallback' => function ($rule, $action) {
+                        $id = \Yii::$app->request->get('id');
+                        
+                        if (!$model = Recipe::findOne($id)) {
+                            throw new NotFoundHttpException("Запись не найдена.");
+                        }
+    
+                        return $model->user_id == \Yii::$app->user->identity->id;
+                    },
+                ],
+            ],
         ];
         return $behaviors;
     }
 
-    // public function behaviors()
-    // {
-    //     $behaviors = parent::behaviors();
-    //     $behaviors['contentNegotiator'] = [
-    //         'class' => \yii\filters\ContentNegotiator::class,
-    //         'formats' => [
-    //             'application/json' => Response::FORMAT_JSON,
-    //         ],
-    //     ];
-    //     return $behaviors;
-    // }
-
-    // protected function successResponse($data, $message = 'OK')
-    // {
-    //     return [
-    //         'status' => 'success',
-    //         'message' => $message,
-    //         'data' => $data,
-    //     ];
-    // }
-
-    // protected function errorResponse($message = 'Error', $code = 400)
-    // {
-    //     Yii::$app->response->statusCode = $code;
-    //     return [
-    //         'status' => 'error',
-    //         'message' => $message,
-    //     ];
-    // }
-
-    // public function __construct($modelClass = "app\models\Recipe")
-    // {
-    //     parent::__construct($modelClass);
-    // }
-    // public function actionIndex()
-    // {
-    //     $recipes = Recipe::find()->all();
-    //     return $this->successResponse($recipes);
-    // }
-
-    // public function actionView($id)
-    // {
-    //     $recipe = Recipe::findOne($id);
-    //     if (!$recipe) {
-    //         return $this->errorResponse('Recipe not found', 404);
-    //     }
-    //     return $this->successResponse($recipe);
-    // }
-
-    // public function actionCreate()
-    // {
-    //     $model = new Recipe();
-    //     $model->load(Yii::$app->request->post(), '');
-    //     if ($model->save()) {
-    //         return $this->successResponse($model, 'Recipe created successfully');
-    //     }
-    //     return $this->errorResponse('Failed to create recipe', 422);
-    // }
-
-    // public function actionUpdate($id)
-    // {
-    //     $model = Recipe::findOne($id);
-    //     if (!$model) {
-    //         return $this->errorResponse('Recipe not found', 404);
-    //     }
-
-    //     $model->load(Yii::$app->request->post(), '');
-    //     if ($model->save()) {
-    //         return $this->successResponse($model, 'Recipe updated successfully');
-    //     }
-    //     return $this->errorResponse('Failed to update recipe', 422);
-    // }
-
-    // public function actionDelete($id)
-    // {
-    //     $model = Recipe::findOne($id);
-    //     if (!$model) {
-    //         return $this->errorResponse('Recipe not found', 404);
-    //     }
-
-    //     if ($model->delete()) {
-    //         return $this->successResponse([], 'Recipe deleted successfully');
-    //     }
-    //     return $this->errorResponse('Failed to delete recipe', 422);
-    // }
+    protected function serializeData($data)
+    {
+        if ($data instanceof Recipe) {
+            return new RecipeResource($data);
+        }
+        return $data;
+    }
 }

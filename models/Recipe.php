@@ -3,6 +3,10 @@
 namespace app\models;
 
 use Yii;
+use yii\web\Link;
+use yii\web\Linkable;
+use yii\helpers\Url;
+
 use app\models\BlockRecipe;
 use app\models\CollectionRecipe;
 use app\models\Comment;
@@ -85,6 +89,45 @@ class Recipe extends \yii\db\ActiveRecord
             'saved' => 'Saved',
             'likes' => 'Likes',
         ];
+    }
+
+    public function fields()
+    {
+        $fields = parent::fields();
+
+        $fields['user'] = function() {
+            $userData = $this->user;
+            unset(
+                $userData['auth_key'],
+                $userData['password'],
+            );
+            return $userData;
+        };
+        $fields['status'] = fn() => $this->status;
+        $fields['private'] = fn() => $this->private;
+        $fields['comments'] = fn() => $this->comments;
+        $fields['created_at'] = fn() => Yii::$app->formatter->asDateTime($this->created_at, 'dd.mm.Y H:i');
+        $fields['likes'] = fn() => count($this->getRecipeReactions()->all());
+        $fields['saved'] = fn() => count($this->getCollectionRecipes()->all());
+
+        $fields['marks'] = fn() => $this->getRecipeMarks()->asArray()->all();
+        $fields['products'] = fn() => $this->getRecipeProducts()->asArray()->all();
+        $fields['steps'] = fn() => $this->getSteps()->asArray()->all();
+
+        $fields['collections'] = function () {
+            if (!Yii::$app->user->isGuest) {
+                return $this->getCollectionRecipes()->andWhere(['user_id' => Yii::$app->user->identity->id])->all();
+            }
+            return [];
+        };
+        $fields['calendar_recipe'] = function () {
+            if (!Yii::$app->user->isGuest) {
+                return $this->getRecipeCalendars()->andWhere(['user_id' => Yii::$app->user->identity->id])->all();
+            }
+            return [];
+        };
+
+        return $fields;
     }
 
     /**
