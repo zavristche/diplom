@@ -1,26 +1,27 @@
 <?php
 
-namespace app\models;
+namespace app\models\mark;
 
 use Yii;
-use app\models\recipe\RecipeProduct;
+use app\models\mark\Mark;
+
 
 /**
- * This is the model class for table "measure".
+ * This is the model class for table "mark_type".
  *
  * @property int $id
  * @property string $title
  *
- * @property RecipeProduct[] $recipeProducts
+ * @property Mark[] $marks
  */
-class Measure extends \yii\db\ActiveRecord
+class MarkType extends \yii\db\ActiveRecord
 {
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
-        return 'measure';
+        return 'mark_type';
     }
 
     /**
@@ -46,12 +47,12 @@ class Measure extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[RecipeProducts]].
+     * Gets query for [[Marks]].
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getRecipeProducts()
+    public function getMarks()
     {
-        return $this->hasMany(RecipeProduct::class, ['measure_id' => 'id']);
+        return $this->hasMany(Mark::class, ['type_id' => 'id']);
     }
 }

@@ -3,8 +3,8 @@
 namespace app\models;
 
 use Yii;
-use app\models\ProductAllergen;
-use app\models\UserAllergen;
+use app\models\product\ProductAllergen;
+use app\models\user\UserAllergen;
 
 /**
  * This is the model class for table "allergen".

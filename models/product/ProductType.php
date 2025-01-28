@@ -1,26 +1,26 @@
 <?php
 
-namespace app\models;
+namespace app\models\product;
 
 use Yii;
-use app\models\recipe\RecipeProduct;
+use app\models\Product;
 
 /**
- * This is the model class for table "measure".
+ * This is the model class for table "product_type".
  *
  * @property int $id
  * @property string $title
  *
- * @property RecipeProduct[] $recipeProducts
+ * @property Product[] $products
  */
-class Measure extends \yii\db\ActiveRecord
+class ProductType extends \yii\db\ActiveRecord
 {
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
-        return 'measure';
+        return 'product_type';
     }
 
     /**
@@ -46,12 +46,12 @@ class Measure extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[RecipeProducts]].
+     * Gets query for [[Products]].
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getRecipeProducts()
+    public function getProducts()
     {
-        return $this->hasMany(RecipeProduct::class, ['measure_id' => 'id']);
+        return $this->hasMany(Product::class, ['type_id' => 'id']);
     }
 }

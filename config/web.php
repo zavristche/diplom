@@ -25,9 +25,9 @@ $config = [
             'class' => 'yii\caching\FileCache',
         ],
         'user' => [
-            'identityClass' => 'app\models\User',
-            'enableAutoLogin' => true,
-            'enableSession' => false,
+            'identityClass' => 'app\models\user\User',
+            'enableAutoLogin' => false,
+            'loginUrl' => null, 
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -52,17 +52,34 @@ $config = [
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
+            'enableStrictParsing' => true,
             'rules' => [
+                'POST login' => 'user/login',
+                'POST register' => 'user/register',
+                'POST logout' => 'user/logout',
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'recipe',
                     'pluralize' => false,
                     'extraPatterns' => [
-                        'GET recipes' => 'index', // Список рецептов
-                        'GET recipe/<id:\d+>' => 'view', // Просмотр рецепта по ID
-                        'POST recipe' => 'create', // Создание рецепта
-                        'PATCH recipe/<id:\d+>' => 'update', // Обновление рецепта
-                        'DELETE recipe/<id:\d+>' => 'delete', // Удаление рецепта
+                        'GET recipe' => 'index',
+                        'GET recipe/<id:\d+>' => 'view',
+                        'POST recipe/<id:\d+>' => 'create',
+                        'PATCH recipe/<id:\d+>' => 'update',
+                        'DELETE recipe/<id:\d+>' => 'delete',
+                    ],
+                ],
+
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'collection',
+                    'pluralize' => false,
+                    'extraPatterns' => [
+                        'GET collection' => 'index',
+                        'GET collection/<id:\d+>' => 'view',
+                        'POST collection/<id:\d+>' => 'create',
+                        'PATCH collection/<id:\d+>' => 'update',
+                        'DELETE collection/<id:\d+>' => 'delete',
                     ],
                 ],
             ],
@@ -73,7 +90,7 @@ $config = [
         'assetManager' => [
             'bundles' => [
                 'yii\bootstrap\BootstrapAsset' => false, // Отключает CSS Bootstrap
-                'yii\bootstrap\BootstrapPluginAsset' => false, // Отключает JS Bootstrap
+                'yii\bootstrap\BootstrapPluginAsset' => false,
             ],
         ],
         

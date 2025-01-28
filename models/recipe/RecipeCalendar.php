@@ -1,32 +1,31 @@
 <?php
 
-namespace app\models;
+namespace app\models\recipe;
 
 use Yii;
-use app\models\recipe\Recipe;
-use app\models\recipe\RecipeNote;
+use app\models\Recipe;
+use app\models\User;
 
 /**
- * This is the model class for table "step".
+ * This is the model class for table "recipe_calendar".
  *
  * @property int $id
+ * @property int $user_id
  * @property int $recipe_id
- * @property int $number
- * @property string $title
- * @property string $photo
- * @property string $description
+ * @property string $start_date
+ * @property string $end_date
  *
  * @property Recipe $recipe
- * @property RecipeNote[] $recipeNotes
+ * @property User $user
  */
-class Step extends \yii\db\ActiveRecord
+class RecipeCalendar extends \yii\db\ActiveRecord
 {
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
-        return 'step';
+        return 'recipe_calendar';
     }
 
     /**
@@ -35,11 +34,11 @@ class Step extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['recipe_id', 'number', 'title', 'photo', 'description'], 'required'],
-            [['recipe_id', 'number'], 'integer'],
-            [['description'], 'string'],
-            [['title', 'photo'], 'string', 'max' => 255],
+            [['user_id', 'recipe_id', 'start_date', 'end_date'], 'required'],
+            [['user_id', 'recipe_id'], 'integer'],
+            [['start_date', 'end_date'], 'safe'],
             [['recipe_id'], 'exist', 'skipOnError' => true, 'targetClass' => Recipe::class, 'targetAttribute' => ['recipe_id' => 'id']],
+            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
 
@@ -50,11 +49,10 @@ class Step extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
+            'user_id' => 'User ID',
             'recipe_id' => 'Recipe ID',
-            'number' => 'Number',
-            'title' => 'Title',
-            'photo' => 'Photo',
-            'description' => 'Description',
+            'start_date' => 'Start Date',
+            'end_date' => 'End Date',
         ];
     }
 
@@ -69,12 +67,12 @@ class Step extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[RecipeNotes]].
+     * Gets query for [[User]].
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getRecipeNotes()
+    public function getUser()
     {
-        return $this->hasMany(RecipeNote::class, ['step_id' => 'id']);
+        return $this->hasOne(User::class, ['id' => 'user_id']);
     }
 }

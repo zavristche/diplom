@@ -3,8 +3,8 @@
 namespace app\models;
 
 use Yii;
-use app\models\Collection;
-use app\models\Recipe;
+use app\models\collection\Collection;
+use app\models\recipe\Recipe;
 
 /**
  * This is the model class for table "status_content".

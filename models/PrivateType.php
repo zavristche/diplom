@@ -3,9 +3,9 @@
 namespace app\models;
 
 use Yii;
-use app\models\Collection;
-use app\models\Recipe;
-use app\models\User;
+use app\models\collection\Collection;
+use app\models\recipe\Recipe;
+use app\models\user\User;
 
 /**
  * This is the model class for table "private_type".
@@ -47,6 +47,11 @@ class PrivateType extends \yii\db\ActiveRecord
             'id' => 'ID',
             'title' => 'Title',
         ];
+    }
+
+    public static function getOne($title)
+    {
+        return self::findOne(['title' => $title])->id;
     }
 
     /**

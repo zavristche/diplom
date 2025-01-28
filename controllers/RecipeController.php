@@ -1,34 +1,17 @@
 <?php
 namespace app\controllers;
 use yii\filters\AccessControl;
-use yii\helpers\ArrayHelper;
-use yii\web\NotFoundHttpException;
-use app\models\Recipe;
+use app\models\recipe\Recipe;
 use Yii;
 use yii\rest\ActiveController;
-use app\resources\RecipeResource;
+use yii\data\ActiveDataProvider;
+use yii\web\BadRequestHttpException;
 
 class RecipeController extends ActiveController
 {
-    public $modelClass = "app\models\Recipe";
+    public $modelClass = 'app\models\recipe\Recipe';
 
     public $enableCsrfValidation = false;
-    
-    public function actions()
-    {
-        return ArrayHelper::merge(parent::actions(), [
-            'index' => [
-                'pagination' => [
-                    'pageSize' => 10,
-                ],
-                'sort' => [
-                    'defaultOrder' => [
-                        'created_at' => SORT_DESC,
-                    ],
-                ],
-            ],
-        ]);
-    }
      
     public function behaviors()
     {
@@ -49,29 +32,96 @@ class RecipeController extends ActiveController
                     'actions' => ['create', 'update', 'delete'],
                     'roles' => ['@'],
                 ],
-                [
-                    'allow' => true,
-                    'actions' => ['update', 'delete'],
-                    'matchCallback' => function ($rule, $action) {
-                        $id = \Yii::$app->request->get('id');
-                        
-                        if (!$model = Recipe::findOne($id)) {
-                            throw new NotFoundHttpException("Запись не найдена.");
-                        }
-    
-                        return $model->user_id == \Yii::$app->user->identity->id;
-                    },
-                ],
             ],
         ];
         return $behaviors;
     }
 
-    protected function serializeData($data)
+    public function beforeAction($action)
     {
-        if ($data instanceof Recipe) {
-            return new RecipeResource($data);
+        try {
+            return parent::beforeAction($action);
+        } catch (\yii\web\UnauthorizedHttpException $e) {
+            // Обработка исключения с кастомным сообщением
+            throw new \yii\web\UnauthorizedHttpException('Это действие доступно только авторизированным пользователям');
         }
-        return $data;
     }
+
+    public function checkAccess($action, $model = null, $params = [])
+    {
+        if ($action === 'update' || $action === 'delete') {
+            if ($model->user_id !== \Yii::$app->user->id)
+                throw new \yii\web\ForbiddenHttpException(sprintf('Вы можете выполнять это действие только с рецептами, которые вы создали.', $action));
+        }
+    }
+    
+    public function actionIndex()
+    {
+        $dataProvider = new ActiveDataProvider([
+            'query' => Recipe::find()->with([
+                'user',
+                'marks',
+                'products',
+                'steps',
+                'status', 
+                'private', 
+                'recipeReactions', 
+                'collectionRecipes'
+            ]),
+            'pagination' => [
+                'pageSize' => 10,
+            ],
+            'sort' => [
+                'defaultOrder' => [
+                    'created_at' => SORT_DESC,
+                ],
+            ],
+        ]);
+    
+        return $dataProvider; 
+    }
+
+    // public function actionCreate()
+    // {
+    //     $request = Yii::$app->request;
+    //     $transaction = Yii::$app->db->beginTransaction();
+
+    //     try {
+    //         // Создаем рецепт
+    //         $recipe = new Recipe();
+    //         $recipe->load($request->post(), '');
+    //         if (!$recipe->save()) {
+    //             throw new BadRequestHttpException('Ошибка при сохранении рецепта');
+    //             return [
+    //                 'attributes' => $model->attributes,
+    //                 'errors' => $model->errors,
+    //             ];
+    //         }
+
+    //         // Сохраняем шаги
+    //         $steps = $request->post('steps', []);
+    //         foreach ($steps as $stepData) {
+    //             $step = new Step();
+    //             $step->recipe_id = $recipe->id;
+    //             $step->description = $stepData['description'];
+    //             if (!$step->save()) {
+    //                 throw new BadRequestHttpException('Ошибка при сохранении шага');
+    //             }
+    //         }
+
+    //         // Привязываем метки
+    //         $tags = $request->post('tags', []);
+    //         $recipe->link('tags', $tags);
+
+    //         // Привязываем продукты
+    //         $products = $request->post('products', []);
+    //         $recipe->link('products', $products);
+
+    //         $transaction->commit();
+    //         return $recipe;
+    //     } catch (\Exception $e) {
+    //         $transaction->rollBack();
+    //         throw new BadRequestHttpException($e->getMessage());
+    //     }
+    // }
 }

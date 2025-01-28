@@ -3,8 +3,8 @@
 namespace app\models;
 
 use Yii;
-use app\models\CollectionReaction;
-use app\models\RecipeReaction;
+use app\models\collection\CollectionReaction;
+use app\models\recipe\RecipeReaction;
 
 /**
  * This is the model class for table "reaction_type".

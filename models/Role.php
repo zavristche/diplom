@@ -3,7 +3,7 @@
 namespace app\models;
 
 use Yii;
-use app\models\User;
+use app\models\user\User;
 
 /**
  * This is the model class for table "role".
@@ -32,6 +32,11 @@ class Role extends \yii\db\ActiveRecord
             [['title'], 'required'],
             [['title'], 'string', 'max' => 255],
         ];
+    }
+
+    public static function getOne($title)
+    {
+        return self::findOne(['title' => $title])->id;
     }
 
     /**

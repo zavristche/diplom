@@ -3,8 +3,8 @@
 namespace app\models;
 
 use Yii;
-use app\models\Recipe;
-use app\models\User;
+use app\models\recipe\Recipe;
+use app\models\user\User;
 
 /**
  * This is the model class for table "comment".
