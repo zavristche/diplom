@@ -3,13 +3,10 @@ namespace app\controllers;
 
 use app\models\collection\Collection;
 use yii\filters\AccessControl;
-use yii\web\NotFoundHttpException;
-use app\models\recipe\Recipe;
 use app\models\user\User;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\rest\ActiveController;
-use yii\web\Response;
 
 class CollectionController extends ActiveController
 {
@@ -78,29 +75,4 @@ class CollectionController extends ActiveController
     
         return $dataProvider; 
     }
-
-    public function actionUserCollections()
-    {
-        $dataProvider = new ActiveDataProvider([
-            'query' => Collection::find()->with([
-                'user', 
-                'status', 
-                'private', 
-                'recipeReactions', 
-                'collectionRecipes'
-            ]),
-            'pagination' => [
-                'pageSize' => 10,
-            ],
-            'sort' => [
-                'defaultOrder' => [
-                    'created_at' => SORT_DESC,
-                ],
-            ],
-        ]);
-    
-        return $dataProvider; 
-    }
-
-
 }

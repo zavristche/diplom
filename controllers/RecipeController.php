@@ -81,6 +81,13 @@ class RecipeController extends ActiveController
         return $dataProvider; 
     }
 
+    // public function actionDelete(
+    //     $model-
+    //     // $this->findModel($id)->delete();
+
+    //     return $this->redirect(['index']);
+    // )
+
     // public function actionCreate()
     // {
     //     $request = Yii::$app->request;

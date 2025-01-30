@@ -3,8 +3,8 @@
 namespace app\models\recipe;
 
 use Yii;
-use app\models\Mark;
-use app\models\Recipe;
+use app\models\mark\Mark;
+use app\models\recipe\Recipe;
 
 /**
  * This is the model class for table "recipe_mark".

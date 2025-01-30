@@ -1,32 +1,29 @@
 <?php
 namespace app\controllers;
-use yii\filters\AccessControl;
-use app\models\collection\CollectionRecipe;
-use Yii;
-use yii\data\ActiveDataProvider;
-use yii\rest\ActiveController;
 
-class CollectionController extends ActiveController
+use app\models\collection\Collection;
+use app\models\collection\CollectionRecipe;
+use yii\filters\AccessControl;
+use Yii;
+use yii\rest\ActiveController;
+use yii\web\BadRequestHttpException;
+use yii\web\NotFoundHttpException;
+
+class CollectionRecipeController extends ActiveController
 {
-    public $modelClass = "app\models\collection\CollectionRecipe";
+    public $modelClass = 'app\models\collection\CollectionRecipe';
 
     public function behaviors()
     {
         $behaviors = parent::behaviors();
         $behaviors['authenticator'] = [
             'class' => \yii\filters\auth\HttpBearerAuth::class,
-            'except' => ['index', 'view'],
         ];
         $behaviors['access'] = [
             'class' => AccessControl::class,
             'rules' => [
                 [
                     'allow' => true,
-                    'actions' => ['index', 'view'],
-                ],
-                [
-                    'allow' => true,
-                    'actions' => ['create', 'update', 'delete'],
                     'roles' => ['@'],
                 ],
             ],
@@ -34,45 +31,41 @@ class CollectionController extends ActiveController
         return $behaviors;
     }
 
-    public function beforeAction($action)
+    public function actions()
     {
-        try {
-            return parent::beforeAction($action);
-        } catch (\yii\web\UnauthorizedHttpException $e) {
-            throw new \yii\web\UnauthorizedHttpException('Доступ запрещен');
+        $actions = parent::actions();
+        unset($actions['create']); // Отключаем стандартный create
+        return $actions;
+    }
+
+    public function actionCreate()
+    {
+        $collection_id = Yii::$app->request->post('collection_id');
+        $recipe_id = Yii::$app->request->post('recipe_id');
+
+        if (!$collection_id || !$recipe_id) {
+            throw new BadRequestHttpException("Необходимо передать collection_id и recipe_id");
         }
-    }
 
-    public function checkAccess($action, $model = null, $params = [])
-    {
-        if ($action === 'update' || $action === 'delete') {
-            if ($model->user_id !== \Yii::$app->user->id)
-                throw new \yii\web\ForbiddenHttpException(sprintf('Вы можете выполнять это действие только с теми коллекциями, которые вы создали.', $action));
+        $collection = Collection::findOne(['id' => $collection_id]);
+            
+        if($collection->user_id !== Yii::$app->user->id){
+            throw new \yii\web\UnauthorizedHttpException('Вы можете добавлять рецепты только свои коллекции');
         }
-    }
 
-    public function actionIndex()
-    {
-        $dataProvider = new ActiveDataProvider([
-            'query' => CollectionRecipe::find()->with([
-                'user', 
-                'status', 
-                'private', 
-                'recipeReactions', 
-                'collectionRecipes'
-            ]),
-            'pagination' => [
-                'pageSize' => 10,
-            ],
-            'sort' => [
-                'defaultOrder' => [
-                    'created_at' => SORT_DESC,
-                ],
-            ],
-        ]);
-    
-        return $dataProvider; 
-    }
+        if(CollectionRecipe::findOne(['recipe_id' => $recipe_id])){
+            throw new \yii\web\ConflictHttpException('Рецепт уже есть в коллекции');
+        }
 
+        $model = new CollectionRecipe();
+        $model->collection_id = $collection_id;
+        $model->recipe_id = $recipe_id;
+
+        if($model->save()){
+            return ['success' => true, 'model' => $model, 'message' => 'Рецепт добавлен в коллекцию'];
+        }
+
+        return ['success' => false, 'errors' => $model->errors];
+    }
 
 }

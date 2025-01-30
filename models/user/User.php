@@ -112,12 +112,6 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         \Yii::$app->user->enableSession = false;
     }
 
-    public static function findIdentityByBasicAuth($username, $password)
-    {
-        $user = self::findByUsername($username);
-        return $user && $user->validatePassword($password) ? $user : null;
-    }
-
     //identity
     public function validatePassword($password)
     {
@@ -125,9 +119,10 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         // return $this->password === $password;
     }
 
-    public static function findByUsername($login)
+    public static function findByUsername($username)
     {
-        return self::findOne(['login' => $login]);
+        // return self::findOne(['login' => $login]);
+        return self::find()->where(['login' => $username])->one();
     }
 
     public static function findIdentity($id)

@@ -7,6 +7,7 @@ use app\models\user\User;
 use Yii;
 use yii\rest\ActiveController;
 use yii\data\ActiveDataProvider;
+use yii\filters\auth\HttpBasicAuth;
 
 class UserController extends ActiveController
 {
@@ -32,9 +33,15 @@ class UserController extends ActiveController
     //     $behaviors = parent::behaviors();
 
     //     $behaviors['authenticator'] = [
-    //         'class' => \yii\filters\auth\HttpBasicAuth::class,
-    //         'auth' => [User::class, 'findIdentityByBasicAuth'], // Метод модели User/
-    //         'except' => ['login', 'register', 'logout'], // Исключаем метод login
+    //         'class' => HttpBasicAuth::class,
+    //         'auth' => function ($username, $password) {
+    //             $user = User::findByUsername($username);
+    //             if ($user && $user->validatePassword($password)) {
+    //                 return $user;
+    //             }
+    //             return null; // Если пользователь не найден или пароль не совпадает
+    //         },
+    //         'only' => ['login'],
     //     ];
 
     //     return $behaviors;
@@ -111,12 +118,22 @@ class UserController extends ActiveController
         throw new \yii\web\ServerErrorHttpException('Не удалось завершить сессию.');
     }
 
-    //BASIC AUTH
+    public function actionUpdate($id)
+    {
+        $user = User::findIdentity($id);
+
+        if ($this->request->isPost && $user->load($this->request->post())) {
+            if($user->save()){
+                return ['success' => true, 'user' => $user, 'message' => 'Профиль обновлен'];
+            }
+        }
+        return ['success' => false, 'errors' => $user->errors];
+    }
+
+    // BASIC AUTH
     // public function actionLogin()
     // {
-    //     $username = Yii::$app->request->post('username');
-    //     $password = Yii::$app->request->post('password');
-    
+        
     //     $authHeader = Yii::$app->request->headers->get('Authorization');
     //     if ($authHeader !== null && preg_match('/^Basic\s+(.*)$/i', $authHeader, $matches)) {
     //         list($username, $password) = explode(':', base64_decode($matches[1]), 2);
@@ -125,11 +142,10 @@ class UserController extends ActiveController
     //     $user = User::findByUsername($username);
     
     //     if ($user === null || !$user->validatePassword($password)) {
-    //         throw new \yii\web\UnauthorizedHttpException('Invalid username or password.');
+    //         throw new \yii\web\UnauthorizedHttpException('Неверный пароль');
     //     }
     
-    //     $token = Yii::$app->security->generateRandomString();
-    //     $user->auth_key = $token;
+    //     $user->auth_key = Yii::$app->security->generateRandomString();
     //     $user->save(false);
     
     //     return [

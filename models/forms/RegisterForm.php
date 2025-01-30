@@ -4,7 +4,7 @@ namespace app\models\forms;
 
 use app\models\PrivateType;
 use app\models\Role;
-use app\models\User;
+use app\models\user\User;
 use Yii;
 use yii\helpers\VarDumper;
 

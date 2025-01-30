@@ -27,7 +27,7 @@ $config = [
         'user' => [
             'identityClass' => 'app\models\user\User',
             'enableAutoLogin' => false,
-            'loginUrl' => null, 
+            'enableSession' => false, // Отключаем сессии для REST API
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -57,6 +57,7 @@ $config = [
                 'POST login' => 'user/login',
                 'POST register' => 'user/register',
                 'POST logout' => 'user/logout',
+                'PATCH profile/<id:\d+>' => 'user/update',
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'recipe',
@@ -64,7 +65,7 @@ $config = [
                     'extraPatterns' => [
                         'GET recipe' => 'index',
                         'GET recipe/<id:\d+>' => 'view',
-                        'POST recipe/<id:\d+>' => 'create',
+                        'POST recipe' => 'create',
                         'PATCH recipe/<id:\d+>' => 'update',
                         'DELETE recipe/<id:\d+>' => 'delete',
                     ],
@@ -82,6 +83,24 @@ $config = [
                         'DELETE collection/<id:\d+>' => 'delete',
                     ],
                 ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'collection-recipe',
+                    'pluralize' => false,
+                    'extraPatterns' => [
+                        'POST collection-recipe' => 'create',
+                        'DELETE collection-recipe/<id:\d+>' => 'delete',
+                    ],
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'recipe-mark',
+                    'pluralize' => false,
+                    'extraPatterns' => [
+                        'POST recipe-mark' => 'create',
+                        'DELETE recipe-mark/<id:\d+>' => 'delete',
+                    ],
+                ],
             ],
         ],
         'on beforeSend' => function ($event) {
@@ -90,7 +109,7 @@ $config = [
         'assetManager' => [
             'bundles' => [
                 'yii\bootstrap\BootstrapAsset' => false, // Отключает CSS Bootstrap
-                'yii\bootstrap\BootstrapPluginAsset' => false,
+                'yii\bootstrap\BootstrapPluginAsset' => false, 
             ],
         ],
         
