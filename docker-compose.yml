@@ -1,0 +1,48 @@
+services:
+  yii2-app:
+    build: .
+    container_name: yii2-app
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - mysql
+    environment:
+      - YII_DEBUG=1
+      - YII_ENV=dev
+
+  mysql:
+    image: mysql:8
+    container_name: mysql-db
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: cook
+      MYSQL_USER: zavristche
+      MYSQL_PASSWORD: zavristche
+    volumes:
+      - ./db:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: root
+
+  vue-app:
+    image: node:20
+    container_name: vue-app
+    working_dir: /frontend
+    volumes:
+      - ./frontend:/frontend
+    command: ["sh", "-c", "npm install && npm run serve"]
+    ports:
+      - "5173:5173"
+    tty: true

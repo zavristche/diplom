@@ -1,0 +1,25 @@
+# Docker файлы
+docker-compose.override.yml
+docker-compose.override.yaml
+.env
+*.pid
+
+# MySQL database
+/db/
+mysql-data/
+phpmyadmin/
+
+# Yii2 runtime и кэш
+/backend/runtime/
+/backend/web/assets/
+/frontend/dist/
+# /backend/web/uploads/
+
+# Vue CLI файлы
+/frontend/node_modules/
+/frontend/dist/
+
+# IDE
+.idea/
+.vscode/
+*.log
