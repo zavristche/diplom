@@ -1,33 +1,25 @@
-# phpstorm project files
-.idea
+# Docker файлы
+docker-compose.override.yml
+docker-compose.override.yaml
+.env
+*.pid
 
-# netbeans project files
-nbproject
+# MySQL database
+/db/
+mysql-data/
+phpmyadmin/
 
-# zend studio for eclipse project files
-.buildpath
-.project
-.settings
+# Yii2 runtime и кэш
+/backend/runtime/
+/backend/web/assets/
+/frontend/dist/
+# /backend/web/uploads/
 
-# windows thumbnail cache
-Thumbs.db
+# Vue CLI файлы
+/frontend/node_modules/
+/frontend/dist/
 
-# composer vendor dir
-/vendor
-
-# composer itself is not needed
-composer.phar
-
-# Mac DS_Store Files
-.DS_Store
-
-# phpunit itself is not needed
-phpunit.phar
-# local phpunit config
-/phpunit.xml
-
-tests/_output/*
-tests/_support/_generated
-
-#vagrant folder
-/.vagrant
+# IDE
+.idea/
+.vscode/
+*.log

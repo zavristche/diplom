@@ -1,8 +1,0 @@
-{
-    "intelephense.environment.phpVersion": "8.1.0",
-    "intelephense.environment.includePaths": [
-        "Users/Katerok/ddev/typo3-10/public/typo3/",
-        "Users/Katerok/ddev/typo3-10/vendor/typo3"
-    ],
-    "liveServer.settings.multiRootWorkspaceName": "cook"
-}
