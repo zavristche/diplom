@@ -1,23 +1,15 @@
-# Используем официальный образ Node.js
-FROM node:20
+FROM node:20-alpine
 
-# Устанавливаем рабочую директорию
+# set working directory
 WORKDIR /app
 
-# Копируем package.json и package-lock.json для установки зависимостей
-COPY package*.json ./
+# add `/app/node_modules/.bin` to $PATH
+ENV PATH /app/node_modules/.bin:$PATH
 
-# Устанавливаем зависимости
+# install and cache app dependencies
+COPY package.json /app/package.json
 RUN npm install
+RUN npm install @vue/cli@latest -g
 
-# Копируем остальные файлы проекта
-COPY . .
-
-# Открываем порт для dev-сервера
-EXPOSE 8282
-
-# Устанавливаем переменные для корректной работы горячей перезагрузки
-ENV CHOKIDAR_USEPOLLING=true
-
-# Запускаем Vue CLI сервер
+# start app
 CMD ["npm", "run", "serve"]

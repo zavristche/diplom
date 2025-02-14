@@ -37,12 +37,14 @@ services:
       MYSQL_ROOT_PASSWORD: root
       
   vue-app:
-    build: ./frontend
     container_name: vue-app
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     volumes:
-      - ./frontend:/app
+      - './frontend:/app:delegated'
+      - '/app/node_modules'
     ports:
-      - "8282:8282"
+      - '8082:8082'
     environment:
-      - CHOKIDAR_USEPOLLING=true
-    command: ["npm", "run", "serve"]
+      - VUE_CLI_HMR_PORT=8082
