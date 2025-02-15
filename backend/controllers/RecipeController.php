@@ -18,14 +18,14 @@ class RecipeController extends ActiveController
         $behaviors = parent::behaviors();
         $behaviors['authenticator'] = [
             'class' => \yii\filters\auth\HttpBearerAuth::class,
-            'except' => ['index', 'view',],
+            'except' => ['index', 'view', 'search'],
         ];
         $behaviors['access'] = [
             'class' => AccessControl::class,
             'rules' => [
                 [
                     'allow' => true,
-                    'actions' => ['index', 'view'],
+                    'actions' => ['index', 'view', 'search'],
                 ],
                 [
                     'allow' => true,
@@ -54,6 +54,40 @@ class RecipeController extends ActiveController
                 throw new \yii\web\ForbiddenHttpException(sprintf('Вы можете выполнять это действие только с рецептами, которые вы создали.', $action));
         }
     }
+
+    public function actionSearch()
+    {
+        $request = Yii::$app->request;
+        $params = $request->post();
+
+        $query = Recipe::find()->with([
+            'user', 'recipeMarks', 'recipeProducts', 'steps', 'status', 'private', 'recipeReactions', 'collectionRecipes'
+        ]);
+
+        if (!empty($params['title'])) {
+            $query->andWhere(['like', 'title', $params['title']]);
+        }
+        if (!empty($params['category'])) {
+            $query->andWhere(['category_id' => $params['category']]);
+        }
+        if (!empty($params['difficulty'])) {
+            $query->andWhere(['difficulty' => $params['difficulty']]);
+        }
+        if (!empty($params['user_id'])) {
+            $query->andWhere(['user_id' => $params['user_id']]);
+        }
+        if (!empty($params['products'])) {
+            $productIds = explode(',', $params['products']);
+            $query->joinWith('products')->andWhere(['product.id' => $productIds]);
+        }
+
+        return new ActiveDataProvider([
+            'query' => $query,
+            'pagination' => ['pageSize' => 10],
+            'sort' => ['defaultOrder' => ['created_at' => SORT_DESC]],
+        ]);
+    }
+
     
     public function actionIndex()
     {

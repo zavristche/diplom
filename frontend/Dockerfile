@@ -1,15 +1,19 @@
-FROM node:20-alpine
+# FROM node:latest as build-stage
+# WORKDIR /app
+# COPY package*.json ./
+# RUN npm install
+# COPY ./ .
+# RUN npm run build
 
-# set working directory
+# FROM nginx as production-stage
+# RUN mkdir /app
+# COPY --from=build-stage /app/dist /app
+# COPY nginx.conf /etc/nginx/nginx.conf
+FROM node:latest
 WORKDIR /app
-
-# add `/app/node_modules/.bin` to $PATH
-ENV PATH /app/node_modules/.bin:$PATH
-
-# install and cache app dependencies
-COPY package.json /app/package.json
+COPY package*.json ./
 RUN npm install
-RUN npm install @vue/cli@latest -g
+COPY . .  
 
-# start app
-CMD ["npm", "run", "serve"]
+EXPOSE 5173
+CMD ["npm", "run", "dev"]

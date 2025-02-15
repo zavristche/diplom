@@ -11,6 +11,7 @@ use app\models\block\BlockRecipe;
 use app\models\collection\CollectionRecipe;
 use app\models\Comment;
 use app\models\Complexity;
+use app\models\mark\Mark;
 use app\models\PrivateType;
 use app\models\recipe\RecipeCalendar;
 use app\models\recipe\RecipeMark;
@@ -137,7 +138,7 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
         $fields['likes'] = fn() => count($this->getRecipeReactions()->all());
         $fields['saved'] = fn() => count($this->getCollectionRecipes()->all());
 
-        $fields['marks'] = fn() => $this->getRecipeMarks()->asArray()->all();
+        $fields['marks'] = fn() => $this->getMarks()->select([])->asArray()->all();
         $fields['products'] = fn() => $this->getRecipeProducts()->asArray()->all();
         $fields['steps'] = fn() => $this->getSteps()->asArray()->all();
 
@@ -221,6 +222,11 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
     public function getRecipeMarks()
     {
         return $this->hasMany(RecipeMark::class, ['recipe_id' => 'id']);
+    }
+
+    public function getMarks()
+    {
+        return $this->hasMany(Mark::class, ['id' => 'mark_id'])->via('recipeMarks');
     }
 
     /**

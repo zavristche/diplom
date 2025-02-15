@@ -1,0 +1,86 @@
+@use "_variables.scss" as *;
+/* Убираем отступы и рамки для всех элементов */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Убираем стандартные стили для ссылок */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Убираем стандартные стили для списков */
+ul,
+ol {
+  list-style: none;
+}
+
+/* Убираем стандартные стили для форм */
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  border: none;
+  outline: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* Убираем стандартные стили для таблиц */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+
+/* Убираем стили для заголовков */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: normal;
+  margin: 0;
+}
+
+/* Стилизация для абзацев */
+p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Стилизация для изображений */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Поддержка для адаптивных элементов */
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
+
+/* Стили для основного контейнера */
+body {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  max-width: 100%;
+  background-color: $background;
+  color: $dark-text;
+  font-family: "Rubik", sans-serif;
+  font-optical-sizing: 1rem;
+  font-weight: 300;
+  font-style: normal;
+}
+
+
