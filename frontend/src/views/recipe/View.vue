@@ -9,12 +9,13 @@ const myRecipe = ref(null);
 const route = useRoute();
 RecipeService.getById(route.params.id).then((recipe) => {
     console.log('Recipe:', recipe);
-    myRecipe.value = recipe.data.data;
+    myRecipe.value = recipe.data;
 }).catch((error) => {
     console.error('Error fetching recipe:', error);
 });
 </script>
 <template>
+  <title>{{ myRecipe.title }}</title>
   <section class="content-container">
     <Recipe v-if="myRecipe" :recipe="myRecipe" />
   </section>

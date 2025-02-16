@@ -22,9 +22,6 @@ const routes = [
     path: '/recipe/:id',
     name: 'recipe',
     component: View,
-    meta: {
-      title: 'Рецепт'
-    }
   },
 ];
 

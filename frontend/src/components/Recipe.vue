@@ -26,18 +26,18 @@ defineProps({
             <img src="/img/avatar.png" alt="">
             <div class="card__text">
                 <h3>{{ recipe.title }}</h3>
-                <span class="card__author">{{ recipe.user_id }}</span>
+                <span class="card__author">{{ recipe.user.login }}</span>
                 <div class="card__metadata">
-                    <span class="date">4 часа назад</span>
+                    <span class="date">{{ recipe.created_at }}</span>
                     <span class="marker">•</span>
                     <span class="reaction">
                         <BaseIcon viewBox="0 0 12 12" class="icon-light-12-1" name="bookmark"/>
-                        <span class="reaction__count">32</span>
+                        <span class="reaction__count">{{ recipe.saved }}</span>
                     </span>
                     <span class="marker">•</span>
                     <span class="reaction">
                         <BaseIcon viewBox="0 0 13 13" class="icon-light-13-1" name="heart"/>
-                        <span class="reaction__count">14</span>
+                        <span class="reaction__count">{{ recipe.likes }}</span>
                     </span>
                 </div>
             </div>
@@ -119,23 +119,18 @@ defineProps({
     width: 100%;
     height: 280px;
     gap: 20px;
-    // overflow: hidden;
-    // max-width: 645px;
-    // min-height: 480px;
 
     .card__preview{
         display: grid;
         grid-template: 100% / 100%;
         width: 100%;
         height: 100%;
-        // overflow: hidden;
         img{
             box-shadow: $shadow;
             object-fit: cover;
             width: 100%;
             height: 100%;
             border-radius: $border;
-            // display: block; 
         }
     }
     .card__info{
