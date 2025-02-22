@@ -2,6 +2,7 @@
 namespace app\controllers;
 use yii\filters\AccessControl;
 use app\models\recipe\Recipe;
+use app\models\recipe\RecipeSearch;
 use Yii;
 use yii\rest\ActiveController;
 use yii\data\ActiveDataProvider;
@@ -59,33 +60,25 @@ class RecipeController extends ActiveController
     {
         $request = Yii::$app->request;
         $params = $request->post();
+    
+        $searchModel = new RecipeSearch();
+        $dataProvider = $searchModel->search($params);
+    
+        // Получаем модели из dataProvider
+        $models = $dataProvider->getModels();
 
-        $query = Recipe::find()->with([
-            'user', 'recipeMarks', 'recipeProducts', 'steps', 'status', 'private', 'recipeReactions', 'collectionRecipes'
-        ]);
+        $result = array_map(function ($model) {
 
-        if (!empty($params['title'])) {
-            $query->andWhere(['like', 'title', $params['title']]);
-        }
-        if (!empty($params['category'])) {
-            $query->andWhere(['category_id' => $params['category']]);
-        }
-        if (!empty($params['difficulty'])) {
-            $query->andWhere(['difficulty' => $params['difficulty']]);
-        }
-        if (!empty($params['user_id'])) {
-            $query->andWhere(['user_id' => $params['user_id']]);
-        }
-        if (!empty($params['products'])) {
-            $productIds = explode(',', $params['products']);
-            $query->joinWith('products')->andWhere(['product.id' => $productIds]);
-        }
-
-        return new ActiveDataProvider([
-            'query' => $query,
-            'pagination' => ['pageSize' => 10],
-            'sort' => ['defaultOrder' => ['created_at' => SORT_DESC]],
-        ]);
+            $data = $model->toArray([], ['user', 'status', 'complexity', 'private', 'comments', 'likes', 'saved', 'marks', 'products', 'steps', 'collections', 'calendar_recipe']);
+    
+            if (isset($data['user'])) {
+                unset($data['user']['auth_key'], $data['user']['password']);
+            }
+    
+            return $data;
+        }, $models);
+    
+        return $result;
     }
 
     
