@@ -8,22 +8,38 @@ use Yii;
 use yii\rest\ActiveController;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
+use yii\web\UnprocessableEntityHttpException;
 
 class CollectionRecipeController extends ActiveController
 {
     public $modelClass = 'app\models\collection\CollectionRecipe';
+
+    protected function findModel($id)
+    {
+        $model = CollectionRecipe::findOne($id);
+        if ($model === null) {
+            throw new NotFoundHttpException('Рецепт в коллекции не найден.');
+        }
+        return $model;
+    }
 
     public function behaviors()
     {
         $behaviors = parent::behaviors();
         $behaviors['authenticator'] = [
             'class' => \yii\filters\auth\HttpBearerAuth::class,
+            'except' => ['index', 'view'],
         ];
         $behaviors['access'] = [
             'class' => AccessControl::class,
             'rules' => [
                 [
                     'allow' => true,
+                    'actions' => ['index', 'view',],
+                ],
+                [
+                    'allow' => true,
+                    'actions' => ['create', 'update', 'delete',],
                     'roles' => ['@'],
                 ],
             ],
@@ -34,8 +50,18 @@ class CollectionRecipeController extends ActiveController
     public function actions()
     {
         $actions = parent::actions();
-        unset($actions['create']); // Отключаем стандартный create
+        unset($actions['create']);
+        unset($actions['delete']);
         return $actions;
+    }
+
+    public function beforeAction($action)
+    {
+        try {
+            return parent::beforeAction($action);
+        } catch (\yii\web\UnauthorizedHttpException $e) {
+            throw new \yii\web\UnauthorizedHttpException('Это действие доступно только авторизированным пользователям');
+        }
     }
 
     public function actionCreate()
@@ -62,10 +88,28 @@ class CollectionRecipeController extends ActiveController
         $model->recipe_id = $recipe_id;
 
         if($model->save()){
-            return ['success' => true, 'model' => $model, 'message' => 'Рецепт добавлен в коллекцию'];
+            return ['success' => true, 'message' => 'Рецепт добавлен в коллекцию'];
         }
 
-        return ['success' => false, 'errors' => $model->errors];
+        throw new UnprocessableEntityHttpException(json_encode($model->errors, JSON_UNESCAPED_UNICODE));
+    }
+
+    public function actionDelete($id)
+    {
+        $model = $this->findModel($id);
+
+        if (!$model) {
+            throw new NotFoundHttpException('Рецепт не найден в коллекции.');
+        }
+
+        if ($model->delete()) {
+            return [
+                'success' => true,
+                'message' => 'Рецепт успешно удален из коллекции.',
+            ];
+        }
+    
+        throw new \yii\web\ServerErrorHttpException('Ошибка при удалении рецепта из коллекции'); 
     }
 
 }

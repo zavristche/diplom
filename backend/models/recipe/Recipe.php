@@ -164,6 +164,18 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
         return $fields;
     }
 
+    public function afterDelete()
+    {
+        parent::afterDelete();
+
+        RecipeMark::deleteAll(['recipe_id' => $this->id]);
+        RecipeCalendar::deleteAll(['recipe_id' => $this->id]);
+        RecipeProduct::deleteAll(['recipe_id' => $this->id]);
+        Step::deleteAll(['recipe_id' => $this->id]);
+        RecipeReaction::deleteAll(['recipe_id' => $this->id]);
+        CollectionRecipe::deleteAll(['recipe_id' => $this->id]);
+    }
+
     /**
      * Gets query for [[BlockRecipes]].
      *

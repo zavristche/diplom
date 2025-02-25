@@ -1,2 +1,4 @@
 RewriteEngine on
 RewriteRule ^(.*)$ web/$1
+RewriteCond %{REQUEST_URI} ^/api
+RewriteRule ^api/(.*)$ /index.php?r=$1 [L,QSA]

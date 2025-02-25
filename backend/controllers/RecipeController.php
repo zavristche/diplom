@@ -1,18 +1,28 @@
 <?php
 namespace app\controllers;
+
 use yii\filters\AccessControl;
 use app\models\recipe\Recipe;
 use app\models\recipe\RecipeSearch;
 use Yii;
 use yii\rest\ActiveController;
 use yii\data\ActiveDataProvider;
-use yii\web\BadRequestHttpException;
+use yii\web\NotFoundHttpException;
 
 class RecipeController extends ActiveController
 {
     public $modelClass = 'app\models\recipe\Recipe';
 
     public $enableCsrfValidation = false;
+
+    protected function findModel($id)
+    {
+        $model = Recipe::findOne($id);
+        if ($model === null) {
+            throw new NotFoundHttpException('Рецепт не найден.');
+        }
+        return $model;
+    }
      
     public function behaviors()
     {
@@ -38,6 +48,15 @@ class RecipeController extends ActiveController
         return $behaviors;
     }
 
+    public function actions()
+    {
+        $actions = parent::actions();
+
+        unset($actions['delete']);
+
+        return $actions;
+    }
+
     public function beforeAction($action)
     {
         try {
@@ -56,6 +75,85 @@ class RecipeController extends ActiveController
         }
     }
 
+    // public function actionCreate()
+    // {
+    //     $model = new Recipe();
+
+    //     if(Yii::$app->request->isPost){
+    //         if ($model->load(Yii::$app->request->post())){
+
+    //             if ($model->validate()) {
+    //                 $model->save();
+    //             }        
+    //         }
+    //     }
+    //     return [
+    //         'attributes' => $model->attributes,
+    //         'errors' => $model->errors,
+    //     ];
+    // }
+
+    // public function actionCreate()
+    // {
+    //     $model = new Recipe();
+
+    //     if (Yii::$app->request->isPost) {
+    //         $data = Yii::$app->request->post();
+
+    //         if ($model->load($data, '') && $model->validate()) {
+    //             if (!$model->save()) {
+    //                 throw new UnprocessableEntityHttpException(json_encode($model->errors, JSON_UNESCAPED_UNICODE));
+    //             }
+
+    //             // Обрабатываем теги (если переданы)
+    //             if (!empty($data['tags'])) {
+    //                 foreach ($data['tags'] as $tag_id) {
+    //                     $recipeTag = new RecipeTag();
+    //                     $recipeTag->recipe_id = $model->id;
+    //                     $recipeTag->tag_id = $tag_id;
+    //                     if (!$recipeTag->save()) {
+    //                         throw new UnprocessableEntityHttpException(json_encode($recipeTag->errors, JSON_UNESCAPED_UNICODE));
+    //                     }
+    //                 }
+    //             }
+
+    //             // Обрабатываем ингредиенты (если переданы)
+    //             if (!empty($data['ingredients'])) {
+    //                 foreach ($data['ingredients'] as $ingredientData) {
+    //                     $ingredient = new Ingredient();
+    //                     $ingredient->recipe_id = $model->id;
+    //                     $ingredient->name = $ingredientData['name'];
+    //                     $ingredient->amount = $ingredientData['amount'];
+    //                     if (!$ingredient->save()) {
+    //                         throw new UnprocessableEntityHttpException(json_encode($ingredient->errors, JSON_UNESCAPED_UNICODE));
+    //                     }
+    //                 }
+    //             }
+
+    //             // Обрабатываем шаги (если переданы)
+    //             if (!empty($data['steps'])) {
+    //                 foreach ($data['steps'] as $stepData) {
+    //                     $step = new RecipeStep();
+    //                     $step->recipe_id = $model->id;
+    //                     $step->order = $stepData['order'];
+    //                     $step->description = $stepData['description'];
+    //                     if (!$step->save()) {
+    //                         throw new UnprocessableEntityHttpException(json_encode($step->errors, JSON_UNESCAPED_UNICODE));
+    //                     }
+    //                 }
+    //             }
+
+    //             return [
+    //                 'success' => true,
+    //                 'message' => 'Рецепт успешно создан',
+    //                 'recipe' => $model->attributes,
+    //             ];
+    //         }
+    //     }
+
+    //     throw new BadRequestHttpException('Некорректные данные запроса.');
+    // }
+
     public function actionSearch()
     {
         $request = Yii::$app->request;
@@ -63,8 +161,7 @@ class RecipeController extends ActiveController
     
         $searchModel = new RecipeSearch();
         $dataProvider = $searchModel->search($params);
-    
-        // Получаем модели из dataProvider
+
         $models = $dataProvider->getModels();
 
         $result = array_map(function ($model) {
@@ -108,54 +205,17 @@ class RecipeController extends ActiveController
         return $dataProvider; 
     }
 
-    // public function actionDelete(
-    //     $model-
-    //     // $this->findModel($id)->delete();
+    public function actionDelete($id)
+    {
+        $model = $this->findModel($id);
+    
+        if ($model->delete()) {
+            return [
+                'success' => true,
+                'message' => 'Рецепт и все связанные данные успешно удалены.',
+            ];
+        }
 
-    //     return $this->redirect(['index']);
-    // )
-
-    // public function actionCreate()
-    // {
-    //     $request = Yii::$app->request;
-    //     $transaction = Yii::$app->db->beginTransaction();
-
-    //     try {
-    //         // Создаем рецепт
-    //         $recipe = new Recipe();
-    //         $recipe->load($request->post(), '');
-    //         if (!$recipe->save()) {
-    //             throw new BadRequestHttpException('Ошибка при сохранении рецепта');
-    //             return [
-    //                 'attributes' => $model->attributes,
-    //                 'errors' => $model->errors,
-    //             ];
-    //         }
-
-    //         // Сохраняем шаги
-    //         $steps = $request->post('steps', []);
-    //         foreach ($steps as $stepData) {
-    //             $step = new Step();
-    //             $step->recipe_id = $recipe->id;
-    //             $step->description = $stepData['description'];
-    //             if (!$step->save()) {
-    //                 throw new BadRequestHttpException('Ошибка при сохранении шага');
-    //             }
-    //         }
-
-    //         // Привязываем метки
-    //         $tags = $request->post('tags', []);
-    //         $recipe->link('tags', $tags);
-
-    //         // Привязываем продукты
-    //         $products = $request->post('products', []);
-    //         $recipe->link('products', $products);
-
-    //         $transaction->commit();
-    //         return $recipe;
-    //     } catch (\Exception $e) {
-    //         $transaction->rollBack();
-    //         throw new BadRequestHttpException($e->getMessage());
-    //     }
-    // }
+        throw new \yii\web\ServerErrorHttpException('Ошибка при удалении рецепта.'); 
+    } 
 }

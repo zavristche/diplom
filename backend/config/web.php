@@ -27,7 +27,7 @@ $config = [
         'user' => [
             'identityClass' => 'app\models\user\User',
             'enableAutoLogin' => false,
-            'enableSession' => false, // Отключаем сессии для REST API
+            'enableSession' => false,
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -54,10 +54,31 @@ $config = [
             'showScriptName' => false,
             'enableStrictParsing' => true,
             'rules' => [
-                'POST login' => 'user/login',
-                'POST register' => 'user/register',
-                'POST logout' => 'user/logout',
-                'PATCH profile/<id:\d+>' => 'user/update',
+                'POST api/login' => 'user/login',
+                'POST api/register' => 'user/register',
+                'POST api/logout' => 'user/logout',
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'user',
+                    'pluralize' => false,
+                    'prefix' => 'api',
+                    'extraPatterns' => [
+                        'POST search' => 'search',
+                    ],
+                ],
+
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => ['profile' => 'profile/profile'], // Добавляем модуль
+                    'pluralize' => false,
+                    'prefix' => 'api',
+                    'extraPatterns' => [
+                        'PATCH <id:\d+>' => 'update',
+                        'DELETE <id:\d+>' => 'delete',
+                        'GET <id:\d+>' => 'view',
+                    ],
+                ],
+                
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'recipe',
@@ -70,6 +91,8 @@ $config = [
                         'POST recipe' => 'create',
                         'PATCH recipe/<id:\d+>' => 'update',
                         'DELETE recipe/<id:\d+>' => 'delete',
+                        // 'POST <id:\d+>/add-collection' => 'add-collection',
+                        // 'DELETE <id:\d+>/delete-collection' => 'delete-collection',
                     ],
                 ],
 
@@ -77,6 +100,7 @@ $config = [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'collection',
                     'pluralize' => false,
+                    'prefix' => 'api',
                     'extraPatterns' => [
                         'GET collection' => 'index',
                         'GET collection/<id:\d+>' => 'view',
@@ -85,19 +109,23 @@ $config = [
                         'DELETE collection/<id:\d+>' => 'delete',
                     ],
                 ],
+
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'collection-recipe',
                     'pluralize' => false,
+                    'prefix' => 'api',
                     'extraPatterns' => [
                         'POST collection-recipe' => 'create',
                         'DELETE collection-recipe/<id:\d+>' => 'delete',
                     ],
                 ],
+
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'recipe-mark',
                     'pluralize' => false,
+                    'prefix' => 'api',
                     'extraPatterns' => [
                         'POST recipe-mark' => 'create',
                         'DELETE recipe-mark/<id:\d+>' => 'delete',
@@ -110,7 +138,7 @@ $config = [
         },
         'assetManager' => [
             'bundles' => [
-                'yii\bootstrap\BootstrapAsset' => false, // Отключает CSS Bootstrap
+                'yii\bootstrap\BootstrapAsset' => false,
                 'yii\bootstrap\BootstrapPluginAsset' => false, 
             ],
         ],
@@ -119,12 +147,18 @@ $config = [
     'as corsFilter' => [
         'class' => \yii\filters\Cors::class,
         'cors' => [
-            'Origin' => ['http://localhost:5173'], // Адрес фронтенда
+            'Origin' => ['http://localhost:5173'],
             'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
             'Access-Control-Allow-Credentials' => true,
         ],
     ],
     'params' => $params,
+    'modules' => [
+        'profile' => [
+            'class' => 'app\modules\profile\Module',
+            'defaultRoute' => 'profile',
+        ],
+    ],
 ];
 
 if (YII_ENV_DEV) {
