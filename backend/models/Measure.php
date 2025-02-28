@@ -54,4 +54,9 @@ class Measure extends \yii\db\ActiveRecord
     {
         return $this->hasMany(RecipeProduct::class, ['measure_id' => 'id']);
     }
+
+    public static function getOne($title)
+    {
+        return self::find()->where(['title' => $title])->one()->id;
+    }
 }

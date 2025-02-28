@@ -66,4 +66,9 @@ class StatusContent extends \yii\db\ActiveRecord
     {
         return $this->hasMany(Recipe::class, ['status_id' => 'id']);
     }
+
+    public static function getOne($title)
+    {
+        return self::findOne(['title' => $title])->id;
+    }
 }

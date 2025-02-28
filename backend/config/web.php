@@ -91,8 +91,6 @@ $config = [
                         'POST recipe' => 'create',
                         'PATCH recipe/<id:\d+>' => 'update',
                         'DELETE recipe/<id:\d+>' => 'delete',
-                        // 'POST <id:\d+>/add-collection' => 'add-collection',
-                        // 'DELETE <id:\d+>/delete-collection' => 'delete-collection',
                     ],
                 ],
 
@@ -105,6 +103,7 @@ $config = [
                         'GET collection' => 'index',
                         'GET collection/<id:\d+>' => 'view',
                         'POST collection/<id:\d+>' => 'create',
+                        'POST search' => 'search',
                         'PATCH collection/<id:\d+>' => 'update',
                         'DELETE collection/<id:\d+>' => 'delete',
                     ],
@@ -129,6 +128,37 @@ $config = [
                     'extraPatterns' => [
                         'POST recipe-mark' => 'create',
                         'DELETE recipe-mark/<id:\d+>' => 'delete',
+                    ],
+                ],
+
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'recipe-reaction',
+                    'pluralize' => false,
+                    'prefix' => 'api',
+                    'extraPatterns' => [
+                        'POST recipe-reaction' => 'create',
+                        'DELETE recipe-reaction' => 'delete',
+                    ],
+                ],
+
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'mark',
+                    'pluralize' => false,
+                    'prefix' => 'api',
+                    'extraPatterns' => [
+                        'GET' => 'index',
+                    ],
+                ],
+
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'product',
+                    'pluralize' => false,
+                    'prefix' => 'api',
+                    'extraPatterns' => [
+                        'GET' => 'index',
                     ],
                 ],
             ],

@@ -8,7 +8,9 @@ use app\models\collection\CollectionProduct;
 use app\models\collection\CollectionReaction;
 use app\models\collection\CollectionRecipe;
 use app\models\collection\CollectionSubscribe;
+use app\models\mark\Mark;
 use app\models\PrivateType;
+use app\models\product\Product;
 use app\models\StatusContent;
 use app\models\user\User;
 use yii\helpers\Url;
@@ -71,32 +73,33 @@ class Collection extends \yii\db\ActiveRecord implements Linkable
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'user_id' => 'User ID',
-            'private_id' => 'Private ID',
-            'status_id' => 'Status ID',
-            'title' => 'Title',
-            'photo' => 'Photo',
-            'description' => 'Description',
-            'saved' => 'Saved',
-            'likes' => 'Likes',
+            'id' => 'Номер коллекции',
+            'user_id' => 'Автор',
+            'private_id' => 'Кому доступна коллекция?',
+            'status_id' => 'Статус',
+            'title' => 'Заголовок',
+            'photo' => 'Фото',
+            'description' => 'Описание',
+            'saved' => 'Сохранения',
+            'likes' => 'Лайки',
         ];
     }
 
     public function getLinks()
     {
+        $url = Yii::$app->params['frontendUrl'];
         return [
             Link::REL_SELF => [
                 'method' => 'GET',
-                'href' => Url::to([$this->id], true),
+                'href' => $url . '/collection/' . $this->id,
             ],
             'edit' => [
                 'method' => 'PATCH',
-                'href' => Url::to([$this->id], true),
+                'href' => $url . '/collection/' . $this->id,
             ],
             'delete' => [
                 'method' => 'DELETE',
-                'href' => Url::to([$this->id], true),
+                'href' => $url . '/collection/' . $this->id,
             ],
         ];
     }
@@ -119,10 +122,20 @@ class Collection extends \yii\db\ActiveRecord implements Linkable
         $fields['likes'] = fn() => count($this->getCollectionReactions()->all());
         $fields['subs'] = fn() => count($this->getCollectionSubscribes()->all());
 
-        $fields['marks'] = fn() => $this->getCollectionMarks()->asArray()->all();
-        $fields['products'] = fn() => $this->getCollectionProducts()->asArray()->all();
+        $fields['marks'] = fn() => $this->getMarks()->select([])->asArray()->all();
+        $fields['products'] = fn() => $this->getProducts()->select([])->asArray()->all();
 
         return $fields;
+    }
+
+    public function afterDelete()
+    {
+        parent::afterDelete();
+
+        CollectionMark::deleteAll(['collection_id' => $this->id]);
+        CollectionProduct::deleteAll(['collection_id' => $this->id]);
+        CollectionReaction::deleteAll(['collection_id' => $this->id]);
+        CollectionRecipe::deleteAll(['collection_id' => $this->id]);
     }
 
     /**
@@ -135,6 +148,11 @@ class Collection extends \yii\db\ActiveRecord implements Linkable
         return $this->hasMany(CollectionMark::class, ['collection_id' => 'id']);
     }
 
+    public function getMarks()
+    {
+        return $this->hasMany(Mark::class, ['id' => 'mark_id'])->via('collectionMarks');
+    }
+
     /**
      * Gets query for [[CollectionProducts]].
      *
@@ -143,6 +161,11 @@ class Collection extends \yii\db\ActiveRecord implements Linkable
     public function getCollectionProducts()
     {
         return $this->hasMany(CollectionProduct::class, ['collection_id' => 'id']);
+    }
+
+    public function getProducts()
+    {
+        return $this->hasMany(Product::class, ['id' => 'product_id'])->via('collectionProducts');
     }
 
     /**

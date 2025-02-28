@@ -4,7 +4,7 @@ namespace app\controllers;
 use app\models\forms\LoginForm;
 use app\models\forms\RegisterForm;
 use app\models\user\User;
-use app\modules\profile\models\UserSearch;
+use app\models\user\UserSearch;
 use Yii;
 use yii\rest\ActiveController;
 use yii\data\ActiveDataProvider;
@@ -102,25 +102,21 @@ class UserController extends ActiveController
 
     public function actionSearch()
     {
-        $request = Yii::$app->request;
-        $params = $request->post();
-    
+        $params = Yii::$app->request->post();  // Используем POST
+        
         $searchModel = new UserSearch();
         $dataProvider = $searchModel->search($params);
-
         $models = $dataProvider->getModels();
-
+       
         $result = array_map(function ($model) {
 
-            $data = $model->toArray([], ['title', 'name']);
-    
+            $data = $model->toArray([], ['name', 'surname', 'login']);
+
             if (isset($data)) {
                 unset($data['auth_key'], $data['password']);
             }
-    
             return $data;
         }, $models);
-    
         return $result;
     }
     

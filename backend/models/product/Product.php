@@ -5,6 +5,7 @@ namespace app\models\product;
 use Yii;
 use app\models\checklist\ChecklistProduct;
 use app\models\collection\CollectionProduct;
+use app\models\Measure;
 use app\models\preference\PreferenceProduct;
 use app\models\product\ProductAllergen;
 use app\models\recipe\RecipeProduct;

@@ -35,11 +35,14 @@ class Step extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['recipe_id', 'number', 'title', 'photo', 'description'], 'required'],
+            [['number', 'title', 'description'], 'required'],
             [['recipe_id', 'number'], 'integer'],
+            [['recipe_id'], 'safe'],
             [['description'], 'string'],
             [['title', 'photo'], 'string', 'max' => 255],
             [['recipe_id'], 'exist', 'skipOnError' => true, 'targetClass' => Recipe::class, 'targetAttribute' => ['recipe_id' => 'id']],
+
+            ['photo', 'safe'],
         ];
     }
 
@@ -50,11 +53,11 @@ class Step extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'recipe_id' => 'Recipe ID',
-            'number' => 'Number',
-            'title' => 'Title',
-            'photo' => 'Photo',
-            'description' => 'Description',
+            'recipe_id' => 'Рецепт',
+            'number' => 'Порядковый номер',
+            'title' => 'Заголовок',
+            'photo' => 'Фото',
+            'description' => 'Описание',
         ];
     }
 

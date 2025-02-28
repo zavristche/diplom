@@ -3,9 +3,9 @@
 namespace app\models\recipe;
 
 use Yii;
-use app\models\Recipe;
+use app\models\recipe\Recipe;
 use app\models\ReactionType;
-use app\models\User;
+use app\models\user\User;
 
 /**
  * This is the model class for table "recipe_reaction".
@@ -35,7 +35,7 @@ class RecipeReaction extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['user_id', 'recipe_id', 'type_id'], 'required'],
+            [['recipe_id'], 'required'],
             [['user_id', 'recipe_id', 'type_id'], 'integer'],
             [['recipe_id'], 'exist', 'skipOnError' => true, 'targetClass' => Recipe::class, 'targetAttribute' => ['recipe_id' => 'id']],
             [['type_id'], 'exist', 'skipOnError' => true, 'targetClass' => ReactionType::class, 'targetAttribute' => ['type_id' => 'id']],
@@ -84,5 +84,10 @@ class RecipeReaction extends \yii\db\ActiveRecord
     public function getUser()
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
+    }
+
+    public static function getReaction($recipe_id)
+    {
+        return self::findOne(['user_id' => Yii::$app->user->id, 'recipe_id' => $recipe_id]);
     }
 }

@@ -3,10 +3,10 @@
 namespace app\models\recipe;
 
 use Yii;
-use app\models\ChecklistProduct;
+use app\models\checklist\ChecklistProduct;
 use app\models\Measure;
-use app\models\Product;
-use app\models\Recipe;
+use app\models\product\Product;
+use app\models\recipe\Recipe;
 
 /**
  * This is the model class for table "recipe_product".
@@ -24,6 +24,7 @@ use app\models\Recipe;
  */
 class RecipeProduct extends \yii\db\ActiveRecord
 {
+    const SCENARIO_NO_TASTE = 'no_taste';
     /**
      * {@inheritdoc}
      */
@@ -38,11 +39,13 @@ class RecipeProduct extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['recipe_id', 'product_id', 'measure_id'], 'required'],
+            [['product_id', 'measure_id'], 'required'],
+            [['recipe_id'], 'safe'],
             [['recipe_id', 'product_id', 'measure_id', 'count'], 'integer'],
             [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => Product::class, 'targetAttribute' => ['product_id' => 'id']],
             [['recipe_id'], 'exist', 'skipOnError' => true, 'targetClass' => Recipe::class, 'targetAttribute' => ['recipe_id' => 'id']],
             [['measure_id'], 'exist', 'skipOnError' => true, 'targetClass' => Measure::class, 'targetAttribute' => ['measure_id' => 'id']],
+            ['count', 'required', 'on' => self::SCENARIO_NO_TASTE],
         ];
     }
 
@@ -53,10 +56,10 @@ class RecipeProduct extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'recipe_id' => 'Recipe ID',
-            'product_id' => 'Product ID',
-            'measure_id' => 'Measure ID',
-            'count' => 'Count',
+            'recipe_id' => 'Рецепт',
+            'product_id' => 'Продукт',
+            'measure_id' => 'Мера счисления',
+            'count' => 'Количество',
         ];
     }
 
@@ -98,5 +101,11 @@ class RecipeProduct extends \yii\db\ActiveRecord
     public function getRecipe()
     {
         return $this->hasOne(Recipe::class, ['id' => 'recipe_id']);
+    }
+
+    
+    public function getIsToTaste()
+    {
+        return $this->measure_id == Measure::getOne('по вкусу');
     }
 }

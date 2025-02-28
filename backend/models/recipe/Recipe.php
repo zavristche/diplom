@@ -5,7 +5,6 @@ namespace app\models\recipe;
 use Yii;
 use yii\web\Link;
 use yii\web\Linkable;
-use yii\helpers\Url;
 
 use app\models\block\BlockRecipe;
 use app\models\collection\CollectionRecipe;
@@ -13,6 +12,7 @@ use app\models\Comment;
 use app\models\Complexity;
 use app\models\mark\Mark;
 use app\models\PrivateType;
+use app\models\product\Product;
 use app\models\recipe\RecipeCalendar;
 use app\models\recipe\RecipeMark;
 use app\models\recipe\RecipeProduct;
@@ -66,15 +66,18 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
     public function rules()
     {
         return [
-            [['user_id', 'status_id', 'private_id', 'title', 'photo', 'description', 'time'], 'required'],
+            [['user_id', 'status_id', 'private_id', 'title', 'description', 'time', 'complexity_id'], 'required'],
             [['user_id', 'status_id', 'private_id', 'saved', 'likes'], 'integer'],
             [['created_at'], 'safe'],
             [['description'], 'string'],
             [['title', 'photo', 'time'], 'string', 'max' => 255],
+
             [['status_id'], 'exist', 'skipOnError' => true, 'targetClass' => StatusContent::class, 'targetAttribute' => ['status_id' => 'id']],
             [['private_id'], 'exist', 'skipOnError' => true, 'targetClass' => PrivateType::class, 'targetAttribute' => ['private_id' => 'id']],
             [['complexity_id'], 'exist', 'skipOnError' => true, 'targetClass' => Complexity::class, 'targetAttribute' => ['complexity_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
+
+            ['photo', 'safe'],
         ];
     }
 
@@ -101,18 +104,19 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
 
     public function getLinks()
     {
+        $url = Yii::$app->params['frontendUrl'];
         return [
             Link::REL_SELF => [
                 'method' => 'GET',
-                'href' => Url::to([$this->id], true),
+                'href' => $url . '/recipe/' . $this->id,
             ],
             'edit' => [
                 'method' => 'PATCH',
-                'href' => Url::to([$this->id], true),
+                'href' => $url . '/recipe/' . $this->id,
             ],
             'delete' => [
                 'method' => 'DELETE',
-                'href' => Url::to([$this->id], true),
+                'href' => $url . '/recipe/' . $this->id,
             ],
         ];
     }
@@ -139,7 +143,7 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
         $fields['saved'] = fn() => count($this->getCollectionRecipes()->all());
 
         $fields['marks'] = fn() => $this->getMarks()->select([])->asArray()->all();
-        $fields['products'] = fn() => $this->getRecipeProducts()->asArray()->all();
+        $fields['products'] = fn() => $this->getProducts()->select([])->asArray()->all();
         $fields['steps'] = fn() => $this->getSteps()->asArray()->all();
 
         $fields['collections'] = function () {
@@ -168,12 +172,48 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
     {
         parent::afterDelete();
 
+        $this->deleteImage($this->photo);
+
+        $steps = Step::findAll(['recipe_id' => $this->id]);
+        foreach ($steps as $step) {
+            if ($step->photo) {
+                $this->deleteImage($step->photo);
+            }
+        }
+
         RecipeMark::deleteAll(['recipe_id' => $this->id]);
         RecipeCalendar::deleteAll(['recipe_id' => $this->id]);
         RecipeProduct::deleteAll(['recipe_id' => $this->id]);
         Step::deleteAll(['recipe_id' => $this->id]);
         RecipeReaction::deleteAll(['recipe_id' => $this->id]);
         CollectionRecipe::deleteAll(['recipe_id' => $this->id]);
+    }
+
+    private function deleteImage($fileUrl)
+    {
+        // Логируем URL для диагностики
+        Yii::info('Attempting to delete file: ' . $fileUrl, __METHOD__);
+    
+        // Извлекаем путь к файлу, удаляя доменную часть
+        $filePath = parse_url($fileUrl, PHP_URL_PATH);
+        $fullPath = Yii::getAlias('@webroot') . $filePath;
+    
+        // Проверяем, существует ли файл
+        if (file_exists($fullPath)) {
+            // Логируем успешное удаление
+            Yii::info('Deleting file: ' . $fullPath, __METHOD__);
+    
+            // Удаляем файл
+            unlink($fullPath);
+        } else {
+            // Логируем, если файл не найден
+            Yii::error('File not found: ' . $fullPath, __METHOD__);
+        }
+    }
+
+    public static function getIsAuthor($recipe_id)
+    {
+        return self::findOne(['id' => $recipe_id])->user_id == Yii::$app->user->id;
     }
 
     /**
@@ -249,6 +289,11 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
     public function getRecipeProducts()
     {
         return $this->hasMany(RecipeProduct::class, ['recipe_id' => 'id']);
+    }
+
+    public function getProducts()
+    {
+        return $this->hasMany(Product::class, ['id' => 'product_id'])->via('recipeProducts');
     }
 
     /**

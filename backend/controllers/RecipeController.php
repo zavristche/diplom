@@ -1,9 +1,14 @@
 <?php
 namespace app\controllers;
 
+use app\models\Measure;
 use yii\filters\AccessControl;
 use app\models\recipe\Recipe;
+use app\models\recipe\RecipeMark;
+use app\models\recipe\RecipeProduct;
 use app\models\recipe\RecipeSearch;
+use app\models\StatusContent;
+use app\models\Step;
 use Yii;
 use yii\rest\ActiveController;
 use yii\data\ActiveDataProvider;
@@ -48,15 +53,6 @@ class RecipeController extends ActiveController
         return $behaviors;
     }
 
-    public function actions()
-    {
-        $actions = parent::actions();
-
-        unset($actions['delete']);
-
-        return $actions;
-    }
-
     public function beforeAction($action)
     {
         try {
@@ -75,84 +71,16 @@ class RecipeController extends ActiveController
         }
     }
 
-    // public function actionCreate()
-    // {
-    //     $model = new Recipe();
+    public function actions()
+    {
+        $actions = parent::actions();
 
-    //     if(Yii::$app->request->isPost){
-    //         if ($model->load(Yii::$app->request->post())){
+        unset($actions['create']);
+        unset($actions['update']);
+        unset($actions['delete']);
 
-    //             if ($model->validate()) {
-    //                 $model->save();
-    //             }        
-    //         }
-    //     }
-    //     return [
-    //         'attributes' => $model->attributes,
-    //         'errors' => $model->errors,
-    //     ];
-    // }
-
-    // public function actionCreate()
-    // {
-    //     $model = new Recipe();
-
-    //     if (Yii::$app->request->isPost) {
-    //         $data = Yii::$app->request->post();
-
-    //         if ($model->load($data, '') && $model->validate()) {
-    //             if (!$model->save()) {
-    //                 throw new UnprocessableEntityHttpException(json_encode($model->errors, JSON_UNESCAPED_UNICODE));
-    //             }
-
-    //             // Обрабатываем теги (если переданы)
-    //             if (!empty($data['tags'])) {
-    //                 foreach ($data['tags'] as $tag_id) {
-    //                     $recipeTag = new RecipeTag();
-    //                     $recipeTag->recipe_id = $model->id;
-    //                     $recipeTag->tag_id = $tag_id;
-    //                     if (!$recipeTag->save()) {
-    //                         throw new UnprocessableEntityHttpException(json_encode($recipeTag->errors, JSON_UNESCAPED_UNICODE));
-    //                     }
-    //                 }
-    //             }
-
-    //             // Обрабатываем ингредиенты (если переданы)
-    //             if (!empty($data['ingredients'])) {
-    //                 foreach ($data['ingredients'] as $ingredientData) {
-    //                     $ingredient = new Ingredient();
-    //                     $ingredient->recipe_id = $model->id;
-    //                     $ingredient->name = $ingredientData['name'];
-    //                     $ingredient->amount = $ingredientData['amount'];
-    //                     if (!$ingredient->save()) {
-    //                         throw new UnprocessableEntityHttpException(json_encode($ingredient->errors, JSON_UNESCAPED_UNICODE));
-    //                     }
-    //                 }
-    //             }
-
-    //             // Обрабатываем шаги (если переданы)
-    //             if (!empty($data['steps'])) {
-    //                 foreach ($data['steps'] as $stepData) {
-    //                     $step = new RecipeStep();
-    //                     $step->recipe_id = $model->id;
-    //                     $step->order = $stepData['order'];
-    //                     $step->description = $stepData['description'];
-    //                     if (!$step->save()) {
-    //                         throw new UnprocessableEntityHttpException(json_encode($step->errors, JSON_UNESCAPED_UNICODE));
-    //                     }
-    //                 }
-    //             }
-
-    //             return [
-    //                 'success' => true,
-    //                 'message' => 'Рецепт успешно создан',
-    //                 'recipe' => $model->attributes,
-    //             ];
-    //         }
-    //     }
-
-    //     throw new BadRequestHttpException('Некорректные данные запроса.');
-    // }
+        return $actions;
+    }
 
     public function actionSearch()
     {
@@ -166,7 +94,7 @@ class RecipeController extends ActiveController
 
         $result = array_map(function ($model) {
 
-            $data = $model->toArray([], ['user', 'status', 'complexity', 'private', 'comments', 'likes', 'saved', 'marks', 'products', 'steps', 'collections', 'calendar_recipe']);
+            $data = $model->toArray([], ['user', 'status', 'complexity', 'private', 'comments', 'marks', 'products', 'collections', 'calendar_recipe']);
     
             if (isset($data['user'])) {
                 unset($data['user']['auth_key'], $data['user']['password']);
@@ -204,6 +132,359 @@ class RecipeController extends ActiveController
     
         return $dataProvider; 
     }
+
+    private function uploadImage($file)
+    {
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            return ['success' => false, 'message' => 'Ошибка при загрузке файла.'];
+        }
+
+        $fileName = Yii::$app->user->id . '_' . time() . '_' . Yii::$app->security->generateRandomString() . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filePath = Yii::getAlias('@webroot/uploads/') . $fileName;
+
+        if (!is_dir(Yii::getAlias('@webroot/uploads/'))) {
+            mkdir(Yii::getAlias('@webroot/uploads/'), 0777, true);
+        }
+
+        if (move_uploaded_file($file['tmp_name'], $filePath)) {
+            return [
+                'success' => true,
+                'url' => Yii::$app->request->hostInfo . '/uploads/' . $fileName
+            ];
+        }
+
+        return ['success' => false, 'message' => 'Ошибка при сохранении файла.'];
+    }
+
+    public function actionCreate()
+    {
+        $data = Yii::$app->request->post();
+        $transaction = Yii::$app->db->beginTransaction();
+        $errors = [];
+
+        try {
+
+            //Рецепт
+            $recipe = new Recipe([
+                'user_id' => Yii::$app->user->id,
+                'status_id' => StatusContent::getOne('Новый'),
+            ]);
+
+            if (!$recipe->load($data, '') || !$recipe->validate()) {
+                $errors = array_merge($errors, $recipe->errors);
+            }
+
+            //проверки связанных таблиц
+            if (!($data['steps'] ?? [])) {
+                $errors['steps'][] = 'Рецепт должен содержать хотя бы один шаг.';
+            }
+
+            if (!($data['products'] ?? [])) {
+                $errors['products'][] = 'Рецепт должен содержать хотя бы один продукт.';
+            }
+
+            //шаги
+            foreach ($data['steps'] ?? [] as $i => $stepData) {
+                $step = new Step([
+                    'number' => $i + 1,
+                    'title' => $stepData['title'] ?? "Шаг " . ($i + 1),
+                    'photo' => $stepData['photo'] ?? null,
+                    'description' => $stepData['description'] ?? null,
+                ]);
+                if (!$step->validate()) {
+                    $errors["step_{$i}"] = $step->errors;
+                }
+            }
+
+            //продукты
+            foreach ($data['products'] ?? [] as $i => $productData) {
+                $recipeProduct = new RecipeProduct([
+                    'product_id' => $productData['product_id'] ?? null,
+                    'measure_id' => $productData['measure_id'] ?? null,
+                    'count' => $productData['count'] ?? null,
+                ]);
+
+                if ($recipeProduct->getIsToTaste()) {
+                    $recipeProduct->count = null;
+                } else {
+                    $recipeProduct->scenario = RecipeProduct::SCENARIO_NO_TASTE;
+                }
+
+                if (!$recipeProduct->validate()) {
+                    $errors["products_{$i}"] = $recipeProduct->errors;
+                }
+            }
+
+            if (empty($_FILES['recipe_photo'])) {
+                $errors['recipe_photo'][] = 'Фото рецепта обязательно.';
+            }
+
+            foreach ($data['steps'] ?? [] as $i => $stepData) {
+                if (empty($_FILES["step_photos"]["name"][$i])) {
+                    $errors["step_photos_{$i}"][] = 'Фото для шага обязательно.';
+                }
+            }
+
+            //валидация
+            if ($errors) {
+                Yii::$app->response->statusCode = 422;
+                return ['success' => false, 'message' => 'Ошибка валидации', 'errors' => $errors];
+            }
+
+            //фото рецепта
+            $upload = $this->uploadImage($_FILES['recipe_photo']);
+            if (!$upload['success']) {
+                return ['success' => false, 'message' => 'Ошибка при загрузке изображения рецепта'];
+            }
+            $recipe->photo = $upload['url'];
+
+            $recipe->save();
+
+            //фото шагов рецепта
+            foreach ($data['steps'] ?? [] as $i => $stepData) {
+                $step = new Step([
+                    'recipe_id' => $recipe->id,
+                    'number' => $i + 1,
+                    'title' => $stepData['title'] ?? "Шаг " . ($i + 1),
+                    'description' => $stepData['description'] ?? null,
+                ]);
+
+                $file = [
+                    'name' => $_FILES["step_photos"]["name"][$i],
+                    'tmp_name' => $_FILES["step_photos"]["tmp_name"][$i],
+                    'type' => $_FILES["step_photos"]["type"][$i],
+                    'error' => $_FILES["step_photos"]["error"][$i],
+                    'size' => $_FILES["step_photos"]["size"][$i],
+                ];
+
+                $upload = $this->uploadImage($file);
+                if ($upload['success']) {
+                    $step->photo = $upload['url'];
+                }
+
+                $step->save();
+            }
+
+            foreach ($data['products'] ?? [] as $productData) {
+                (new RecipeProduct([
+                    'recipe_id' => $recipe->id,
+                    'product_id' => $productData['product_id'],
+                    'measure_id' => $productData['measure_id'],
+                    'count' => $productData['count'] ?? null,
+                ]))->save();
+            }
+
+            foreach ($data['marks'] ?? [] as $markId) {
+                (new RecipeMark([
+                    'recipe_id' => $recipe->id,
+                    'mark_id' => $markId,
+                ]))->save();
+            }
+
+            $transaction->commit();
+
+            return ['success' => true, 'message' => 'Рецепт успешно создан', 'recipe' => $recipe->toArray()];
+            
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::$app->response->statusCode = 500;
+            return ['success' => false, 'message' => 'Ошибка при создании рецепта', 'error' => $e->getMessage()];
+        }
+    }
+
+
+
+    // public function actionCreate()
+    // {
+    //     $data = Yii::$app->request->post();
+    //     $transaction = Yii::$app->db->beginTransaction();
+    //     $errors = [];
+
+    //     try {
+    //         $recipe = new Recipe([
+    //             'user_id' => Yii::$app->user->id,
+    //             'status_id' => StatusContent::getOne('Новый'),
+    //         ]);
+
+    //         if (!$recipe->load($data, '') || !$recipe->validate()) {
+    //             $errors = array_merge($errors, $recipe->errors);
+    //         }
+
+    //         if (!($data['steps'] ?? [])) {
+    //             $errors['steps'][] = 'Рецепт должен содержать хотя бы один шаг.';
+    //         }
+
+    //         if (!($data['products'] ?? [])) {
+    //             $errors['products'][] = 'Рецепт должен содержать хотя бы один продукт.';
+    //         }
+
+    //         foreach ($data['steps'] ?? [] as $i => $stepData) {
+    //             $step = new Step([
+    //                 'number' => $i + 1,
+    //                 'title' => $stepData['title'] ?? "Шаг " . ($i + 1),
+    //                 'photo' => $stepData['photo'] ?? null,
+    //                 'description' => $stepData['description'] ?? null,
+    //             ]);
+    //             if (!$step->validate()) {
+    //                 $errors["steps_{$i}"] = $step->errors;
+    //             }
+    //         }
+
+    //         foreach ($data['products'] ?? [] as $i => $productData) {
+    //             $recipeProduct = new RecipeProduct([
+    //                 'product_id' => $productData['product_id'] ?? null,
+    //                 'measure_id' => $productData['measure_id'] ?? null,
+    //                 'count' => $productData['count'] ?? null,
+    //             ]);
+
+    //             if ($recipeProduct->getIsToTaste()) {
+    //                 $recipeProduct->count = null;
+    //             } else {
+    //                 $recipeProduct->scenario = RecipeProduct::SCENARIO_NO_TASTE;
+    //             }
+
+    //             if (!$recipeProduct->validate()) {
+    //                 $errors["products_{$i}"] = $recipeProduct->errors;
+    //             }
+    //         }
+
+    //         if ($errors) {
+    //             Yii::$app->response->statusCode = 422;
+    //             return ['success' => false, 'message' => 'Ошибка валидации', 'errors' => $errors];
+    //         }
+
+    //         $recipe->save();
+
+    //         foreach ($data['steps'] ?? [] as $i => $stepData) {
+    //             (new Step([
+    //                 'recipe_id' => $recipe->id,
+    //                 'number' => $i + 1,
+    //                 'title' => $stepData['title'] ?? "Шаг " . ($i + 1),
+    //                 'photo' => $stepData['photo'] ?? null,
+    //                 'description' => $stepData['description'] ?? null,
+    //             ]))->save();
+    //         }
+
+    //         foreach ($data['products'] ?? [] as $productData) {
+    //             (new RecipeProduct([
+    //                 'recipe_id' => $recipe->id,
+    //                 'product_id' => $productData['product_id'],
+    //                 'measure_id' => $productData['measure_id'],
+    //                 'count' => $productData['count'] ?? null,
+    //             ]))->save();
+    //         }
+
+    //         foreach ($data['marks'] ?? [] as $markId) {
+    //             (new RecipeMark([
+    //                 'recipe_id' => $recipe->id,
+    //                 'mark_id' => $markId,
+    //             ]))->save();
+    //         }
+
+    //         $transaction->commit();
+    //         return ['success' => true, 'message' => 'Рецепт успешно создан', 'recipe' => $recipe->toArray()];
+    //     } catch (\Exception $e) {
+    //         $transaction->rollBack();
+    //         Yii::$app->response->statusCode = 500;
+    //         return ['success' => false, 'message' => 'Ошибка при создании рецепта', 'error' => $e->getMessage()];
+    //     }
+    // }
+
+    public function actionUpdate($id)
+    {
+        $data = Yii::$app->request->post();
+        $transaction = Yii::$app->db->beginTransaction();
+        $errors = [];
+
+        try {
+            $recipe = Recipe::findOne($id);
+            if (!$recipe) {
+                Yii::$app->response->statusCode = 404;
+                return ['success' => false, 'message' => 'Рецепт не найден'];
+            }
+
+            if ($recipe->user_id !== Yii::$app->user->id) {
+                Yii::$app->response->statusCode = 403;
+                return ['success' => false, 'message' => 'Доступ запрещен'];
+            }
+
+            if (!$recipe->load($data, '') || !$recipe->validate()) {
+                $errors = array_merge($errors, $recipe->errors);
+            }
+
+            if (empty($data['steps']) || !is_array($data['steps'])) {
+                $errors['steps'][] = 'Рецепт должен содержать хотя бы один шаг.';
+            }
+
+            if (empty($data['products']) || !is_array($data['products'])) {
+                $errors['products'][] = 'Рецепт должен содержать хотя бы один продукт.';
+            }
+
+            if (!empty($errors)) {
+                Yii::$app->response->statusCode = 422;
+                return ['success' => false, 'message' => 'Ошибка валидации', 'errors' => $errors];
+            }
+
+            if (!$recipe->save()) {
+                throw new \yii\web\ServerErrorHttpException('Не удалось сохранить рецепт.');
+            }
+
+            // Удаляем старые шаги, продукты и метки
+            Step::deleteAll(['recipe_id' => $recipe->id]);
+            RecipeProduct::deleteAll(['recipe_id' => $recipe->id]);
+            RecipeMark::deleteAll(['recipe_id' => $recipe->id]);
+
+            foreach ($data['steps'] as $i => $stepData) {
+                $step = new Step([
+                    'recipe_id' => $recipe->id,
+                    'number' => $i + 1,
+                    'title' => $stepData['title'] ?? "Шаг " . ($i + 1),
+                    'photo' => $stepData['photo'] ?? null,
+                    'description' => $stepData['description'] ?? null,
+                ]);
+                if (!$step->save()) {
+                    throw new \yii\web\ServerErrorHttpException('Не удалось сохранить шаг.');
+                }
+            }
+
+            foreach ($data['products'] as $productData) {
+                $recipeProduct = new RecipeProduct([
+                    'recipe_id' => $recipe->id,
+                    'product_id' => $productData['product_id'],
+                    'measure_id' => $productData['measure_id'],
+                    'count' => $productData['count'] ?? null,
+                ]);
+                if (!$recipeProduct->save()) {
+                    throw new \yii\web\ServerErrorHttpException('Не удалось сохранить продукт.');
+                }
+            }
+
+            if (!empty($data['marks'])) {
+                foreach ($data['marks'] as $markId) {
+                    $recipeMark = new RecipeMark([
+                        'recipe_id' => $recipe->id,
+                        'mark_id' => $markId,
+                    ]);
+                    if (!$recipeMark->save()) {
+                        throw new \yii\web\ServerErrorHttpException('Не удалось сохранить метку.');
+                    }
+                }
+            }
+
+            $transaction->commit();
+
+            return [
+                'success' => true,
+                'message' => 'Рецепт успешно обновлен',
+                'recipe' => $recipe->toArray(),
+            ];
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::$app->response->statusCode = 500;
+            return ['success' => false, 'message' => 'Ошибка при обновлении рецепта', 'error' => $e->getMessage()];
+        }
+    }
+
 
     public function actionDelete($id)
     {

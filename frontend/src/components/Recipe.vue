@@ -19,7 +19,7 @@ defineProps({
 <template>
   <section class="card recipe">
     <div class="card__preview">
-        <img :src="`/img/${recipe.photo}`" alt="">
+        <img :src="`${recipe.photo}`" alt="">
     </div>
     <div class="card__info">
         <div class="card__title">
