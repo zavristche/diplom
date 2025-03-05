@@ -20,6 +20,9 @@ use app\models\user\UserBlacklist;
 use app\models\user\UserSubscribe;
 use app\models\user\UserAllergen;
 use app\models\block\BlockUser;
+use app\models\mark\Mark;
+use app\models\product\Product;
+use yii\web\Link;
 
 /**
  * This is the model class for table "user".
@@ -103,6 +106,46 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
             'photo_header' => 'Photo Header',
             'auth_key' => 'Auth Key',
         ];
+    }
+
+    public function getLinks()
+    {
+        $url = Yii::$app->params['frontendUrl'];
+        return [
+            Link::REL_SELF => [
+                'method' => 'GET',
+                'href' => $url . '/profile/' . $this->id,
+            ],
+            'edit' => [
+                'method' => 'PATCH',
+                'href' => $url . '/profile/' . $this->id,
+            ],
+            'delete' => [
+                'method' => 'DELETE',
+                'href' => $url . '/profile/' . $this->id,
+            ],
+        ];
+    }
+
+    public function fields()
+    {
+        $fields = parent::fields();
+
+        unset($fields['auth_key']);
+        unset($fields['password']);
+
+        $fields['status'] = fn() => $this->status;
+        $fields['private'] = fn() => $this->private;
+
+        // $fields['preferece_marks'] = fn() => $this->getPreferenceMarks()->select([])->asArray()->all();
+        // $fields['preference_products'] = fn() => $this->getPreferenceProducts()->select([])->asArray()->all();
+
+        $fields['recipes'] = fn() => $this->getRecipes()->asArray()->all();
+        $fields['collections'] = fn() => $this->getCollections()->asArray()->all();
+
+        $fields['_links'] = fn() => $this->getLinks();
+
+        return $fields;
     }
     
 
@@ -230,6 +273,11 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         return $this->hasMany(PreferenceMark::class, ['user_id' => 'id']);
     }
 
+    public function getMarks()
+    {
+        return $this->hasMany(Mark::class, ['id' => 'mark_id'])->via('recipeMarks');
+    }
+
     /**
      * Gets query for [[PreferenceProducts]].
      *
@@ -238,6 +286,11 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     public function getPreferenceProducts()
     {
         return $this->hasMany(PreferenceProduct::class, ['user_id' => 'id']);
+    }
+
+    public function getProducts()
+    {
+        return $this->hasMany(Product::class, ['id' => 'product_id'])->via('recipeProducts');
     }
 
     /**

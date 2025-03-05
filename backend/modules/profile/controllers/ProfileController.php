@@ -3,6 +3,8 @@
 namespace app\modules\profile\controllers;
 
 use app\models\user\User;
+use app\modules\profile\models\UpdateForm;
+use Yii;
 use yii\filters\AccessControl;
 use yii\rest\ActiveController;
 use yii\web\NotFoundHttpException;
@@ -31,11 +33,11 @@ class ProfileController extends ActiveController
             'rules' => [
                 [
                     'allow' => true,
-                    'actions' => ['index', 'view', 'search'],
+                    'actions' => ['index', 'view'],
                 ],
                 [
                     'allow' => true,
-                    'actions' => ['create', 'update', 'delete'],
+                    'actions' => ['update', 'delete'],
                     'roles' => ['@'],
                 ],
             ],
@@ -49,7 +51,7 @@ class ProfileController extends ActiveController
 
         unset($actions['delete']);
         unset($actions['update']);
-        unset($actions['view']);
+        unset($actions['create']);
 
         return $actions;
     }
@@ -66,25 +68,20 @@ class ProfileController extends ActiveController
 
     public function checkAccess($action, $model = null, $params = [])
     {
-        if ($action === 'update' || $action === 'delete') {
+        if ($action === 'update') {
             if ($model->id !== \Yii::$app->user->id)
                 throw new \yii\web\ForbiddenHttpException(sprintf('Доступ запрещен', $action));
         }
     }
 
-    public function actionView($id)
-    {
-        return $this->findModel($id);
-    }
-
     public function actionUpdate($id)
     {
-        $model = $this->findModel($id);
-        $model->load(\Yii::$app->request->bodyParams, '');
-        if ($model->save()) {
-            return $model;
-        }
-        return ['error' => $model->errors];
+        $model = new UpdateForm(['id' => $id]);
+        $data = \Yii::$app->request->bodyParams;
+        $model->load($data, '');
+        $user = $model->update($id);
+
+        return $user;
     }
 
     protected function findModel($id)

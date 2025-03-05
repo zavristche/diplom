@@ -238,9 +238,11 @@ class CollectionController extends ActiveController
 
             if (!empty($data['products'])) {
                 foreach ($data['products'] as $id) {
+
                     $collectionProduct = new CollectionProduct();
                     $collectionProduct->collection_id = $collection->id;
                     $collectionProduct->product_id = $id;
+                    
                     if (!$collectionProduct->save()) {
                         $errors['products'][] = $collectionProduct->errors;
                     }

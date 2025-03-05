@@ -21,6 +21,10 @@ use app\models\recipe\RecipeNote;
  */
 class Step extends \yii\db\ActiveRecord
 {
+    public $imageFile;
+    const SCENARIO_CREATE = 'create';
+    const SCENARIO_UPDATE = 'update';
+    
     /**
      * {@inheritdoc}
      */
@@ -42,6 +46,8 @@ class Step extends \yii\db\ActiveRecord
             [['title', 'photo'], 'string', 'max' => 255],
             [['recipe_id'], 'exist', 'skipOnError' => true, 'targetClass' => Recipe::class, 'targetAttribute' => ['recipe_id' => 'id']],
 
+            [['imageFile'], 'file', 'skipOnEmpty' => false, 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_CREATE]],
+            [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_UPDATE]],
             ['photo', 'safe'],
         ];
     }
@@ -57,9 +63,26 @@ class Step extends \yii\db\ActiveRecord
             'number' => 'Порядковый номер',
             'title' => 'Заголовок',
             'photo' => 'Фото',
+            'step_photo' => 'Загрузка фото',
             'description' => 'Описание',
         ];
     }
+
+    // public function afterDelete()
+    // {
+    //     parent::afterDelete();
+    //     $this->deleteImage($this->photo);
+    // }
+
+    // private function deleteImage($fileUrl)
+    // {
+    //     if ($fileUrl) {
+    //         $filePath = Yii::getAlias('@webroot') . parse_url($fileUrl, PHP_URL_PATH);
+    //         if (file_exists($filePath)) {
+    //             unlink($filePath);
+    //         }
+    //     }
+    // }
 
     /**
      * Gets query for [[Recipe]].

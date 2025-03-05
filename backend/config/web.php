@@ -19,6 +19,7 @@ $config = [
             'baseUrl' => '',
             'parsers' => [
                 'application/json' => 'yii\web\JsonParser',
+                'multipart/form-data' => 'yii\web\MultipartFormDataParser'
             ],
         ],
         'cache' => [
@@ -43,7 +44,8 @@ $config = [
             'targets' => [
                 [
                     'class' => 'yii\log\FileTarget',
-                    'levels' => ['error', 'warning'],
+                    'levels' => ['error', 'warning', 'info'],
+                    'logFile' => '@runtime/logs/app.log',
                 ],
             ],
         ],
@@ -69,7 +71,7 @@ $config = [
 
                 [
                     'class' => 'yii\rest\UrlRule',
-                    'controller' => ['profile' => 'profile/profile'], // Добавляем модуль
+                    'controller' => ['profile' => 'profile/profile'],
                     'pluralize' => false,
                     'prefix' => 'api',
                     'extraPatterns' => [
@@ -178,7 +180,7 @@ $config = [
         'class' => \yii\filters\Cors::class,
         'cors' => [
             'Origin' => ['http://localhost:5173'],
-            'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+            'Access-Control-Request-Method' => ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
             'Access-Control-Allow-Credentials' => true,
         ],
     ],
@@ -187,6 +189,11 @@ $config = [
         'profile' => [
             'class' => 'app\modules\profile\Module',
             'defaultRoute' => 'profile',
+        ],
+        'modules' => [
+            'admin' => [
+                'class' => 'app\modules\admin\Module',
+            ],
         ],
     ],
 ];

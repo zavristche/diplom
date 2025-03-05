@@ -52,6 +52,10 @@ use app\models\user\User;
  */
 class Recipe extends \yii\db\ActiveRecord implements Linkable
 {
+    public $imageFile;
+    const SCENARIO_CREATE = 'create';
+    const SCENARIO_UPDATE = 'update';
+
     /**
      * {@inheritdoc}
      */
@@ -77,8 +81,15 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
             [['complexity_id'], 'exist', 'skipOnError' => true, 'targetClass' => Complexity::class, 'targetAttribute' => ['complexity_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
 
+            [['imageFile'], 'file', 'skipOnEmpty' => false, 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_CREATE]],
+            [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_UPDATE]],
             ['photo', 'safe'],
         ];
+    }
+
+    public function attributes()
+    {
+        return array_merge(parent::attributes(), ['recipe_photo']);
     }
 
     /**
@@ -95,11 +106,17 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
             'created_at' => 'Дата создания',
             'title' => 'Название',
             'photo' => 'Фото',
+            'recipe_photo' => 'Загрузка фото',
             'description' => 'Описание',
             'saved' => 'Сохранения',
             'likes' => 'Оценки',
             'time' => 'Время приготовления',
         ];
+    }
+
+    public function safeAttributes()
+    {
+        return array_merge(parent::safeAttributes(), ['recipe_photo']);
     }
 
     public function getLinks()
@@ -124,15 +141,6 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
     public function fields()
     {
         $fields = parent::fields();
-
-        $fields['user'] = function() {
-            $userData = $this->user;
-            unset(
-                $userData['auth_key'],
-                $userData['password'],
-            );
-            return $userData;
-        };
 
         $fields['status'] = fn() => $this->status;
         $fields['complexity'] = fn() => $this->complexity;
@@ -166,49 +174,6 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
         };
 
         return $fields;
-    }
-
-    public function afterDelete()
-    {
-        parent::afterDelete();
-
-        $this->deleteImage($this->photo);
-
-        $steps = Step::findAll(['recipe_id' => $this->id]);
-        foreach ($steps as $step) {
-            if ($step->photo) {
-                $this->deleteImage($step->photo);
-            }
-        }
-
-        RecipeMark::deleteAll(['recipe_id' => $this->id]);
-        RecipeCalendar::deleteAll(['recipe_id' => $this->id]);
-        RecipeProduct::deleteAll(['recipe_id' => $this->id]);
-        Step::deleteAll(['recipe_id' => $this->id]);
-        RecipeReaction::deleteAll(['recipe_id' => $this->id]);
-        CollectionRecipe::deleteAll(['recipe_id' => $this->id]);
-    }
-
-    private function deleteImage($fileUrl)
-    {
-        // Логируем URL для диагностики
-        Yii::info('Attempting to delete file: ' . $fileUrl, __METHOD__);
-    
-        // Извлекаем путь к файлу, удаляя доменную часть
-        $filePath = parse_url($fileUrl, PHP_URL_PATH);
-        $fullPath = Yii::getAlias('@webroot') . $filePath;
-    
-        // Проверяем, существует ли файл
-        if (file_exists($fullPath)) {
-            // Логируем успешное удаление
-            Yii::info('Deleting file: ' . $fullPath, __METHOD__);
-    
-            // Удаляем файл
-            unlink($fullPath);
-        } else {
-            // Логируем, если файл не найден
-            Yii::error('File not found: ' . $fullPath, __METHOD__);
-        }
     }
 
     public static function getIsAuthor($recipe_id)
