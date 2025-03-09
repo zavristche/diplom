@@ -1,6 +1,6 @@
 <?php
 
-namespace app\modules\profile\models;
+namespace app\modules\admin\models;
 
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
@@ -17,8 +17,8 @@ class UserSearch extends User
     public function rules()
     {
         return [
-            [['id', 'role_id', 'private_id'], 'integer'],
-            [['last_active', 'status', 'name', 'surname', 'login', 'email', 'password', 'avatar', 'photo_header', 'auth_key'], 'safe'],
+            [['id', 'role_id', 'private_id', 'block_type_id', 'block_reason_id'], 'integer'],
+            [['last_active', 'status', 'name', 'surname', 'login', 'email', 'password', 'avatar', 'photo_header', 'auth_key', 'other_reason'], 'safe'],
         ];
     }
 
@@ -61,6 +61,8 @@ class UserSearch extends User
             'id' => $this->id,
             'role_id' => $this->role_id,
             'private_id' => $this->private_id,
+            'block_type_id' => $this->block_type_id,
+            'block_reason_id' => $this->block_reason_id,
             'last_active' => $this->last_active,
         ]);
 
@@ -71,6 +73,7 @@ class UserSearch extends User
             ->andFilterWhere(['like', 'email', $this->email])
             ->andFilterWhere(['like', 'password', $this->password])
             ->andFilterWhere(['like', 'avatar', $this->avatar])
+            ->andFilterWhere(['like', 'other_reason', $this->other_reason])
             ->andFilterWhere(['like', 'photo_header', $this->photo_header])
             ->andFilterWhere(['like', 'auth_key', $this->auth_key]);
 

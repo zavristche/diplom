@@ -2,6 +2,7 @@
 
 namespace app\models\user;
 
+use app\models\Role;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use app\models\user\User;
@@ -55,7 +56,8 @@ class UserSearch extends User
     
         $query->andFilterWhere(['like', 'name', $this->name])
             ->andFilterWhere(['like', 'surname', $this->surname])
-            ->andFilterWhere(['like', 'login', $this->login]);
+            ->andFilterWhere(['like', 'login', $this->login])
+            ->andFilterWhere(['!=', 'role_id', Role::getOne('admin')]);
     
         return $dataProvider;
     }

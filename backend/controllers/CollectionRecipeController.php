@@ -9,8 +9,9 @@ use yii\rest\ActiveController;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\UnprocessableEntityHttpException;
+use app\controllers\BaseApiController;
 
-class CollectionRecipeController extends ActiveController
+class CollectionRecipeController extends BaseApiController
 {
     public $modelClass = 'app\models\collection\CollectionRecipe';
 

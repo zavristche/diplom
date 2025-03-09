@@ -8,8 +8,9 @@ use app\models\recipe\RecipeReaction;
 use Yii;
 use yii\rest\ActiveController;
 use yii\web\NotFoundHttpException;
+use app\controllers\BaseApiController;
 
-class ProductController extends ActiveController
+class ProductController extends BaseApiController
 {
     public $modelClass = 'app\models\product\Product';
 

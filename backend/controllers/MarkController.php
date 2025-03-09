@@ -8,8 +8,9 @@ use Yii;
 use yii\rest\ActiveController;
 use yii\web\Link;
 use yii\web\NotFoundHttpException;
+use app\controllers\BaseApiController;
 
-class MarkController extends ActiveController
+class MarkController extends BaseApiController
 {
     public $modelClass = 'app\models\mark\Mark';
 

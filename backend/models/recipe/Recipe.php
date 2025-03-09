@@ -30,6 +30,7 @@ use app\models\user\User;
  * @property int $private_id
  * @property int $complexity_id
  * @property string $created_at
+ * @property string $admin_comment
  * @property string $title
  * @property string $photo
  * @property string $time
@@ -55,6 +56,7 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
     public $imageFile;
     const SCENARIO_CREATE = 'create';
     const SCENARIO_UPDATE = 'update';
+    const SCENARIO_CANCEL = 'update';
 
     /**
      * {@inheritdoc}
@@ -84,6 +86,8 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
             [['imageFile'], 'file', 'skipOnEmpty' => false, 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_CREATE]],
             [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_UPDATE]],
             ['photo', 'safe'],
+
+            ['admin_comment', 'required', 'on' => self::SCENARIO_CANCEL],
         ];
     }
 
@@ -111,6 +115,7 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
             'saved' => 'Сохранения',
             'likes' => 'Оценки',
             'time' => 'Время приготовления',
+            'admin_comment' => 'Причина отклонения публикации',
         ];
     }
 

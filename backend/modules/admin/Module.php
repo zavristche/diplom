@@ -16,30 +16,11 @@ class Module extends \yii\base\Module
      */
     public $controllerNamespace = 'app\modules\admin\controllers';
 
-    public function behaviors()
-    {
-        return [
-            'access' => [
-                'class' => AccessControl::class,
-                'rules' => [
-                    [
-                        'allow' => true,
-                        'roles' => ['@'],
-                        'matchCallback' => fn() => Yii::$app->user->identity->isAdmin,
-                    ],
-                ],
-                'denyCallback' => fn() => throw new NotFoundHttpException('Страница не найдена.'),
-            ],
-        ];
-    }
-
     /**
      * {@inheritdoc}
      */
     public function init()
     {
         parent::init();
-
-        // custom initialization code goes here
     }
 }

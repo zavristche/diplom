@@ -9,8 +9,9 @@ use yii\rest\ActiveController;
 use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
+use app\controllers\BaseApiController;
 
-class RecipeReactionController extends ActiveController
+class RecipeReactionController extends BaseApiController
 {
     public $modelClass = 'app\models\recipe\RecipeReaction';
 

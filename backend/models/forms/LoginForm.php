@@ -74,6 +74,12 @@ class LoginForm extends Model
     {
         if ($this->validate()) {
             $user = $this->getUser();
+
+            if ($user->isBlocked()) {
+                $this->addError('block', 'Ваш аккаунт заблокирован.');
+                return false;
+            }
+
             $user->auth_key = Yii::$app->security->generateRandomString();
             $user->save(false);
 

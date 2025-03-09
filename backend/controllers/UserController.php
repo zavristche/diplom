@@ -10,8 +10,9 @@ use yii\rest\ActiveController;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\filters\auth\HttpBasicAuth;
+use app\controllers\BaseApiController;
 
-class UserController extends ActiveController
+class UserController extends BaseApiController
 {
     public $modelClass = "app\models\user\User";
 
@@ -23,12 +24,36 @@ class UserController extends ActiveController
 
         $behaviors['authenticator'] = [
             'class' => \yii\filters\auth\HttpBearerAuth::class,
-            'except' => ['login', 'register', 'search'],
+            'except' => ['login', 'register', 'search',],
         ];
+
+        // $behaviors['access'] = [
+        //     'class' => AccessControl::class,
+        //     'rules' => [
+        //         [
+        //             'allow' => true,
+        //             'actions' => ['register', 'logout'],
+        //         ],
+        //         [
+        //             'allow' => true,
+        //             'actions' => ['search', 'login'],
+        //             'roles' => ['@'],
+        //         ],
+        //     ],
+        // ];
 
         return $behaviors;
     }
 
+    public function beforeAction($action)
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+    
+        return true;
+    }
+    
     public function actionIndex()
     {
         return new ActiveDataProvider([
@@ -102,7 +127,8 @@ class UserController extends ActiveController
 
     public function actionSearch()
     {
-        $params = Yii::$app->request->post();  // Используем POST
+        $request = Yii::$app->request;
+        $params = $request->getQueryParams();
         
         $searchModel = new UserSearch();
         $dataProvider = $searchModel->search($params);

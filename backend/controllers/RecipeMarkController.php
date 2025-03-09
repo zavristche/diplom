@@ -7,8 +7,9 @@ use Yii;
 use yii\rest\ActiveController;
 use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
+use app\controllers\BaseApiController;
 
-class RecipeMarkController extends ActiveController
+class RecipeMarkController extends BaseApiController
 {
     public $modelClass = 'app\models\recipe\RecipeMark';
 

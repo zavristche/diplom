@@ -3,20 +3,15 @@
 namespace app\models\block;
 
 use Yii;
-use app\models\block\BlockCollection;
-use app\models\block\BlockRecipe;
-use app\models\block\BlockUser;
-
+use app\models\block\Block;
 
 /**
- * This is the model class for table "block_status".
+ * This is the model class for table "block_type".
  *
  * @property int $id
  * @property string $title
  *
- * @property BlockCollection[] $blockCollections
- * @property BlockRecipe[] $blockRecipes
- * @property BlockUser[] $blockUsers
+ * @property Block[] $blocks
  */
 class BlockStatus extends \yii\db\ActiveRecord
 {
@@ -51,32 +46,17 @@ class BlockStatus extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[BlockCollections]].
+     * Gets query for [[Blocks]].
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getBlockCollections()
+    public function getBlocks()
     {
-        return $this->hasMany(BlockCollection::class, ['status_id' => 'id']);
+        return $this->hasMany(Block::class, ['block_type_id' => 'id']);
     }
 
-    /**
-     * Gets query for [[BlockRecipes]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getBlockRecipes()
+    public static function getOne($title)
     {
-        return $this->hasMany(BlockRecipe::class, ['status_id' => 'id']);
-    }
-
-    /**
-     * Gets query for [[BlockUsers]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getBlockUsers()
-    {
-        return $this->hasMany(BlockUser::class, ['status_id' => 'id']);
+        return self::findOne(['title' => $title])->id;
     }
 }

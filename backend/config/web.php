@@ -56,19 +56,23 @@ $config = [
             'showScriptName' => false,
             'enableStrictParsing' => true,
             'rules' => [
+                
+                //Пользователь
                 'POST api/login' => 'user/login',
                 'POST api/register' => 'user/register',
                 'POST api/logout' => 'user/logout',
+                'api/admin/recipe' => 'admin/recipe/index',
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'user',
                     'pluralize' => false,
                     'prefix' => 'api',
                     'extraPatterns' => [
-                        'POST search' => 'search',
+                        'GET search' => 'search',
                     ],
                 ],
 
+                //Профиль
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => ['profile' => 'profile/profile'],
@@ -80,22 +84,48 @@ $config = [
                         'GET <id:\d+>' => 'view',
                     ],
                 ],
+
+                //Админ-панель
+
+                //Рецепты
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'admin/recipe',
+                    'pluralize' => false,
+                    'prefix' => 'api',
+                    'extraPatterns' => [
+                        'PATCH <id:\d+>/cancel' => 'cancel',
+                        'POST <id:\d+>/apply' => 'apply',
+                        'GET' => 'index',
+                        'GET <id:\d+>' => 'view',
+                    ],
+                ],
+
+                //Юзеры
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'admin/user',
+                    'pluralize' => false,
+                    'prefix' => 'api',
+                    'extraPatterns' => [
+                        'PATCH <id:\d+>/block' => 'block',
+                        'POST <id:\d+>/unblock' => 'unblock',
+                        'GET <id:\d+>' => 'view',
+                    ],
+                ],
                 
+                //Рецепт
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'recipe',
                     'pluralize' => false,
                     'prefix' => 'api',
                     'extraPatterns' => [
-                        'GET recipe' => 'index',
-                        'POST search' => 'search',
-                        'GET recipe/<id:\d+>' => 'view',
-                        'POST recipe' => 'create',
-                        'PATCH recipe/<id:\d+>' => 'update',
-                        'DELETE recipe/<id:\d+>' => 'delete',
+                        'GET search' => 'search',
                     ],
                 ],
 
+                //Коллекция
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'collection',
@@ -105,12 +135,13 @@ $config = [
                         'GET collection' => 'index',
                         'GET collection/<id:\d+>' => 'view',
                         'POST collection/<id:\d+>' => 'create',
-                        'POST search' => 'search',
+                        'GET search' => 'search',
                         'PATCH collection/<id:\d+>' => 'update',
                         'DELETE collection/<id:\d+>' => 'delete',
                     ],
                 ],
 
+                //Рецепт в коллекции
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'collection-recipe',
@@ -122,6 +153,7 @@ $config = [
                     ],
                 ],
 
+                //🦖
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'recipe-mark',
@@ -133,6 +165,7 @@ $config = [
                     ],
                 ],
 
+                //Реакции рецепта
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'recipe-reaction',
@@ -144,6 +177,7 @@ $config = [
                     ],
                 ],
 
+                //🦖
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'mark',
@@ -154,6 +188,7 @@ $config = [
                     ],
                 ],
 
+                //🦖
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'product',
@@ -190,10 +225,8 @@ $config = [
             'class' => 'app\modules\profile\Module',
             'defaultRoute' => 'profile',
         ],
-        'modules' => [
-            'admin' => [
-                'class' => 'app\modules\admin\Module',
-            ],
+        'admin' => [
+            'class' => 'app\modules\admin\Module',
         ],
     ],
 ];

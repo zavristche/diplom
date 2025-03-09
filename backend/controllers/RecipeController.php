@@ -13,8 +13,9 @@ use Yii;
 use yii\rest\ActiveController;
 use yii\data\ActiveDataProvider;
 use yii\web\NotFoundHttpException;
+use app\controllers\BaseApiController;
 
-class RecipeController extends ActiveController
+class RecipeController extends BaseApiController
 {
     public $modelClass = 'app\models\recipe\Recipe';
 
@@ -85,15 +86,14 @@ class RecipeController extends ActiveController
     public function actionSearch()
     {
         $request = Yii::$app->request;
-        $params = $request->post();
+        $params = $request->getQueryParams(); // Изменили на GET
     
         $searchModel = new RecipeSearch();
         $dataProvider = $searchModel->search($params);
-
+    
         $models = $dataProvider->getModels();
-
+    
         $result = array_map(function ($model) {
-
             $data = $model->toArray([], ['user', 'status', 'complexity', 'private', 'comments', 'marks', 'products', 'collections', 'calendar_recipe']);
     
             if (isset($data['user'])) {
@@ -103,9 +103,12 @@ class RecipeController extends ActiveController
             return $data;
         }, $models);
     
-        return $result;
+        return [
+            'success' => true,
+            'recipes' => $result,
+        ];
     }
-
+    
     public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
@@ -161,14 +164,21 @@ class RecipeController extends ActiveController
             //Рецепт
             $recipe = new Recipe([
                 'user_id' => Yii::$app->user->id,
-                'status_id' => StatusContent::getOne('Новый'),
+                'status_id' => StatusContent::getOne('Новое'),
                 'imageFile' => $_FILES['recipe_photo'],
                 'scenario' => Recipe::SCENARIO_CREATE,
             ]);
 
-            if (!$recipe->load($data, '') || !$recipe->validate()) {
+            foreach ($data as $attribute => $value) {
+                if ($recipe->hasAttribute($attribute)) {
+                    $recipe->$attribute = $value;
+                }
+            }
+
+            if (!$recipe->validate()) {
                 $errors = array_merge($errors, $recipe->errors);
             }
+            // return $errors;
 
             //проверки связанных таблиц
             if (!($data['steps'] ?? [])) {
@@ -213,18 +223,25 @@ class RecipeController extends ActiveController
                 }
             }
 
-            //валидация
-            if ($errors) {
-                Yii::$app->response->statusCode = 422;
-                return ['success' => false, 'message' => 'Ошибка валидации', 'errors' => $errors, 'recipe' => $recipe];
+            Yii::info($_FILES, 'debug');
+            if (!isset($_FILES['recipe_photo'])) {
+                return ['success' => false, 'message' => 'Файл не был загружен.', 'files' => $_FILES];
             }
 
             //фото рецепта
             $upload = $this->uploadImage($recipe->imageFile);
             if (!$upload['success']) {
-                return ['success' => false, 'message' => $upload];
+                $errors['recipe_photo'] = $upload['message'];
+                // return ['success' => false, 'message' => $upload];
+            } else {
+                $recipe->photo = $upload['url'];
             }
-            $recipe->photo = $upload['url'];
+
+            //валидация
+            if ($errors) {
+                Yii::$app->response->statusCode = 422;
+                return ['success' => false, 'message' => 'Ошибка валидации', 'errors' => $errors, 'recipe' => $recipe];
+            }
 
             $recipe->save();
 
@@ -284,6 +301,7 @@ class RecipeController extends ActiveController
     {
         $recipe = $this->findModel($id);
         $recipe->scenario = Recipe::SCENARIO_UPDATE;
+        $recipe->status_id = StatusContent::getOne('Новое');
     
         $data = Yii::$app->request->getBodyParams();
     

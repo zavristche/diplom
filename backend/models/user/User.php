@@ -2,6 +2,8 @@
 
 namespace app\models\user;
 
+use app\models\block\Block;
+use app\models\block\BlockStatus;
 use Yii;
 use app\models\checklist\Checklist;
 use app\models\collection\CollectionReaction;
@@ -19,7 +21,6 @@ use app\models\Role;
 use app\models\user\UserBlacklist;
 use app\models\user\UserSubscribe;
 use app\models\user\UserAllergen;
-use app\models\block\BlockUser;
 use app\models\mark\Mark;
 use app\models\product\Product;
 use yii\web\Link;
@@ -31,6 +32,7 @@ use yii\web\Link;
  * @property int $role_id
  * @property int $private_id
  * @property string|null $last_active
+ * @property string|null $date_unblock
  * @property string|null $status
  * @property string $name
  * @property string $surname
@@ -41,7 +43,6 @@ use yii\web\Link;
  * @property string|null $photo_header
  * @property string $auth_key
  *
- * @property BlockUser[] $blockUsers
  * @property Checklist[] $checklists
  * @property CollectionReaction[] $collectionReactions
  * @property CollectionSubscribe[] $collectionSubscribes
@@ -55,6 +56,7 @@ use yii\web\Link;
  * @property RecipeReaction[] $recipeReactions
  * @property Recipe[] $recipes
  * @property Role $role
+ * @property Block $role
  * @property UserBlacklist[] $userBlacklists
  * @property UserBlacklist[] $userBlacklists0
  * @property UserSubscribe[] $userSubscribes
@@ -120,10 +122,6 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
                 'method' => 'PATCH',
                 'href' => $url . '/profile/' . $this->id,
             ],
-            'delete' => [
-                'method' => 'DELETE',
-                'href' => $url . '/profile/' . $this->id,
-            ],
         ];
     }
 
@@ -141,6 +139,7 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         // $fields['preference_products'] = fn() => $this->getPreferenceProducts()->select([])->asArray()->all();
 
         $fields['recipes'] = fn() => $this->getRecipes()->asArray()->all();
+        $fields['blocks'] = fn() => $this->getBlocks()->asArray()->all();
         $fields['collections'] = fn() => $this->getCollections()->asArray()->all();
 
         $fields['_links'] = fn() => $this->getLinks();
@@ -155,27 +154,77 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
         \Yii::$app->user->enableSession = false;
     }
 
+    public function getIsAdmin()
+    {
+        return $this->role_id == Role::getOne('admin');
+    }
+
+    public function isBlocked()
+    {
+        $block = Block::find()
+            ->where(['user_id' => $this->id, 'block_status_id' => BlockStatus::getOne('Действует')])
+            ->orderBy(['id' => SORT_DESC])
+            ->one();
+    
+        if (!$block) {
+            return false;
+        }
+    
+        // Если блокировка временная, проверяем, истекло ли время
+        $unblockTime = strtotime($block->created_at) + $block->time_unblock;
+        
+        if ($block->time_unblock && $unblockTime <= time()) {
+            $block->block_status_id = BlockStatus::getOne('Истекла');
+            $block->save();
+            return false;
+        }
+    
+        return true;
+    }
+    
+
     //identity
     public function validatePassword($password)
     {
         return Yii::$app->security->validatePassword($password, $this->password);
-        // return $this->password === $password;
     }
 
     public static function findByUsername($username)
     {
-        // return self::findOne(['login' => $login]);
         return self::find()->where(['login' => $username])->one();
     }
 
+    // public static function findIdentity($id)
+    // {
+    //     return static::findOne($id);
+    // }
+
     public static function findIdentity($id)
     {
-        return static::findOne($id);
+        $user = static::findOne($id);
+
+        if ($user && $user->isBlocked()) {
+            return null;
+        }
+
+        return $user;
     }
+
+
+    // public static function findIdentityByAccessToken($token, $type = null)
+    // {
+    //     return static::findOne(['auth_key' => $token]);
+    // }
 
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        return static::findOne(['auth_key' => $token]);
+        $user = static::findOne(['auth_key' => $token]);
+
+        if ($user && $user->isBlocked()) {
+            throw new \yii\web\ForbiddenHttpException('Ваш аккаунт заблокирован.');
+        }
+
+        return $user;
     }
 
     public function getId()
@@ -192,15 +241,10 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     {
         return $this->auth_key === $auth_key;
     }
-
-    /**
-     * Gets query for [[BlockUsers]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getBlockUsers()
+    
+    public function getBlocks()
     {
-        return $this->hasMany(BlockUser::class, ['user_id' => 'id']);
+        return $this->hasMany(Block::class, ['user_id' => 'id']);
     }
 
     /**

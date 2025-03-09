@@ -9,10 +9,10 @@ use app\models\StatusContent;
 use yii\filters\AccessControl;
 use Yii;
 use yii\data\ActiveDataProvider;
-use yii\rest\ActiveController;
+use app\controllers\BaseApiController;
 use yii\web\NotFoundHttpException;
 
-class CollectionController extends ActiveController
+class CollectionController extends BaseApiController
 {
     public $modelClass = "app\models\collection\Collection";
 
@@ -104,7 +104,7 @@ class CollectionController extends ActiveController
     public function actionSearch()
     {
         $request = Yii::$app->request;
-        $params = $request->post();
+        $params = $request->getQueryParams();
     
         $searchModel = new CollectionSearch();
         $dataProvider = $searchModel->search($params);
@@ -125,6 +125,24 @@ class CollectionController extends ActiveController
         return $result;
     }
 
+    private function uploadImage($file)
+    {
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            return ['success' => false, 'message' => 'Ошибка при загрузке файла.', 'e' => $file['error']];
+        }
+    
+        $uploadDir = Yii::getAlias('@webroot/uploads/');
+        !is_dir($uploadDir) && mkdir($uploadDir, 0777, true);
+    
+        $fileName = Yii::$app->user->id . '_' . time() . '_' . Yii::$app->security->generateRandomString() . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filePath = $uploadDir . $fileName;
+        $fileUrl = Yii::$app->request->hostInfo . '/uploads/' . $fileName;
+    
+        return (move_uploaded_file($file['tmp_name'], $filePath) || copy($file['tmp_name'], $filePath)) 
+            ? ['success' => true, 'url' => $fileUrl] 
+            : ['success' => false, 'message' => 'Ошибка при сохранении файла.'];
+    }
+
     public function actionCreate()
     {
         $data = Yii::$app->request->post();
@@ -134,10 +152,43 @@ class CollectionController extends ActiveController
         try {
             $collection = new Collection();
             $collection->user_id = Yii::$app->user->id;
-            $collection->status_id = StatusContent::getOne('Новый');
+            $collection->status_id = StatusContent::getOne('Новое');
     
             if (!$collection->load($data, '') || !$collection->validate()) {
                 $errors = array_merge($errors, $collection->errors);
+            }
+        
+            if (!empty($data['products'])) {
+                foreach ($data['products'] as $id) {
+                    $collectionProduct = new CollectionProduct();
+                    $collectionProduct->collection_id = $collection->id;
+                    $collectionProduct->product_id = $id;
+                    if (!$collectionProduct->validate()) {
+                        $errors['products'][] = $collectionProduct->errors;
+                    }
+                }
+            }
+
+            if (!empty($data['marks'])) {
+                foreach ($data['marks'] as $id) {
+                    $collectionMark = new CollectionMark();
+                    $collectionMark->collection_id = $collection->id;
+                    $collectionMark->mark_id = $id;
+                    if (!$collectionMark->validate()) {
+                        $errors['marks'][] = $collectionMark->errors;
+                    }
+                }
+            }
+
+            // Фото коллекции
+            if (!empty($_FILES["photo"]["name"])) {
+    
+                $upload = $this->uploadImage($_FILES["photo"]);
+                if (!$upload['success']) {
+                    $errors['photo'] = $upload['message'];
+                } else {
+                    $collection->photo = $upload['url'];
+                }
             }
     
             if (!empty($errors)) {
@@ -150,38 +201,21 @@ class CollectionController extends ActiveController
             }
     
             $collection->save();
-    
-            if (!empty($data['products'])) {
-                foreach ($data['products'] as $id) {
-                    $collectionProduct = new CollectionProduct();
-                    $collectionProduct->collection_id = $collection->id;
-                    $collectionProduct->product_id = $id;
-                    if (!$collectionProduct->save()) {
-                        $errors['products'][] = $collectionProduct->errors;
-                    }
-                }
+
+            foreach ($data['products'] ?? [] as $productData) {
+                (new CollectionProduct([
+                    'collection_id' => $collection->id,
+                    'product_id' => $productData['product_id'],
+                ]))->save();
             }
 
-            if (!empty($data['marks'])) {
-                foreach ($data['marks'] as $id) {
-                    $collectionMark = new CollectionMark();
-                    $collectionMark->collection_id = $collection->id;
-                    $collectionMark->mark_id = $id;
-                    if (!$collectionMark->save()) {
-                        $errors['marks'][] = $collectionMark->errors;
-                    }
-                }
+            foreach ($data['marks'] ?? [] as $markId) {
+                (new CollectionProduct([
+                    'collection_id' => $collection->id,
+                    'mark_id' => $markId,
+                ]))->save();
             }
-    
-            if (!empty($errors)) {
-                Yii::$app->response->statusCode = 422;
-                return [
-                    'success' => false,
-                    'message' => 'Ошибка при сохранении связанных данных',
-                    'errors' => $errors,
-                ];
-            }
-    
+
             $transaction->commit();
     
             return [
@@ -214,6 +248,23 @@ class CollectionController extends ActiveController
                     'success' => false,
                     'message' => 'Коллекция не найдена',
                 ];
+            }
+
+            // Фото коллекции
+            if (!empty($_FILES["photo"]["name"])) {
+
+                $photoPath = Yii::getAlias('@webroot') . parse_url($recipe->photo, PHP_URL_PATH);
+
+                if ($recipe->photo && file_exists($photoPath)) {
+                    unlink($photoPath);
+                }
+
+                $upload = $this->uploadImage($_FILES["photo"]);
+                if (!$upload['success']) {
+                    $errors['photo'] = $upload['message'];
+                } else {
+                    $collection->photo = $upload['url'];
+                }
             }
 
             if (!$collection->load($data, '') || !$collection->validate()) {
@@ -287,10 +338,25 @@ class CollectionController extends ActiveController
         }
     }
 
+    // public function actionDelete($id)
+    // {
+    //     $model = $this->findModel($id);
+    
+    //     if ($model->delete()) {
+    //         return [
+    //             'success' => true,
+    //             'message' => 'Коллекция и все связанные данные успешно удалены.',
+    //         ];
+    //     }
+
+    //     throw new \yii\web\ServerErrorHttpException('Ошибка при удалении коллекции.'); 
+    // }
+
     public function actionDelete($id)
     {
         $model = $this->findModel($id);
-    
+        $this->deleteRelatedData($model);
+
         if ($model->delete()) {
             return [
                 'success' => true,
@@ -299,6 +365,22 @@ class CollectionController extends ActiveController
         }
 
         throw new \yii\web\ServerErrorHttpException('Ошибка при удалении коллекции.'); 
-    } 
+    }
+
+    private function deleteRelatedData($model)
+    {
+        $this->deleteImage($model->photo);
+
+    }
+
+    private function deleteImage($fileUrl)
+    {
+        if ($fileUrl) {
+            $filePath = Yii::getAlias('@webroot') . parse_url($fileUrl, PHP_URL_PATH);
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+        }
+    }
 
 }

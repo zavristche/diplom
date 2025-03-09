@@ -9,8 +9,9 @@ use yii\filters\AccessControl;
 use yii\rest\ActiveController;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use app\controllers\BaseApiController;
 
-class ProfileController extends ActiveController
+class ProfileController extends BaseApiController
 {
     public $modelClass = "app\models\user\User";
 
