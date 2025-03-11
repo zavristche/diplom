@@ -56,7 +56,7 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
     public $imageFile;
     const SCENARIO_CREATE = 'create';
     const SCENARIO_UPDATE = 'update';
-    const SCENARIO_CANCEL = 'update';
+    const SCENARIO_CANCEL = 'cancel';
 
     /**
      * {@inheritdoc}
@@ -108,7 +108,7 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
             'complexity_id' => 'Сложность',
             'private_id' => 'Кому доступен рецепт?',
             'created_at' => 'Дата создания',
-            'title' => 'Название',
+            'title' => 'Заголовок',
             'photo' => 'Фото',
             'recipe_photo' => 'Загрузка фото',
             'description' => 'Описание',

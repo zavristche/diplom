@@ -202,14 +202,13 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     public static function findIdentity($id)
     {
         $user = static::findOne($id);
-
+    
         if ($user && $user->isBlocked()) {
-            return null;
+            throw new \yii\web\ForbiddenHttpException('Ваш аккаунт заблокирован');
         }
-
+    
         return $user;
     }
-
 
     // public static function findIdentityByAccessToken($token, $type = null)
     // {
