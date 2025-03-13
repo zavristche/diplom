@@ -187,16 +187,6 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
     }
 
     /**
-     * Gets query for [[BlockRecipes]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getBlockRecipes()
-    {
-        return $this->hasMany(BlockRecipe::class, ['recipe_id' => 'id']);
-    }
-
-    /**
      * Gets query for [[CollectionRecipes]].
      *
      * @return \yii\db\ActiveQuery

@@ -35,7 +35,7 @@ class CollectionReaction extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['user_id', 'collection_id', 'type_id'], 'required'],
+            [['user_id', 'collection_id'], 'required'],
             [['user_id', 'collection_id', 'type_id'], 'integer'],
             [['collection_id'], 'exist', 'skipOnError' => true, 'targetClass' => Collection::class, 'targetAttribute' => ['collection_id' => 'id']],
             [['type_id'], 'exist', 'skipOnError' => true, 'targetClass' => ReactionType::class, 'targetAttribute' => ['type_id' => 'id']],

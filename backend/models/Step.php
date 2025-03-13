@@ -67,23 +67,7 @@ class Step extends \yii\db\ActiveRecord
             'description' => 'Описание',
         ];
     }
-
-    // public function afterDelete()
-    // {
-    //     parent::afterDelete();
-    //     $this->deleteImage($this->photo);
-    // }
-
-    // private function deleteImage($fileUrl)
-    // {
-    //     if ($fileUrl) {
-    //         $filePath = Yii::getAlias('@webroot') . parse_url($fileUrl, PHP_URL_PATH);
-    //         if (file_exists($filePath)) {
-    //             unlink($filePath);
-    //         }
-    //     }
-    // }
-
+    
     /**
      * Gets query for [[Recipe]].
      *

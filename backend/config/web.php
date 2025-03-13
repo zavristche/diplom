@@ -61,7 +61,9 @@ $config = [
                 'POST api/login' => 'user/login',
                 'POST api/register' => 'user/register',
                 'POST api/logout' => 'user/logout',
-                'api/admin/recipe' => 'admin/recipe/index',
+                // 'api/admin/recipe' => 'admin/recipe/index',
+
+                //Пользователь / поиск
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'user',
@@ -85,9 +87,7 @@ $config = [
                     ],
                 ],
 
-                //Админ-панель
-
-                //Рецепты
+                //Админ-панель / Рецепты
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'admin/recipe',
@@ -101,7 +101,7 @@ $config = [
                     ],
                 ],
 
-                //Юзеры
+                //Админ-панель / Юзеры
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'admin/user',
@@ -125,22 +125,18 @@ $config = [
                     ],
                 ],
 
-                //Коллекция
+                //Реакции рецепта
                 [
                     'class' => 'yii\rest\UrlRule',
-                    'controller' => 'collection',
+                    'controller' => 'recipe-reaction',
                     'pluralize' => false,
                     'prefix' => 'api',
                     'extraPatterns' => [
-                        'GET collection' => 'index',
-                        'GET collection/<id:\d+>' => 'view',
-                        'POST collection/<id:\d+>' => 'create',
-                        'GET search' => 'search',
-                        'PATCH collection/<id:\d+>' => 'update',
-                        'DELETE collection/<id:\d+>' => 'delete',
+                        'POST' => 'create',
+                        'DELETE' => 'delete',
                     ],
                 ],
-
+                
                 //Рецепт в коллекции
                 [
                     'class' => 'yii\rest\UrlRule',
@@ -153,49 +149,26 @@ $config = [
                     ],
                 ],
 
-                //🦖
+                //Коллекция
                 [
                     'class' => 'yii\rest\UrlRule',
-                    'controller' => 'recipe-mark',
+                    'controller' => 'collection',
                     'pluralize' => false,
                     'prefix' => 'api',
                     'extraPatterns' => [
-                        'POST recipe-mark' => 'create',
-                        'DELETE recipe-mark/<id:\d+>' => 'delete',
+                        'GET search' => 'search',
                     ],
                 ],
 
-                //Реакции рецепта
+                //Реакции коллекции
                 [
                     'class' => 'yii\rest\UrlRule',
-                    'controller' => 'recipe-reaction',
+                    'controller' => 'collection-reaction',
                     'pluralize' => false,
                     'prefix' => 'api',
                     'extraPatterns' => [
-                        'POST recipe-reaction' => 'create',
-                        'DELETE recipe-reaction' => 'delete',
-                    ],
-                ],
-
-                //🦖
-                [
-                    'class' => 'yii\rest\UrlRule',
-                    'controller' => 'mark',
-                    'pluralize' => false,
-                    'prefix' => 'api',
-                    'extraPatterns' => [
-                        'GET' => 'index',
-                    ],
-                ],
-
-                //🦖
-                [
-                    'class' => 'yii\rest\UrlRule',
-                    'controller' => 'product',
-                    'pluralize' => false,
-                    'prefix' => 'api',
-                    'extraPatterns' => [
-                        'GET' => 'index',
+                        'POST' => 'create',
+                        'DELETE' => 'delete',
                     ],
                 ],
             ],

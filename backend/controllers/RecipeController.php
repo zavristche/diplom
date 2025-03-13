@@ -1,7 +1,6 @@
 <?php
 namespace app\controllers;
 
-use app\models\Measure;
 use yii\filters\AccessControl;
 use app\models\recipe\Recipe;
 use app\models\recipe\RecipeMark;
@@ -10,7 +9,6 @@ use app\models\recipe\RecipeSearch;
 use app\models\StatusContent;
 use app\models\Step;
 use Yii;
-use yii\rest\ActiveController;
 use yii\data\ActiveDataProvider;
 use yii\web\NotFoundHttpException;
 use app\controllers\BaseApiController;
@@ -59,7 +57,6 @@ class RecipeController extends BaseApiController
         try {
             return parent::beforeAction($action);
         } catch (\yii\web\UnauthorizedHttpException $e) {
-            // Обработка исключения с кастомным сообщением
             throw new \yii\web\UnauthorizedHttpException('Это действие доступно только авторизированным пользователям');
         }
     }
@@ -86,7 +83,7 @@ class RecipeController extends BaseApiController
     public function actionSearch()
     {
         $request = Yii::$app->request;
-        $params = $request->getQueryParams(); // Изменили на GET
+        $params = $request->getQueryParams();
     
         $searchModel = new RecipeSearch();
         $dataProvider = $searchModel->search($params);
@@ -181,7 +178,6 @@ class RecipeController extends BaseApiController
             if (!$recipe->validate()) {
                 $errors = array_merge($errors, $recipe->errors);
             }
-            // return $errors;
 
             //проверки связанных таблиц
             if (!($data['steps'] ?? [])) {
@@ -301,6 +297,9 @@ class RecipeController extends BaseApiController
         $recipe = $this->findModel($id);
         $recipe->scenario = Recipe::SCENARIO_UPDATE;
         $recipe->status_id = StatusContent::getOne('Новое');
+        $products = [];
+        $marks = [];
+        $steps = [];
     
         $data = Yii::$app->request->getBodyParams();
     
@@ -331,8 +330,8 @@ class RecipeController extends BaseApiController
             // Фото рецепта
             if (!empty($_FILES["recipe_photo"]["name"])) {
                 
-                if (!empty($recipe->photo)) {
-                    $photoPath = Yii::getAlias('@webroot') . parse_url($recipe->photo, PHP_URL_PATH);
+                if (!empty($recipe->imageFile)) {
+                    $photoPath = Yii::getAlias('@webroot') . parse_url($recipe->imageFile, PHP_URL_PATH);
 
                     if (file_exists($photoPath)) {
                         unlink($photoPath);
@@ -343,7 +342,7 @@ class RecipeController extends BaseApiController
                 if (!$upload['success']) {
                     $errors['imageFile'] = $upload['message'];
                 } else {
-                    $recipe->photo = $upload['url'];
+                    $recipe->imageFile = $upload['url'];
                 }
             }
     
@@ -360,7 +359,6 @@ class RecipeController extends BaseApiController
 
                     $step = Step::findOne($stepData['id']);
                 } else {
-
                     $step = new Step();
                 }
     
@@ -377,14 +375,6 @@ class RecipeController extends BaseApiController
                 // Фото шага
                 if (!empty($_FILES["step_photos"]["name"][$i])) {
 
-                    if (!empty($step->photo)) { 
-                        $photoPath = Yii::getAlias('@webroot') . parse_url($step->photo, PHP_URL_PATH);
-    
-                        if (file_exists($photoPath)) {
-                            unlink($photoPath);
-                        }
-                    }
-
                     $file = [
                         'name' => $_FILES["step_photos"]["name"][$i],
                         'tmp_name' => $_FILES["step_photos"]["tmp_name"][$i],
@@ -395,24 +385,19 @@ class RecipeController extends BaseApiController
                     
                     $upload = $this->uploadImage($file);
                     if ($upload['success']) {
-                        $step->photo = $upload['url'];
+                        $step->imageFile = $upload['url'];
                     } else {
                         $errors["step_{$i}"]['imageFile'] = $upload['message'];
                     }
                 }
     
-                if ($step->validate()) {
-                    $step->save();
-                    $newSteps[] = $step->id;
-                } else {
+                if (!$step->validate()) {
                     $errors["step_{$i}"] = $step->errors;
                 }
+
+                $steps[] = $step;
             }
-    
-            $stepsToDelete = array_diff(array_keys($existingSteps), $newSteps);
-            if (!empty($stepsToDelete)) {
-                Step::deleteAll(['id' => $stepsToDelete]);
-            }
+
     
             // Продукты
             $existingProducts = $recipe->getProducts()->indexBy('id')->all();
@@ -427,17 +412,11 @@ class RecipeController extends BaseApiController
     
                 $product->setAttributes($productData);
     
-                if ($product->validate()) {
-                    $product->save();
-                    $newProducts[] = $product->id;
-                } else {
+                if (!$product->validate()) {
                     $errors["product_{$product->id}"] = $product->errors;
                 }
-            }
-    
-            $productsToDelete = array_diff(array_keys($existingProducts), $newProducts);
-            if (!empty($productsToDelete)) {
-                RecipeProduct::deleteAll(['id' => $productsToDelete]);
+
+                $products[] = $product;
             }
     
             // Метки
@@ -449,18 +428,81 @@ class RecipeController extends BaseApiController
                     $recipeMark = new RecipeMark();
                     $recipeMark->recipe_id = $recipe->id;
                     $recipeMark->mark_id = $mark;
-                    if (!$recipeMark->save()) {
+                    if (!$recipeMark->validate()) {
                         $errors["marks"][] = $recipeMark->errors;
                     }
+                    $marks[] = $recipeMark;
                 }
             }
 
             if (!empty($errors)) {
                 Yii::$app->response->statusCode = 422;
-                return ['success' => false, 'message' => 'Ошибка валидации', 'errors' => $errors, 'recipe' => $recipe];
-            }
+                foreach($steps as $step){
+                    if (!empty($step->imageFile)) { 
+                        $photoPath = Yii::getAlias('@webroot') . parse_url($step->imageFile, PHP_URL_PATH);
     
+                        if (file_exists($photoPath)) {
+                            unlink($photoPath);
+                        }
+                    }
+                }
+
+                if (!empty($recipe->imageFile)) { 
+                    $photoPath = Yii::getAlias('@webroot') . parse_url($recipe->imageFile, PHP_URL_PATH);
+
+                    if (file_exists($photoPath)) {
+                        unlink($photoPath);
+                    }
+                }
+
+                return ['success' => false, 'message' => 'Ошибка валидации', 'errors' => $errors, 'recipe' => $recipe, 'steps' => $steps, 'products' => $products, 'marks' => $marks];
+            }
+
+            if (!empty($recipe->imageFile)) { 
+                $photoPath = Yii::getAlias('@webroot') . parse_url($step->photo, PHP_URL_PATH);
+
+                if (file_exists($photoPath)) {
+                    unlink($photoPath);
+                }
+                $recipe->photo = $recipe->imageFile;
+            }
             $recipe->save();
+
+            $stepsToDelete = array_diff(array_keys($existingSteps), $newSteps);
+            if (!empty($stepsToDelete)) {
+                Step::deleteAll(['id' => $stepsToDelete]);
+            }
+
+            $productsToDelete = array_diff(array_keys($existingProducts), $newProducts);
+            if (!empty($productsToDelete)) {
+                RecipeProduct::deleteAll(['id' => $productsToDelete]);
+            }
+
+            RecipeMark::deleteAll(['recipe_id' => $recipe->id]);
+
+            foreach ($products as $product) {
+                $product->recipe_id = $recipe->id;
+                $product->save();
+            }
+
+            foreach ($steps as $step) {
+                $step->recipe_id = $recipe->id;
+                if (!empty($step->imageFile)) { 
+                    $photoPath = Yii::getAlias('@webroot') . parse_url($step->photo, PHP_URL_PATH);
+    
+                    if (file_exists($photoPath)) {
+                        unlink($photoPath);
+                    }
+
+                    $step->photo = $step->imageFile;
+                }
+                $step->save();
+            }
+
+            foreach ($marks as $mark) {
+                $mark->recipe_id = $recipe->id;
+                $mark->save();
+            }
 
             $transaction->commit();
             return ['success' => true, 'message' => 'Рецепт успешно обновлен', 'recipe' => $recipe->toArray()];
@@ -487,14 +529,14 @@ class RecipeController extends BaseApiController
 
     private function deleteRelatedData($model)
     {
-        // Удаляем фото рецепта
+        // фото рецепта
         $this->deleteImage($model->photo);
 
-        // Удаляем шаги и их фото
+        // шаги
         $steps = Step::findAll(['recipe_id' => $model->id]);
         foreach ($steps as $step) {
             $this->deleteImage($step->photo);
-            $step->delete(); // Удаляем шаг
+            $step->delete();
         }
     }
 

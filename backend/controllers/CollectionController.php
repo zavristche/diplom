@@ -58,6 +58,17 @@ class CollectionController extends BaseApiController
         }
     }
 
+    public function checkAccess($action, $model = null, $params = [])
+    {
+        if ($action === 'create' || $action === 'delete') {
+            if ($model->user_id !== \Yii::$app->user->id)
+            return [
+                'success' => false,
+                'message' => 'Вы не можете лайкнуть свой собственную коллекцию'
+            ];
+        }
+    }
+
     public function actions()
     {
         $actions = parent::actions();
@@ -65,7 +76,6 @@ class CollectionController extends BaseApiController
         unset($actions['create']);
         unset($actions['delete']);
         unset($actions['update']);
-        // unset($actions['index']);
 
         return $actions;
     }
@@ -160,7 +170,7 @@ class CollectionController extends BaseApiController
                 $errors = array_merge($errors, $collection->errors);
             }
         
-            if (!empty($data['products'])) {
+            if (isset($data['products'])) {
                 foreach ($data['products'] as $id) {
                     $collectionProduct = new CollectionProduct([
                         'product_id' => $id,
@@ -169,7 +179,7 @@ class CollectionController extends BaseApiController
                 }
             }
 
-            if (!empty($data['marks'])) {
+            if (isset($data['marks'])) {
                 foreach ($data['marks'] as $id) {
                     $collectionMark = new CollectionMark([
                         'mark_id' => $id,
@@ -236,10 +246,9 @@ class CollectionController extends BaseApiController
         $data = Yii::$app->request->post();
         $transaction = Yii::$app->db->beginTransaction();
         $errors = [];
+        
         $marks = [];
         $products = [];
-        $newProducts = [];
-        $newMarks = [];
 
         try {
             $collection = Collection::findOne($id);
@@ -252,7 +261,7 @@ class CollectionController extends BaseApiController
             }
 
             // Фото коллекции
-            if (!empty($_FILES["recipe_photo"]["name"])) {
+            if (!empty($_FILES["photo"]["name"])) {
                 
                 if (!empty($collection->photo)) {
                     $photoPath = Yii::getAlias('@webroot') . parse_url($collection->photo, PHP_URL_PATH);
@@ -264,9 +273,9 @@ class CollectionController extends BaseApiController
 
                 $upload = $this->uploadImage($_FILES["photo"]);
                 if (!$upload['success']) {
+                    $errors['photo'] = $upload['message'];
                 } else {
                     $collection->photo = $upload['url'];
-                    $errors['photo'] = $upload['message'];
                 }
             }
 
@@ -278,42 +287,22 @@ class CollectionController extends BaseApiController
             }
 
             // Продукты
-            if(!empty($data['products'])){
-                $existingProducts = $collection->getProducts()->indexBy('id')->all();                
-         
-                foreach ($data['products'] as $productData) {
-                    if(isset($productData['id'])) {
-                    $product = CollectionProduct::findOne($productData['id']);
-                    } else {
-                    $product = new CollectionProduct(['collection_id' => $collection->id]);
-                    }
-        
-                    $product->setAttributes($productData);
-        
-                    if (!$product->validate()) {
-                        $errors["product_{$productData}"] = $product->errors;
-                    }
-                    $products[] = $product;
+            if (isset($data['products'])) {
+                foreach($data['products'] as $id) {
+                    $collectionProduct = new CollectionProduct([
+                        'product_id' => $id,
+                    ]);
+                    $products[] = $collectionProduct;
                 }
             }
 
             // Метки
-            if(!empty($data['marks'])){
-                $existingMarks = $collection->getMarks()->indexBy('id')->all();
-        
-                foreach ($data['marks'] as $markData) {
-                    if (isset($markData['id'])) {
-                    $mark = CollectionMark::findOne($markData['id']);
-                    } else {
-                    $mark = new CollectionMark(['collection_id' => $collection->id]);
-                    }
-        
-                    $mark->setAttributes($markData);
-        
-                    if (!$mark->validate()) {
-                        $errors["mark_{$markData}"] = $mark->errors;
-                    }
-                    $marks[] = $mark;
+            if (isset($data['marks'])) {
+                foreach($data['marks'] as $id) {
+                    $collectionMark = new CollectionMark([
+                        'mark_id' => $id,
+                    ]);
+                    $marks[] = $collectionMark;
                 }
             }
 
@@ -331,28 +320,17 @@ class CollectionController extends BaseApiController
 
             $collection->save();
 
-            foreach ($products ?? [] as $product) {
-                $newProducts[] = $product->id;
+            CollectionMark::deleteAll(['collection_id' => $collection->id]);
+            CollectionProduct::deleteAll(['collection_id' => $collection->id]);
+
+            foreach ($products as $product) {
+                $product->collection_id = $collection->id;
                 $product->save();
             }
 
-            foreach ($marks ?? [] as $mark) {
-                $newMarks[] = $mark->id;
+            foreach ($marks as $mark) {
+                $mark->collection_id = $collection->id;
                 $mark->save();
-            }
-
-            if(isset($existingProducts)){
-                $productsToDelete = array_diff(array_keys($existingProducts), $newProducts);
-                if (!empty($productsToDelete)){
-                    CollectionProduct::deleteAll(['id' => $productsToDelete]);
-                }
-            }
-
-            if(isset($existingMarks)){
-                $marksToDelete = array_diff(array_keys($existingMarks), $newMarks);
-                if (!empty($marksToDelete)){
-                    CollectionMark::deleteAll(['id' => $marksToDelete]);
-                }
             }
 
             $transaction->commit();
@@ -373,20 +351,6 @@ class CollectionController extends BaseApiController
         }
     }
 
-    // public function actionDelete($id)
-    // {
-    //     $model = $this->findModel($id);
-    
-    //     if ($model->delete()) {
-    //         return [
-    //             'success' => true,
-    //             'message' => 'Коллекция и все связанные данные успешно удалены.',
-    //         ];
-    //     }
-
-    //     throw new \yii\web\ServerErrorHttpException('Ошибка при удалении коллекции.'); 
-    // }
-
     public function actionDelete($id)
     {
         $model = $this->findModel($id);
@@ -404,18 +368,11 @@ class CollectionController extends BaseApiController
 
     private function deleteRelatedData($model)
     {
-        $this->deleteImage($model->photo);
-
-    }
-
-    private function deleteImage($fileUrl)
-    {
-        if ($fileUrl) {
-            $filePath = Yii::getAlias('@webroot') . parse_url($fileUrl, PHP_URL_PATH);
+        if ($model->photo) {
+            $filePath = Yii::getAlias('@webroot') . parse_url($model->photo, PHP_URL_PATH);
             if (file_exists($filePath)) {
                 unlink($filePath);
             }
         }
     }
-
 }

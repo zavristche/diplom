@@ -1,17 +1,13 @@
 <?php
 namespace app\controllers;
 use yii\filters\AccessControl;
-use app\models\recipe\Recipe;
-use app\models\recipe\RecipeMark;
 use app\models\recipe\RecipeReaction;
 use Yii;
-use yii\rest\ActiveController;
-use yii\data\ActiveDataProvider;
-use yii\web\BadRequestHttpException;
-use yii\web\NotFoundHttpException;
 use app\controllers\BaseApiController;
+use app\models\collection\Collection;
+use app\models\collection\CollectionReaction;
 
-class RecipeReactionController extends BaseApiController
+class CollectionReactionController extends BaseApiController
 {
     public $modelClass = 'app\models\recipe\RecipeReaction';
 
@@ -51,6 +47,7 @@ class RecipeReactionController extends BaseApiController
         try {
             return parent::beforeAction($action);
         } catch (\yii\web\UnauthorizedHttpException $e) {
+            // Обработка исключения с кастомным сообщением
             throw new \yii\web\UnauthorizedHttpException('Это действие доступно только авторизированным пользователям');
         }
     }
@@ -58,17 +55,17 @@ class RecipeReactionController extends BaseApiController
     public function actionCreate()
     {
         $data = Yii::$app->request->getBodyParams();
-        $recipe = Recipe::findOne($data['recipe_id']);
+        $collection = Collection::findOne($data['collection_id']);
 
-        if($recipe->user_id == Yii::$app->user->id){
+        if($collection->user_id == Yii::$app->user->id){
             return [
                 'success' => false,
-                'message' => 'Вы не можете лайкнуть свой собственный рецепт'
+                'message' => 'Вы не можете лайкнуть свой собственную коллекцию'
             ];
         }
 
-        $model = new RecipeReaction([
-            'recipe_id' => $data['recipe_id'],
+        $model = new CollectionReaction([
+            'collection_id' => $data['collection_id'],
             'user_id' => Yii::$app->user->id,
         ]);
 
@@ -82,7 +79,7 @@ class RecipeReactionController extends BaseApiController
     public function actionDelete()
     {
         $data = Yii::$app->request->getBodyParams();
-        $model = RecipeReaction::findOne(['recipe_id' => $data['recipe_id'], 'user_id' => Yii::$app->user->id]);
+        $model = CollectionReaction::findOne(['collection_id' => $data['collection_id'], 'user_id' => Yii::$app->user->id]);
         
         if ($model->delete()) {
             return [
@@ -92,5 +89,5 @@ class RecipeReactionController extends BaseApiController
         }
 
         throw new \yii\web\ServerErrorHttpException('Ошибка при удалении реакции.'); 
-    } 
+    }
 }
