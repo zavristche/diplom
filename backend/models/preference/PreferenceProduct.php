@@ -51,6 +51,14 @@ class PreferenceProduct extends \yii\db\ActiveRecord
         ];
     }
 
+    public function fields()
+    {
+        $fields = parent::fields();
+        $fields['product'] = fn() => $this->product;
+
+        return $fields;
+    }
+
     /**
      * Gets query for [[Product]].
      *

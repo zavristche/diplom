@@ -24,6 +24,8 @@ use app\models\user\User;
  */
 class Comment extends \yii\db\ActiveRecord
 {
+    public $imageFile;
+    
     /**
      * {@inheritdoc}
      */
@@ -38,7 +40,7 @@ class Comment extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['recipe_id', 'user_id', 'text', 'photo'], 'required'],
+            [['recipe_id', 'user_id', 'text'], 'required'],
             [['recipe_id', 'user_id', 'answer_id'], 'integer'],
             [['created_at'], 'safe'],
             [['text'], 'string'],
@@ -46,7 +48,17 @@ class Comment extends \yii\db\ActiveRecord
             [['answer_id'], 'exist', 'skipOnError' => true, 'targetClass' => self::class, 'targetAttribute' => ['answer_id' => 'id']],
             [['recipe_id'], 'exist', 'skipOnError' => true, 'targetClass' => Recipe::class, 'targetAttribute' => ['recipe_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
+            [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg'],
         ];
+    }
+
+    public function fields()
+    {
+        $fields = parent::fields();
+        $fields['user'] = fn() => $this->user;
+        $fields['answer'] = fn() => $this->answer;
+
+        return $fields;
     }
 
     /**
@@ -56,12 +68,13 @@ class Comment extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'recipe_id' => 'Recipe ID',
-            'user_id' => 'User ID',
-            'answer_id' => 'Answer ID',
-            'created_at' => 'Created At',
-            'text' => 'Text',
-            'photo' => 'Photo',
+            'recipe_id' => 'Рецепт',
+            'user_id' => 'Пользователь',
+            'answer_id' => 'Ответ на комментарий',
+            'created_at' => 'Дата создания',
+            'text' => 'Текст',
+            'photo' => 'Фото',
+            'imageFile' => 'Фото',
         ];
     }
 

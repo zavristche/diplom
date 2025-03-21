@@ -38,6 +38,23 @@ class Checklist extends \yii\db\ActiveRecord
         ];
     }
 
+    public function fields()
+    {
+        $fields = parent::fields();
+
+        $fields['user'] = function() {
+            $userData = $this->user;
+            unset(
+                $userData['auth_key'],
+                $userData['password'],
+            );
+            return $userData;
+        };
+        $fields['products'] = fn() => $this->getProducts()->select([])->asArray()->all();
+
+        return $fields;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -59,5 +76,10 @@ class Checklist extends \yii\db\ActiveRecord
     public function getUser()
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
+    }
+
+    public function getProducts()
+    {
+        return $this->hasMany(ChecklistProduct::class, ['list_id' => $this->id]);
     }
 }

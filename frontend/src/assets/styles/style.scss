@@ -126,3 +126,13 @@ a {
     }
   }
 }
+
+.loading-container,
+.error-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; // Полная высота экрана
+  font-size: 24px;
+  color: $text-info; // Пример использования переменной из SCSS
+}

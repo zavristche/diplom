@@ -42,6 +42,7 @@ use yii\web\Linkable;
  */
 class Collection extends \yii\db\ActiveRecord implements Linkable
 {
+    public $imageFile;
     /**
      * {@inheritdoc}
      */
@@ -64,7 +65,7 @@ class Collection extends \yii\db\ActiveRecord implements Linkable
             [['private_id'], 'exist', 'skipOnError' => true, 'targetClass' => PrivateType::class, 'targetAttribute' => ['private_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
             [['status_id'], 'exist', 'skipOnError' => true, 'targetClass' => StatusContent::class, 'targetAttribute' => ['status_id' => 'id']],
-            [['photo'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg'],
+            [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg'],
         ];
     }
 
@@ -80,6 +81,7 @@ class Collection extends \yii\db\ActiveRecord implements Linkable
             'status_id' => 'Статус',
             'title' => 'Заголовок',
             'photo' => 'Фото',
+            'imageFile' => 'Фото',
             'description' => 'Описание',
             'saved' => 'Сохранения',
             'likes' => 'Лайки',

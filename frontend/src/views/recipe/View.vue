@@ -1,23 +1,16 @@
 <script setup>
-import { ref } from 'vue';
-import BaseIcon from "../../components/BaseIcon.vue";
-import Recipe from "../../components/Recipe.vue";
-import RecipeService from '../../api/RecipeService';
 import { useRoute } from 'vue-router';
+import Recipe from '../../components/Recipe.vue';
 
-const myRecipe = ref(null);
 const route = useRoute();
-RecipeService.getById(route.params.id).then((recipe) => {
-    console.log('Recipe:', recipe);
-    myRecipe.value = recipe.data;
-}).catch((error) => {
-    console.error('Error fetching recipe:', error);
-});
+const myRecipe = route.meta.recipe; // Получаем данные из meta
 </script>
+
 <template>
-  <title>{{ myRecipe.title }}</title>
   <section class="content-container">
+    <title>{{ myRecipe?.title }}</title> <!-- Используем опциональную цепочку -->
     <Recipe v-if="myRecipe" :recipe="myRecipe" />
+    <p v-else>Рецепт не найден</p>
   </section>
 </template>
 
@@ -28,49 +21,7 @@ RecipeService.getById(route.params.id).then((recipe) => {
 .content-container {
   display: grid;
   width: 100%;
-  grid-template-columns: repeat(3, 1fr); // Три равные колонки
-  gap: 40px; // Расстояние между карточками
-  // margin-top: 50px;
-}
-
-.hero {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: 100%;
-  // height: 36rem;
-  align-content: center;
-  // background-color: $accent-color-2;
-
-  h1 {
-    font-weight: 600;
-    font-size: 100px;
-  }
-
-  .search {
-    box-shadow: $shadow;
-  }
-
-  .container-col {
-    justify-content: space-between;
-    height: 19rem;
-  }
-}
-
-.slogan {
-  font-weight: 300;
-  font-size: 32px;
-}
-
-.mascot {
-  display: flex;
-  width: 100%;
-  height: 38rem;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
 }
 </style>

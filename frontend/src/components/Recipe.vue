@@ -11,7 +11,7 @@ const toggleMenu = () => {
 defineProps({
   recipe: {
     type: Object,
-    required: true, // Обязательный prop
+    required: true,
   },
 });
 </script>
@@ -73,7 +73,6 @@ defineProps({
     align-items: flex-end;
     gap: 10px;
     font-size: 18px;
-    // padding: 20px;
 
     .btn-popup{
         position: absolute;

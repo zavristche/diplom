@@ -81,10 +81,38 @@ $config = [
                     'pluralize' => false,
                     'prefix' => 'api',
                     'extraPatterns' => [
-                        'PATCH <id:\d+>' => 'update',
-                        'DELETE <id:\d+>' => 'delete',
                         'GET <id:\d+>' => 'view',
                     ],
+                ],
+
+                //Настройки / Аккаунт
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => ['profile/setting/account' => 'profile/setting/user'],
+                    'pluralize' => false,
+                    'prefix' => 'api',
+                    'extraPatterns' => [
+                        'PATCH <id:\d+>' => 'update',
+                    ],
+                ],
+
+                //Настройки / Метки
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'profile/setting/preference-mark',
+                    'pluralize' => false,
+                    'prefix' => 'api',
+                    'extraPatterns' => [
+                        'POST' => 'create',
+                    ],
+                ],
+
+                //Настройки / Продукты
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'profile/setting/preference-product',
+                    'pluralize' => false,
+                    'prefix' => 'api',
                 ],
 
                 //Админ-панель / Рецепты
@@ -149,6 +177,17 @@ $config = [
                     ],
                 ],
 
+                //Комментарий
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'comment',
+                    'pluralize' => false,
+                    'prefix' => 'api',
+                    'extraPatterns' => [
+                        // 'GET search' => 'search',
+                    ],
+                ],
+                
                 //Коллекция
                 [
                     'class' => 'yii\rest\UrlRule',
@@ -196,7 +235,7 @@ $config = [
     'modules' => [
         'profile' => [
             'class' => 'app\modules\profile\Module',
-            'defaultRoute' => 'profile',
+            // 'defaultRoute' => 'profile',
         ],
         'admin' => [
             'class' => 'app\modules\admin\Module',

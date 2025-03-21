@@ -51,6 +51,14 @@ class PreferenceMark extends \yii\db\ActiveRecord
         ];
     }
 
+    public function fields()
+    {
+        $fields = parent::fields();
+        $fields['mark'] = fn() => $this->mark;
+
+        return $fields;
+    }
+
     /**
      * Gets query for [[Mark]].
      *

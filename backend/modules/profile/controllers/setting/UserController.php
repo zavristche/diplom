@@ -1,6 +1,6 @@
 <?php
 
-namespace app\modules\profile\controllers;
+namespace app\modules\profile\controllers\setting;
 
 use app\models\user\User;
 use Yii;
@@ -8,8 +8,9 @@ use yii\filters\AccessControl;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use app\controllers\BaseApiController;
+use app\modules\profile\models\UpdateForm;
 
-class ProfileController extends BaseApiController
+class UserController extends BaseApiController
 {
     public $modelClass = "app\models\user\User";
 
@@ -32,7 +33,7 @@ class ProfileController extends BaseApiController
             'rules' => [
                 [
                     'allow' => true,
-                    'actions' => ['index', 'view'],
+                    'actions' => ['index', 'view', 'update'],
                 ],
             ],
         ];
@@ -48,6 +49,17 @@ class ProfileController extends BaseApiController
         unset($actions['create']);
 
         return $actions;
+    }
+
+        public function actionUpdate($id)
+    {
+        $model = new UpdateForm(['id' => $id]);
+        $data = Yii::$app->request->getBodyParams();
+        $model->load($data, '');
+        $user = $model->update($id);
+
+        // return [123];
+        return $user;
     }
 
     protected function findModel($id)

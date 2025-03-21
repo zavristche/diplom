@@ -2,40 +2,20 @@
 
 namespace app\modules\profile\models;
 
-use app\models\PrivateType;
-use app\models\Role;
 use app\models\user\User;
 use Yii;
-use yii\helpers\VarDumper;
 
-/**
- * This is the model class for table "user".
- *
- * @property int $id
- * @property int $role_id
- * @property string $name
- * @property string $surname
- * @property string|null $patronymic
- * @property string $email
- * @property string $login
- * @property string $password
- * @property string $auth_key
- * @property string|null $avatar
- *
- * @property Comment[] $comments
- * @property Post[] $posts
- * @property Role $role
- * @property UserLock[] $userLocks
- */
 class UpdateForm extends \yii\base\Model
 {
     public int $id;
+    public int $private_id;
     public string $name = '';
     public string $surname = '';
     public string $email = '';
     public string $login = '';
     public string $password = '';
     public string $password_repeat = '';
+    // public string $password_old = '';
     public $avatar;
     public $photo_header;
     public bool $delete_avatar = false;
@@ -48,10 +28,9 @@ class UpdateForm extends \yii\base\Model
     public function rules()
     {
         return [
-            [[ 'name', 'surname', 'email', 'login', 'password', 'password_repeat',], 'required'],
+            [[ 'name', 'surname', 'email', 'login', 'password', 'password_repeat', 'private_id'], 'required'],
             [['name', 'surname', 'email', 'login', 'password', 'password_repeat'], 'string', 'max' => 255],
             
-            // [['login', 'email'], 'unique', 'targetClass' => User::class],
             ['email', 'email'],
 
             [['name', 'surname'], 'match', 'pattern' => '/^[а-яё\s]+$/ui', 'message' => 'Разрешена только кириллица и пробелы'],
@@ -64,10 +43,6 @@ class UpdateForm extends \yii\base\Model
             [['avatar', 'photo_header'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg'],
 
             [['delete_avatar', 'delete_photo_header'], 'boolean'],
-
-            // ['avatar', 'required', 'on' => self::SCENARIO_AVATAR],
-            // ['photo_header', 'required', 'on' => self::SCENARIO_PHOTO_HEADER],
-            // [['photo_header', 'avatar'], 'required', 'on' => self::SCENARIO_TWO_IMG],
         ];
     }
 
@@ -78,11 +53,12 @@ class UpdateForm extends \yii\base\Model
     {
         return [
             'id' => 'ID',
+            'private_id' => 'Кто может видеть мой профиль?',
             'name' => 'Имя',
             'surname' => 'Фамилия',
             'email' => 'Почта',
             'login' => 'Логин',
-            // 'password_old' => 'Старый пароль',
+            'password_old' => 'Старый пароль',
             'password' => 'Пароль',
             'password_repeat' => 'Повтор пароля',
             'avatar' => 'Аватар',
@@ -92,16 +68,16 @@ class UpdateForm extends \yii\base\Model
         ];
     }
 
-    public function validateOldPassword($attribute, $params)
-    {
-        if (!$this->hasErrors()) {
-            $user = $this->user($this->id);
+    // public function validateOldPassword($attribute, $params)
+    // {
+    //     if (!$this->hasErrors()) {
+    //         $user = $this->user($this->id);
 
-            if (!$user || !$user->validatePassword($this->password)) {
-                $this->addError($attribute, 'Неверный пароль');
-            }
-        }
-    }
+    //         if (!$user || !$user->validatePassword($this->password_щдв)) {
+    //             $this->addError($attribute, 'Неверный старый пароль');
+    //         }
+    //     }
+    // }
 
     private function uploadImage($file)
     {

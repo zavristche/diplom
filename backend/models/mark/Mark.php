@@ -55,6 +55,14 @@ class Mark extends \yii\db\ActiveRecord
         ];
     }
 
+    public function fields()
+    {
+        $fields = parent::fields();
+        $fields['type'] = fn() => $this->type;
+
+        return $fields;
+    }
+
     /**
      * Gets query for [[CollectionMarks]].
      *

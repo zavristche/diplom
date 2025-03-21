@@ -29,6 +29,7 @@ use app\models\user\User;
  * @property int $status_id
  * @property int $private_id
  * @property int $complexity_id
+ * @property int $portions
  * @property string $created_at
  * @property string $admin_comment
  * @property string $title
@@ -72,8 +73,8 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
     public function rules()
     {
         return [
-            [['user_id', 'status_id', 'private_id', 'title', 'description', 'time', 'complexity_id'], 'required'],
-            [['user_id', 'status_id', 'private_id', 'saved', 'likes'], 'integer'],
+            [['user_id', 'status_id', 'private_id', 'title', 'description', 'time', 'complexity_id', 'portions'], 'required'],
+            [['user_id', 'status_id', 'private_id', 'saved', 'likes', 'portions'], 'integer'],
             [['created_at'], 'safe'],
             [['description'], 'string'],
             [['title', 'photo', 'time'], 'string', 'max' => 255],
@@ -115,6 +116,7 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
             'saved' => 'Сохранения',
             'likes' => 'Оценки',
             'time' => 'Время приготовления',
+            'portions' => 'Количество порций',
             'admin_comment' => 'Причина отклонения публикации',
         ];
     }
@@ -148,6 +150,8 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
         $fields = parent::fields();
 
         $fields['status'] = fn() => $this->status;
+        $fields['created_at'] = fn() => Yii::$app->formatter->asDate($this->created_at, 'php:d.m.Y');
+        $fields['user'] = fn() => $this->user;
         $fields['complexity'] = fn() => $this->complexity;
         $fields['private'] = fn() => $this->private;
         $fields['comments'] = fn() => $this->comments;
@@ -171,6 +175,7 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
             }
             return [];
         };
+        
         $fields['calendar_recipe'] = function () {
             if (!Yii::$app->user->isGuest) {
                 return $this->getRecipeCalendars()->andWhere(['user_id' => Yii::$app->user->identity->id])->all();

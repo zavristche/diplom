@@ -54,18 +54,7 @@ class CollectionController extends BaseApiController
         try {
             return parent::beforeAction($action);
         } catch (\yii\web\UnauthorizedHttpException $e) {
-            throw new \yii\web\UnauthorizedHttpException('Доступ запрещен');
-        }
-    }
-
-    public function checkAccess($action, $model = null, $params = [])
-    {
-        if ($action === 'create' || $action === 'delete') {
-            if ($model->user_id !== \Yii::$app->user->id)
-            return [
-                'success' => false,
-                'message' => 'Вы не можете лайкнуть свой собственную коллекцию'
-            ];
+            throw new \yii\web\UnauthorizedHttpException('Это действие доступно только авторизированным пользователям');
         }
     }
 
@@ -149,7 +138,7 @@ class CollectionController extends BaseApiController
         $fileUrl = Yii::$app->request->hostInfo . '/uploads/' . $fileName;
     
         return (move_uploaded_file($file['tmp_name'], $filePath) || copy($file['tmp_name'], $filePath)) 
-            ? ['success' => true, 'url' => $fileUrl] 
+            ? ['success' => true, 'url' => $fileUrl, 'filePath' => $filePath] 
             : ['success' => false, 'message' => 'Ошибка при сохранении файла.'];
     }
 
@@ -160,16 +149,16 @@ class CollectionController extends BaseApiController
         $errors = [];
         $products = [];
         $marks = [];
-    
+        $uploadedFilePath = null;
         try {
             $collection = new Collection();
             $collection->user_id = Yii::$app->user->id;
             $collection->status_id = StatusContent::getOne('Новое');
-    
+
             if (!$collection->load($data, '') || !$collection->validate()) {
                 $errors = array_merge($errors, $collection->errors);
             }
-        
+
             if (isset($data['products'])) {
                 foreach ($data['products'] as $id) {
                     $collectionProduct = new CollectionProduct([
@@ -190,16 +179,19 @@ class CollectionController extends BaseApiController
 
             // Фото коллекции
             if (!empty($_FILES["photo"]["name"])) {
-    
                 $upload = $this->uploadImage($_FILES["photo"]);
                 if (!$upload['success']) {
                     $errors['photo'] = $upload['message'];
                 } else {
-                    $collection->photo = $upload['url'];
+                    $collection->imageFile = $upload['url'];
+                    $uploadedFilePath = $upload['filePath'];
                 }
             }
-    
+
             if (!empty($errors)) {
+                if ($uploadedFilePath && file_exists($uploadedFilePath)) {
+                    unlink($uploadedFilePath);
+                }
                 Yii::$app->response->statusCode = 422;
                 return [
                     'success' => false,
@@ -210,7 +202,8 @@ class CollectionController extends BaseApiController
                     'marks' => $marks
                 ];
             }
-    
+
+            $collection->photo = $collection->imageFile;
             $collection->save();
 
             foreach ($products ?? [] as $product) {
@@ -224,13 +217,17 @@ class CollectionController extends BaseApiController
             }
 
             $transaction->commit();
-    
+
             return [
                 'success' => true,
                 'message' => 'Коллекция успешно создана',
                 'collection' => $collection->toArray(),
             ];
         } catch (\Exception $e) {
+            // В случае исключения удаляем загруженный файл
+            if ($uploadedFilePath && file_exists($uploadedFilePath)) {
+                unlink($uploadedFilePath);
+            }
             $transaction->rollBack();
             Yii::$app->response->statusCode = 500;
             return [
