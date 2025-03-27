@@ -1,18 +1,21 @@
 <script setup>
-import { ref } from 'vue';
-
+import { ref, computed } from "vue";
+import { useRoute } from "vue-router";
 import BaseIcon from "../components/BaseIcon.vue";
 import Recipe from "../components/Recipe.vue";
 import RecipeService from '../api/RecipeService';
 
 const myRecipes = ref([]);
 
-RecipeService.getAll().then((recipes) => {
-    console.log('Recipes:', recipes);
-    myRecipes.value = recipes.data.data;
-}).catch((error) => {
-    console.error('Error fetching recipes:', error);
-});
+const route = useRoute();
+const recipes = route.meta.data;
+console.log(recipes);
+// RecipeService.getAll().then((recipes) => {
+//     console.log('Recipes:', recipes);
+//     myRecipes.value = recipes.data.data;
+// }).catch((error) => {
+//     console.error('Error fetching recipes:', error);
+// });
 </script>
 <template>
   <section class="hero">
@@ -26,7 +29,7 @@ RecipeService.getAll().then((recipes) => {
         <input
           type="text"
           id="search"
-          placeholder="Поиск по рецептам, подборкам и авторам"
+          placeholder="Поиск"
         />
         <div class="btn-container">
           <button type="submit" id="btn-search" class="btn-salat">Найти</button>
@@ -36,8 +39,12 @@ RecipeService.getAll().then((recipes) => {
     </div>
     <img src="/img/mascot.png" alt="Test Image">
   </section>
-  <section v-for="recipe in myRecipes" :key="recipe.id" class="content-container">
-    <Recipe v-if="recipe" :recipe="recipe" />
+  <section class="content-container">
+    <Recipe
+      v-for="recipe in recipes"
+      :key="recipe.id"
+      :recipe="recipe"
+    />
   </section>
 </template>
 

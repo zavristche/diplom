@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use app\models\recipe\Recipe;
 use Yii;
 
 /**
@@ -9,6 +10,7 @@ use Yii;
  *
  * @property int $id
  * @property string $description
+ * @property string $title
  * @property int $value
  *
  * @property Recipe[] $recipes
@@ -29,9 +31,9 @@ class Complexity extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['description', 'value'], 'required'],
+            [['description', 'value', 'title'], 'required'],
             [['value'], 'integer'],
-            [['description'], 'string', 'max' => 255],
+            [['description', 'title'], 'string', 'max' => 255],
         ];
     }
 
@@ -45,6 +47,15 @@ class Complexity extends \yii\db\ActiveRecord
             'description' => 'Description',
             'value' => 'Value',
         ];
+    }
+
+    public static function getAll()
+    {
+        return self::find()
+        ->select(['id', 'title', 'description'])
+        ->indexBy('id')
+        ->asArray()
+        ->all();
     }
 
     /**

@@ -45,6 +45,11 @@ class Measure extends \yii\db\ActiveRecord
         ];
     }
 
+    public static function getAll()
+    {
+        return self::find()->select('title')->indexBy('id')->column();
+    }
+
     /**
      * Gets query for [[RecipeProducts]].
      *

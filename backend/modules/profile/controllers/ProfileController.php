@@ -13,6 +13,14 @@ class ProfileController extends BaseApiController
 {
     public $modelClass = "app\models\user\User";
 
+    public function findModel($id)
+    {
+        if (($model = User::findOne($id)) !== null) {
+            return $model; // Убирать поля не нужно здесь, это делается в fields()
+        }
+        throw new NotFoundHttpException('Страница не найдена');
+    }
+
     public function behaviors()
     {
         $behaviors = parent::behaviors();
@@ -46,17 +54,16 @@ class ProfileController extends BaseApiController
         unset($actions['delete']);
         unset($actions['update']);
         unset($actions['create']);
+        unset($actions['view']);
 
         return $actions;
     }
 
-    protected function findModel($id)
+    public function actionView($id)
     {
-        if (($model = User::findOne($id)) !== null) {
-            unset($model['auth_key']);
-            unset($model['password']);
-            return $model;
-        }
-        throw new NotFoundHttpException('Страница не найдена');
+        $model = $this->findModel($id);
+        return $model->toArray([], ['recipes', 'collections']);
     }
+    
+
 }

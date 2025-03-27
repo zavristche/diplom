@@ -152,6 +152,12 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
         $fields['status'] = fn() => $this->status;
         $fields['created_at'] = fn() => Yii::$app->formatter->asDate($this->created_at, 'php:d.m.Y');
         $fields['user'] = fn() => $this->user;
+        $fields['user'] = function () {
+            return $this->user->toArray(
+                array_diff(array_keys($this->user->fields()), ['recipes', 'collections'])
+            );
+        };
+        
         $fields['complexity'] = fn() => $this->complexity;
         $fields['private'] = fn() => $this->private;
         $fields['comments'] = fn() => $this->comments;
@@ -160,21 +166,24 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
         $fields['saved'] = fn() => count($this->getCollectionRecipes()->all());
 
         $fields['marks'] = fn() => $this->getMarks()->select([])->asArray()->all();
-        $fields['products'] = fn() => $this->getProducts()->select([])->asArray()->all();
+        $fields['products'] = fn() => $this->getRecipeProducts()
+        ->with(['product', 'measure']) // Подтягиваем связанные модели
+        ->asArray()
+        ->all();
         $fields['steps'] = fn() => $this->getSteps()->asArray()->all();
 
-        $fields['collections'] = function () {
-            if (!Yii::$app->user->isGuest) {
-                $userId = Yii::$app->user->id;
+        // $fields['collections'] = function () {
+        //     if (!Yii::$app->user->isGuest) {
+        //         $userId = Yii::$app->user->id;
 
-                return $this->getCollectionRecipes()
-                    ->joinWith('collection')
-                    ->andWhere(['collection.user_id' => $userId])
-                    ->andWhere(['recipe_id' => $this->id])
-                    ->all();
-            }
-            return [];
-        };
+        //         return $this->getCollectionRecipes()
+        //             ->joinWith('collection')
+        //             ->andWhere(['collection.user_id' => $userId])
+        //             ->andWhere(['recipe_id' => $this->id])
+        //             ->all();
+        //     }
+        //     return [];
+        // };
         
         $fields['calendar_recipe'] = function () {
             if (!Yii::$app->user->isGuest) {
@@ -260,6 +269,12 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
     {
         return $this->hasMany(Product::class, ['id' => 'product_id'])->via('recipeProducts');
     }
+    
+
+    // public function getProducts()
+    // {
+    //     return $this->hasMany(Product::class, ['id' => 'product_id'])->via('recipeProducts');
+    // }
 
     /**
      * Gets query for [[RecipeReactions]].

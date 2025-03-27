@@ -63,6 +63,15 @@ class RecipeProduct extends \yii\db\ActiveRecord
         ];
     }
 
+    public function fields()
+    {
+        $fields = parent::fields();
+        $fields['product'] = fn() => $this->product;
+        $fields['measure'] = fn() => $this->measure;
+
+        return $fields;
+    }
+
     /**
      * Gets query for [[ChecklistProducts]].
      *

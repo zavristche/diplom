@@ -26,7 +26,7 @@ import BaseIcon from "./BaseIcon.vue";
         <input
           type="text"
           id="search"
-          placeholder="Поиск по рецептам, подборкам и авторам"
+          placeholder="Поиск"
         />
         <div class="btn-container">
           <button type="submit" id="btn-search" class="btn-salat">Найти</button>

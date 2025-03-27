@@ -10,6 +10,11 @@ use yii\filters\AccessControl;
 use Yii;
 use yii\data\ActiveDataProvider;
 use app\controllers\BaseApiController;
+use app\models\mark\Mark;
+use app\models\mark\MarkType;
+use app\models\PrivateType;
+use app\models\product\Product;
+use app\models\product\ProductType;
 use yii\web\NotFoundHttpException;
 
 class CollectionController extends BaseApiController
@@ -30,14 +35,14 @@ class CollectionController extends BaseApiController
         $behaviors = parent::behaviors();
         $behaviors['authenticator'] = [
             'class' => \yii\filters\auth\HttpBearerAuth::class,
-            'except' => ['index', 'view', 'search'],
+            'except' => ['index', 'view', 'search', 'create-data'],
         ];
         $behaviors['access'] = [
             'class' => AccessControl::class,
             'rules' => [
                 [
                     'allow' => true,
-                    'actions' => ['index', 'view', 'search'],
+                    'actions' => ['index', 'view', 'search', 'create-data'],
                 ],
                 [
                     'allow' => true,
@@ -140,6 +145,37 @@ class CollectionController extends BaseApiController
         return (move_uploaded_file($file['tmp_name'], $filePath) || copy($file['tmp_name'], $filePath)) 
             ? ['success' => true, 'url' => $fileUrl, 'filePath' => $filePath] 
             : ['success' => false, 'message' => 'Ошибка при сохранении файла.'];
+    }
+
+    public function actionCreateData()
+    {
+        try {
+            $products = Product::getAll();
+            $product_types = ProductType::getAll();
+            $marks = Mark::getAll();
+            $mark_types = MarkType::getAll();
+            $privates = PrivateType::getAll();
+
+            // Формируем ответ
+            return [
+                'success' => true,
+                'data' => [
+                    'products' => $products,
+                    'product_types' => $product_types,
+                    'marks' => $marks,
+                    'mark_types' => $mark_types,
+                    'privates' => $privates,
+                ],
+                'message' => 'Данные для создания коллекции успешно получены',
+            ];
+        } catch (\Exception $e) {
+            Yii::$app->response->statusCode = 500;
+            return [
+                'success' => false,
+                'message' => 'Ошибка при получении данных',
+                'error' => $e->getMessage(),
+            ];
+        }
     }
 
     public function actionCreate()

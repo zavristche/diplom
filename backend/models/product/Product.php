@@ -71,6 +71,15 @@ class Product extends \yii\db\ActiveRecord
         return $fields;
     }
 
+    public static function getAll()
+    {
+        return self::find()
+        ->select(['id', 'title', 'type_id'])
+        ->indexBy('id')
+        ->asArray()
+        ->all();
+    }
+
     /**
      * Gets query for [[ChecklistProducts]].
      *

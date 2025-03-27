@@ -22,7 +22,7 @@
   align-items: center;
   padding-left: 10px;
   font-weight: 400;
-  font-size: 16px;
+  font-size: 20px;
   input {
     width: 100%;
   }
@@ -78,13 +78,38 @@ a {
   height: 100%;
 }
 
+h1 {
+  font-size: 32px;
+  font-weight: 600;
+}
 
-@function contrast-color($background-color) {
-  $luminance: ((red($background-color) * 0.299) + (green($background-color) * 0.587) + (blue($background-color) * 0.114)) / 255;
-  @if $luminance > 0.8 {
-    @return #fff; // Тёмный текст для светлого фона
+h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 15px 0;
+}
+
+input[type="number"] {
+  -webkit-appearance: none; /* Убирает стандартный вид в WebKit-браузерах */
+  -moz-appearance: textfield; /* Убирает стрелки в Firefox */
+  appearance: none; /* Убирает стандартный вид в современных браузерах */
+}
+
+/* Скрываем кнопки в WebKit-браузерах (Chrome, Safari) */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@function contrast-color($background-color, $threshold: 0.5) {
+  $luminance: ((red($background-color) * 0.299) + 
+               (green($background-color) * 0.587) + 
+               (blue($background-color) * 0.114)) / 255;
+  @if $luminance > $threshold {
+    @return #333333;
   } @else {
-    @return #383502; // Светлый текст для тёмного фона
+    @return #ffffff;
   }
 }
 
@@ -93,13 +118,14 @@ a {
     display: flex;
     flex-direction: row;
     align-items: center;
+    gap: 20px;
     justify-content: space-between;
     color: contrast-color($color);
     background-color: #{$color};
-    padding: 1rem;
+    padding: 15px 20px;
     border-radius: $border;
-    font-weight: 500;
-    font-size: 16px;
+    font-weight: 400;
+    font-size: 20px;
     cursor: pointer;
     box-shadow: $shadow;
   }
@@ -107,10 +133,17 @@ a {
 
 .line {
   background-color: $background;
+  color: $background-dark;
   border: 1px solid $text-info-light;
   font-weight: 400;
-  padding: 0 0.7rem 0 0;
   box-shadow: none;
+}
+
+.no-line {
+  border: none;
+  background-color: $background;
+  box-shadow: none;
+  padding: 10px;
 }
 
 @each $name, $color in $colors {

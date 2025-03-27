@@ -9,7 +9,7 @@ const toggleMenu = () => {
 };
 
 defineProps({
-  recipe: {
+  collection: {
     type: Object,
     required: true,
   },
@@ -18,28 +18,23 @@ defineProps({
 
 <template>
   <section class="card recipe">
-    <router-link :to="`/recipe/${recipe.id}`" class="card__preview">
-        <img :src="`${recipe.photo}`" alt="">
+    <router-link :to="`/collection/${collection.id}`" class="card__preview">
+        <img :src="`${collection.photo}`" alt="">
     </router-link>
     <div class="card__info">
         <div class="card__title">
-            <router-link :to="`/profile/${recipe.user.id}`">
-                <img :src="`${recipe.user.avatar}`" alt="">
+            <router-link :to="`/profile/${collection.user.id}`">
+                <img :src="`${collection.user.avatar}`" alt="">
             </router-link>
             <div class="card__text">
-                <h3><router-link :to="`/recipe/${recipe.id}`">{{ recipe.title }}</router-link></h3>
-                <router-link :to="`/profile/${recipe.user.id}`" class="card__author">{{ recipe.user.login }}</router-link>
+                <h3><router-link :to="`/collection/${collection.id}`">{{ collection.title }}</router-link></h3>
+                <router-link :to="`/profile/${collection.user.id}`" class="card__author">{{ collection.user.login }}</router-link>
                 <div class="card__metadata">
-                    <span class="date">{{ recipe.created_at }}</span>
-                    <span class="marker">•</span>
-                    <span class="reaction">
-                        <BaseIcon viewBox="0 0 12 12" class="icon-light-12-1" name="bookmark"/>
-                        <span class="reaction__count">{{ recipe.saved }}</span>
-                    </span>
+                    <span class="date">{{ collection.created_at }}</span>
                     <span class="marker">•</span>
                     <span class="reaction">
                         <BaseIcon viewBox="0 0 13 13" class="icon-light-13-1" name="heart"/>
-                        <span class="reaction__count">{{ recipe.likes }}</span>
+                        <span class="reaction__count">{{ collection.likes }}</span>
                     </span>
                 </div>
             </div>
@@ -51,10 +46,6 @@ defineProps({
                 <button class="btn-item">
                     <BaseIcon viewBox="0 0 65 65" class="icon-dark-55-1" name="heartb"/>
                     Поставить лайк
-                </button>
-                <button class="btn-item">
-                    <BaseIcon viewBox="0 0 65 65" class="icon-dark-55-1" name="bookmarkb"/>
-                    В коллекцию
                 </button>
             </div>
         </div>

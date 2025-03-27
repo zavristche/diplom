@@ -128,25 +128,39 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     public function fields()
     {
         $fields = parent::fields();
-
+    
+        // Удаляем ненужные поля
         unset($fields['auth_key']);
         unset($fields['password']);
-
+    
+        // Основные поля, которые всегда возвращаются
         $fields['status'] = fn() => $this->status;
         $fields['private'] = fn() => $this->private;
-
-        // $fields['preferece_marks'] = fn() => $this->getPreferenceMarks()->select([])->asArray()->all();
-        // $fields['preference_products'] = fn() => $this->getPreferenceProducts()->select([])->asArray()->all();
-
-        $fields['recipes'] = fn() => $this->getRecipes()->asArray()->all();
         $fields['blocks'] = fn() => $this->getBlocks()->asArray()->all();
-        $fields['collections'] = fn() => $this->getCollections()->asArray()->all();
-
         $fields['_links'] = fn() => $this->getLinks();
-
+    
         return $fields;
     }
     
+    public function extraFields()
+    {
+        return [
+            'recipes' => function () {
+                return $this->recipes ? array_map(function ($recipe) {
+                    return $recipe->toArray(
+                        array_diff(array_keys($recipe->fields()), ['recipes', 'collections'])
+                    );
+                }, $this->recipes) : [];
+            },
+            'collections' => function () {
+                return $this->collections ? array_map(function ($collection) {
+                    return $collection->toArray(
+                        array_diff(array_keys($collection->fields()), ['recipes', 'collections'])
+                    );
+                }, $this->collections) : [];
+            },
+        ];
+    }
 
     public function init()
     {

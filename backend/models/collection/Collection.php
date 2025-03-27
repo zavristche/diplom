@@ -11,6 +11,7 @@ use app\models\collection\CollectionSubscribe;
 use app\models\mark\Mark;
 use app\models\PrivateType;
 use app\models\product\Product;
+use app\models\recipe\Recipe;
 use app\models\StatusContent;
 use app\models\user\User;
 use yii\helpers\Url;
@@ -110,26 +111,42 @@ class Collection extends \yii\db\ActiveRecord implements Linkable
     public function fields()
     {
         $fields = parent::fields();
-
-        $fields['user'] = function() {
-            $userData = $this->user;
-            unset(
-                $userData['auth_key'],
-                $userData['password'],
-            );
-            return $userData;
+    
+        // Поле user: возвращаем данные пользователя, исключая recipes и collections для предотвращения рекурсии
+        $fields['user'] = function () {
+            return $this->user ? $this->user->toArray(
+                array_diff(array_keys($this->user->fields()), ['recipes', 'collections'])
+            ) : null;
         };
-
+    
+        // Форматируем created_at
+        $fields['created_at'] = fn() => Yii::$app->formatter->asDate($this->created_at, 'php:d.m.Y');
         $fields['status'] = fn() => $this->status;
         $fields['private'] = fn() => $this->private;
         $fields['likes'] = fn() => count($this->getCollectionReactions()->all());
         $fields['subs'] = fn() => count($this->getCollectionSubscribes()->all());
-
+    
         $fields['marks'] = fn() => $this->getMarks()->select([])->asArray()->all();
         $fields['products'] = fn() => $this->getProducts()->select([])->asArray()->all();
-
+    
+        // Поле recipes: возвращаем рецепты, включая user, но без рекурсии
+        $fields['recipes'] = function () {
+            return $this->recipes ? array_map(function ($recipe) {
+                $recipeData = $recipe->toArray(
+                    array_diff(array_keys($recipe->fields()), ['recipes', 'collections']) // Исключаем вложенные recipes и collections
+                );
+                if ($recipe->user) {
+                    $recipeData['user'] = $recipe->user->toArray(
+                        array_diff(array_keys($recipe->user->fields()), ['recipes', 'collections'])
+                    );
+                }
+                return $recipeData;
+            }, $this->recipes) : [];
+        };
+    
         return $fields;
     }
+
 
     public function afterDelete()
     {
@@ -165,7 +182,7 @@ class Collection extends \yii\db\ActiveRecord implements Linkable
     {
         return $this->hasMany(CollectionProduct::class, ['collection_id' => 'id']);
     }
-
+    
     public function getProducts()
     {
         return $this->hasMany(Product::class, ['id' => 'product_id'])->via('collectionProducts');
@@ -189,6 +206,11 @@ class Collection extends \yii\db\ActiveRecord implements Linkable
     public function getCollectionRecipes()
     {
         return $this->hasMany(CollectionRecipe::class, ['collection_id' => 'id']);
+    }
+
+    public function getRecipes()
+    {
+        return $this->hasMany(Recipe::class, ['id' => 'recipe_id'])->via('collectionRecipes');
     }
 
     /**

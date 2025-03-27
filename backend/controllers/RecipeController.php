@@ -13,6 +13,13 @@ use yii\data\ActiveDataProvider;
 use yii\web\NotFoundHttpException;
 use app\controllers\BaseApiController;
 use app\models\Comment;
+use app\models\Complexity;
+use app\models\mark\Mark;
+use app\models\mark\MarkType;
+use app\models\Measure;
+use app\models\PrivateType;
+use app\models\product\Product;
+use app\models\product\ProductType;
 
 class RecipeController extends BaseApiController
 {
@@ -34,14 +41,14 @@ class RecipeController extends BaseApiController
         $behaviors = parent::behaviors();
         $behaviors['authenticator'] = [
             'class' => \yii\filters\auth\HttpBearerAuth::class,
-            'except' => ['index', 'view', 'search'],
+            'except' => ['index', 'view', 'search', 'create-data'],
         ];
         $behaviors['access'] = [
             'class' => AccessControl::class,
             'rules' => [
                 [
                     'allow' => true,
-                    'actions' => ['index', 'view', 'search'],
+                    'actions' => ['index', 'view', 'search', 'create-data'],
                 ],
                 [
                     'allow' => true,
@@ -149,6 +156,40 @@ class RecipeController extends BaseApiController
         return (move_uploaded_file($file['tmp_name'], $filePath) || copy($file['tmp_name'], $filePath))
             ? ['success' => true, 'url' => $fileUrl, 'filePath' => $filePath]
             : ['success' => false, 'message' => 'Ошибка при сохранении файла.'];
+    }
+
+    public function actionCreateData()
+    {
+        try {
+            $products = Product::getAll();
+            $product_types = ProductType::getAll();
+            $marks = Mark::getAll();
+            $privates = PrivateType::getAll();
+            $measures = Measure::getAll();
+            $complexities = Complexity::getAll();
+            $mark_types = MarkType::getAll();
+
+            return [
+                'success' => true,
+                'data' => [
+                    'products' => $products,
+                    'product_types' => $product_types,
+                    'marks' => $marks,
+                    'measures' => $measures,
+                    'privates' => $privates,
+                    'complexities' => $complexities,
+                    'mark_types' => $mark_types,
+                ],
+                'message' => 'Данные для создания рецепта успешно получены',
+            ];
+        } catch (\Exception $e) {
+            Yii::$app->response->statusCode = 500;
+            return [
+                'success' => false,
+                'message' => 'Ошибка при получении данных',
+                'error' => $e->getMessage(),
+            ];
+        }
     }
 
     public function actionCreate()

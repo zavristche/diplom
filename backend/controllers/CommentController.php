@@ -147,7 +147,7 @@ class CommentController extends BaseApiController
 
             return [
                 'success' => true,
-                'message' => 'Коллекция успешно создана',
+                'message' => 'Комментарий успешно создан',
                 'collection' => $comment->toArray(),
             ];
         } catch (\Exception $e) {
@@ -158,7 +158,7 @@ class CommentController extends BaseApiController
             Yii::$app->response->statusCode = 500;
             return [
                 'success' => false,
-                'message' => 'Ошибка при создании коллекции',
+                'message' => 'Ошибка при создании комментария',
                 'error' => $e->getMessage(),
             ];
         }

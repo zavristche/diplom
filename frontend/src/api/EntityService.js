@@ -13,6 +13,10 @@ export default class EntityService {
         return apiClient.get(`/${this.resource}/${id}`);
     }
 
+    getCreateData() {
+        return apiClient.get(`/${this.resource}/create-data`);
+    }
+
     create(data) {
         return apiClient.post(`/${this.resource}`, data);
     }

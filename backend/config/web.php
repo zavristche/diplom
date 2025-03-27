@@ -50,13 +50,13 @@ $config = [
             ],
         ],
         'db' => $db,
-        
+
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'enableStrictParsing' => true,
             'rules' => [
-                
+
                 //Пользователь
                 'POST api/login' => 'user/login',
                 'POST api/register' => 'user/register',
@@ -141,7 +141,7 @@ $config = [
                         'GET <id:\d+>' => 'view',
                     ],
                 ],
-                
+
                 //Рецепт
                 [
                     'class' => 'yii\rest\UrlRule',
@@ -150,6 +150,7 @@ $config = [
                     'prefix' => 'api',
                     'extraPatterns' => [
                         'GET search' => 'search',
+                        'GET create-data' => 'create-data',
                     ],
                 ],
 
@@ -164,7 +165,7 @@ $config = [
                         'DELETE' => 'delete',
                     ],
                 ],
-                
+
                 //Рецепт в коллекции
                 [
                     'class' => 'yii\rest\UrlRule',
@@ -187,7 +188,7 @@ $config = [
                         // 'GET search' => 'search',
                     ],
                 ],
-                
+
                 //Коллекция
                 [
                     'class' => 'yii\rest\UrlRule',
@@ -196,6 +197,7 @@ $config = [
                     'prefix' => 'api',
                     'extraPatterns' => [
                         'GET search' => 'search',
+                        'GET create-data' => 'create-data',
                     ],
                 ],
 
@@ -210,6 +212,17 @@ $config = [
                         'DELETE' => 'delete',
                     ],
                 ],
+
+                //Поиск
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'search',
+                    'pluralize' => false,
+                    'prefix' => 'api',
+                    'extraPatterns' => [
+                        'GET data' => 'data',
+                    ],
+                ],
             ],
         ],
         'on beforeSend' => function ($event) {
@@ -218,10 +231,10 @@ $config = [
         'assetManager' => [
             'bundles' => [
                 'yii\bootstrap\BootstrapAsset' => false,
-                'yii\bootstrap\BootstrapPluginAsset' => false, 
+                'yii\bootstrap\BootstrapPluginAsset' => false,
             ],
         ],
-        
+
     ],
     'as corsFilter' => [
         'class' => \yii\filters\Cors::class,

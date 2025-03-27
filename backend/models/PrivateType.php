@@ -49,6 +49,11 @@ class PrivateType extends \yii\db\ActiveRecord
         ];
     }
 
+    public static function getAll()
+    {
+        return self::find()->select('title')->indexBy('id')->column();
+    }
+
     public static function getOne($title)
     {
         return self::findOne(['title' => $title])->id;

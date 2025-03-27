@@ -3,7 +3,7 @@
 namespace app\models\product;
 
 use Yii;
-use app\models\Product;
+use app\models\product\Product;
 
 /**
  * This is the model class for table "product_type".
@@ -43,6 +43,11 @@ class ProductType extends \yii\db\ActiveRecord
             'id' => 'ID',
             'title' => 'Title',
         ];
+    }
+
+    public static function getAll()
+    {
+        return self::find()->select('title')->indexBy('id')->column();
     }
 
     /**
