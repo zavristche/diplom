@@ -1,12 +1,20 @@
 <script setup>
+import { ref } from "vue";
+import Register from "../components/Register.vue";
+import Login from "../components/Login.vue";
 import BaseIcon from "./BaseIcon.vue";
+
+const isRegisterOpen = ref(false);
+const isLoginOpen = ref(false);
 </script>
 
 <template>
+  <Register :isOpen="isRegisterOpen" @close="isRegisterOpen = false" />
+  <Login :isOpen="isLoginOpen" @close="isLoginOpen = false" />
   <header>
     <div class="container">
       <a href="/">
-        <BaseIcon class="logo"  name="logo"/>
+        <BaseIcon class="logo" name="logo" />
       </a>
       <nav class="labels left">
         <a href="/search/recipe">
@@ -21,24 +29,16 @@ import BaseIcon from "./BaseIcon.vue";
       </nav>
       <div class="search">
         <div class="btn icon">
-          <BaseIcon class="icon-dark-45-1" viewBox="0 0 45 45" name="search"/>
+          <BaseIcon class="icon-dark-45-1" viewBox="0 0 45 45" name="search" />
         </div>
-        <input
-          type="text"
-          id="search"
-          placeholder="Поиск"
-        />
+        <input type="text" id="search" placeholder="Поиск" />
         <div class="btn-container">
           <button type="submit" id="btn-search" class="btn-salat">Найти</button>
         </div>
       </div>
       <nav class="labels left">
-        <a href="/register">
-          <div class="label-item">Регистрация</div>
-        </a>
-        <a href="/login">
-          <div class="label-item">Вход</div>
-        </a>
+        <button class="label-item" @click="isRegisterOpen = true">Регистрация</button>
+        <button class="label-item" @click="isLoginOpen = true">Вход</button>
       </nav>
     </div>
   </header>
@@ -76,10 +76,10 @@ header {
 
     max-width: 75rem;
     min-width: 28.75rem;
+  }
 
-
+  .label-item {
+    color: $light;
   }
 }
-
-
 </style>

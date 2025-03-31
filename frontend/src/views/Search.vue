@@ -604,23 +604,6 @@ const handleSubmit = (event) => {
   width: 100%;
 }
 
-.input-form {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px 20px;
-  border-radius: $border;
-  font-size: 20px;
-  font-weight: 400;
-  border: 1px solid $text-info-light;
-  width: 100%;
-
-  &::placeholder {
-    font-weight: 300;
-  }
-}
-
 .btn-group {
   display: flex;
   flex-wrap: wrap;

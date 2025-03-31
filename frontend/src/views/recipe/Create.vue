@@ -528,7 +528,7 @@ onMounted(() => {
       font-weight: 400;
       background: transparent;
       outline: none;
-      min-width: 100px; /* Чтобы input не сжимался слишком сильно */
+      min-width: 100px;
     }
   }
 

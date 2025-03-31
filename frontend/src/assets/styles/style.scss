@@ -27,8 +27,6 @@
     width: 100%;
   }
 
-
-
   background-color: $background;
   width: 550px;
   height: 2.8rem;
@@ -50,11 +48,12 @@
 nav {
   display: flex;
   flex-direction: row;
+  height: 100%;
+
 
   .label-item {
     display: flex;
     align-items: center;
-    height: 100%;
     padding: 0 1rem;
   }
 }
@@ -131,6 +130,19 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 }
 
+.btn-icon {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0 ;
+}
+
+.btn-small {
+  font-weight: 400;
+  color: $text-info-light;
+}
+
 .line {
   background-color: $background;
   color: $background-dark;
@@ -160,12 +172,33 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 }
 
-.loading-container,
-.error-container {
+//Формы
+.input-form {
   display: flex;
-  justify-content: center;
+  flex-direction: row;
   align-items: center;
-  height: 100vh; // Полная высота экрана
-  font-size: 24px;
-  color: $text-info; // Пример использования переменной из SCSS
+  justify-content: space-between;
+  padding: 15px 20px;
+  border-radius: $border;
+  font-size: 20px;
+  font-weight: 400;
+  border: 1px solid $text-info-light;
+  width: 100%;
+
+  &::placeholder {
+    font-weight: 300;
+  }
+
+  &.invalid {
+    border: 2px solid $error;
+  }
+
+  &.valid {
+    border: 2px solid $accent-color-1;
+  }
+}
+
+.invalid-feedback {
+  font-size: 16px;
+  color: $error;
 }

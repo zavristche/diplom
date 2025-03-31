@@ -230,7 +230,7 @@ const onFileSelected = (event, id = null) => {
         {{ comment.user.login }}
       </div>
       <p>{{ comment.text }}</p>
-      <button class="comment-answer" @click="toggleForm(comment.id)">
+      <button class="btn-small" @click="toggleForm(comment.id)">
         Ответить
       </button>
       <form v-if="formVisibility[comment.id]" action="post" id="comment-answer">
@@ -518,11 +518,6 @@ const onFileSelected = (event, id = null) => {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
-
-    .comment-answer {
-      font-weight: 400;
-      color: $text-info-light;
-    }
   }
 }
 
