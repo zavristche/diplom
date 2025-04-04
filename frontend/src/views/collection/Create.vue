@@ -506,19 +506,5 @@ onMounted(() => {
       justify-content: flex-start;
     }
   }
-
-  .preview {
-    display: flex;
-    flex-shrink: 0;
-    width: 100%;
-    height: 500px;
-    img {
-      box-shadow: $shadow;
-      object-fit: cover;
-      width: 100%;
-      height: 100%;
-      border-radius: $border;
-    }
-  }
 }
 </style>

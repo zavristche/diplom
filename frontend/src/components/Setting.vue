@@ -3,7 +3,7 @@ import { ref, defineProps, defineEmits } from "vue";
 import BaseIcon from "./BaseIcon.vue";
 import Input from "./Input.vue";
 
-defineProps(["isOpen"]);
+defineProps(["isOpen", "profile"]); // Добавляем profile в пропсы
 const emit = defineEmits(["close"]);
 
 const closeModal = () => {
@@ -12,28 +12,53 @@ const closeModal = () => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click.self="closeModal">
+  <div v-if="isOpen" class="modal-overlay setting"> <!-- Убрано @click.self -->
     <div class="modal-container">
       <div class="modal-header">
+        <h1 class="title">Настройки</h1>
         <button class="btn-icon" @click="closeModal">
           <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-2" name="close" />
         </button>
       </div>
       <div class="content">
-        <div class="logo">
-          <BaseIcon class="logo" name="logo" />
-        </div>
-        <h1 class="title">Добро пожаловать в <br />Рецептище</h1>
         <form action="" method="POST" class="form">
-          <Input label="Логин" name="login" placeholder="Введите логин" />
           <Input
-            label="Пароль"
+            label="Имя"
+            name="name"
+            type="text"
+            placeholder="Введите имя"
+            :value="profile.name"
+          />
+          <Input
+            label="Фамилия"
+            name="surname"
+            type="text"
+            placeholder="Введите фамилию"
+            :value="profile.surname"
+          />
+          <Input
+            label="Логин"
+            name="login"
+            type="text"
+            placeholder="Введите логин"
+            :value="profile.login"
+          />
+          <Input
+            label="Email"
+            name="email"
+            type="text"
+            placeholder="Введите email"
+            :value="profile.email"
+          />
+          <Input
+            label="Новый пароль"
             name="password"
             type="password"
-            placeholder="Введите пароль"
+            placeholder="Введите новый пароль"
+            autocomplete="current-password"
           />
+          <input class="btn-dark" type="submit" value="Войти" />
         </form>
-        <input class="btn-dark" type="submit" value="Войти" />
       </div>
     </div>
   </div>
@@ -55,6 +80,15 @@ const closeModal = () => {
   z-index: 1000;
   overflow-y: auto; // добавляем скролл при необходимости
   padding: 20px; // небольшой отступ, чтобы окно не прилипало к краям
+
+  &.setting {
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 0 20px 0;
+    }
+  }
 }
 
 .modal-container {
@@ -70,11 +104,6 @@ const closeModal = () => {
   .btn-dark {
     width: 100%;
   }
-}
-
-.modal-header {
-  display: flex;
-  justify-content: flex-end;
 }
 
 .content {

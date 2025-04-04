@@ -60,19 +60,6 @@ console.log(collection);
 @use "../../assets/styles/variables" as *;
 @use "../../assets/styles/style";
 
-.preview {
-  display: flex;
-  width: 100%;
-  height: 500px;
-  img {
-    box-shadow: $shadow;
-    object-fit: cover;
-    width: 100%;
-    height: 100%;
-    border-radius: $border;
-  }
-}
-
 //Карточка контента
 .cards-info {
   display: flex;

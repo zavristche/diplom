@@ -1,28 +1,33 @@
 <script setup>
 import { useRoute } from "vue-router";
-import BaseIcon from "../../components/BaseIcon.vue";
 import { ref } from "vue";
+import BaseIcon from "../../components/BaseIcon.vue";
 import Recipe from "../../components/Recipe.vue";
 import Tabs from "../../components/Tabs.vue";
 import Collection from "../../components/Collection.vue";
+import Setting from "../../components/Setting.vue";
 
 const route = useRoute();
 const profile = route.meta.profile;
-console.log(profile);
 
-// Состояние для активного таба
+const isSettingOpen = ref(false);
 const activeTab = ref(0);
 
-// Обработчик события от Tabs
 const handleTabChange = (index) => {
   activeTab.value = index;
 };
-
 </script>
 
 <template>
-  <div class="preview">
-    <div class="profile_header"><img :src="`${profile.photo_header}`" /></div>
+  <Setting 
+    :isOpen="isSettingOpen" 
+    @close="isSettingOpen = false"
+    :profile="profile"
+  />
+  <div class="preview profile">
+    <div class="profile_header" v-if="profile.photo_header">
+      <img :src="profile.photo_header" />
+    </div>
     <div class="profile-info">
       <div class="avatar">
         <img :src="`${profile.avatar}`" />
@@ -31,7 +36,7 @@ const handleTabChange = (index) => {
         <h1>{{ profile.login }}</h1>
         <span>{{ profile.status }}</span>
         <div class="btn-group">
-          <button class="btn-dark no-line">
+          <button class="btn-dark no-line" @click="isSettingOpen = true">
             <BaseIcon
               viewBox="0 0 29 27"
               class="icon-pale-30-2"
@@ -56,10 +61,10 @@ const handleTabChange = (index) => {
       @update:activeTab="handleTabChange"
     />
     <div class="btn-group">
-      <router-link to="/collection" class="btn-dark">
+      <router-link to="/collection/create" class="btn-dark">
         Создать коллекцию
       </router-link>
-      <router-link to="/recipe" class="btn-dark">
+      <router-link to="/recipe/create" class="btn-dark">
         Создать рецепт
       </router-link>
     </div>
@@ -102,9 +107,12 @@ const handleTabChange = (index) => {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: auto;
   border-radius: $border;
   box-shadow: $shadow;
+
+  &.profile {
+    height: auto;
+  }
 
   .profile_header {
     display: flex;

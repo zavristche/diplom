@@ -2,6 +2,7 @@
 import { useRoute } from "vue-router";
 import BaseIcon from "../../components/BaseIcon.vue";
 import { ref, computed } from "vue";
+import SaveRecipe from "../../components/SaveRecipe.vue";
 
 const route = useRoute();
 const recipe = route.meta.recipe;
@@ -72,9 +73,13 @@ const onFileSelected = (event, id = null) => {
     }
   }
 };
+
+const isSaveRecipeOpen = ref(false);
+
 </script>
 
 <template>
+  <SaveRecipe :isOpen="isSaveRecipeOpen" :recipe_id="recipe.id" @close="isSaveRecipeOpen = false" />
   <div class="preview">
     <img :src="`${recipe.photo}`" alt="" />
   </div>
@@ -109,7 +114,7 @@ const onFileSelected = (event, id = null) => {
       {{ recipe.description }}
     </div>
     <div class="btn-group">
-      <button type="submit" class="btn-dark">
+      <button type="submit" class="btn-dark" @click="isSaveRecipeOpen = true">
         <BaseIcon
           viewBox="0 0 25 26"
           class="icon-white-30-2"

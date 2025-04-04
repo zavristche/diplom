@@ -27,21 +27,6 @@ class UserController extends BaseApiController
             'except' => ['login', 'register', 'search',],
         ];
 
-        // $behaviors['access'] = [
-        //     'class' => AccessControl::class,
-        //     'rules' => [
-        //         [
-        //             'allow' => true,
-        //             'actions' => ['register', 'logout'],
-        //         ],
-        //         [
-        //             'allow' => true,
-        //             'actions' => ['search', 'login'],
-        //             'roles' => ['@'],
-        //         ],
-        //     ],
-        // ];
-
         return $behaviors;
     }
 

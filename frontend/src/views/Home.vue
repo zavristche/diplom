@@ -10,12 +10,7 @@ const myRecipes = ref([]);
 const route = useRoute();
 const recipes = route.meta.data;
 console.log(recipes);
-// RecipeService.getAll().then((recipes) => {
-//     console.log('Recipes:', recipes);
-//     myRecipes.value = recipes.data.data;
-// }).catch((error) => {
-//     console.error('Error fetching recipes:', error);
-// });
+
 </script>
 <template>
   <section class="hero">

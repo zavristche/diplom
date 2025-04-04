@@ -11,7 +11,7 @@
           <BaseIcon class="logo" name="logo" />
         </div>
         <h1 class="title">Добро пожаловать в <br />Рецептище</h1>
-        <div class="form">
+        <form action="" method="POST" class="form">
           <Input
             label="Имя"
             name="name"
@@ -33,7 +33,7 @@
             type="password"
             placeholder="Введите повтор пароля"
           />
-        </div>
+        </form>
         <input class="btn-dark" type="submit" value="Зарегистрироваться" />
       </div>
     </div>

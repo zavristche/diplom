@@ -13,9 +13,9 @@ const isLoginOpen = ref(false);
   <Login :isOpen="isLoginOpen" @close="isLoginOpen = false" />
   <header>
     <div class="container">
-      <a href="/">
+      <router-link to="/">
         <BaseIcon class="logo" name="logo" />
-      </a>
+      </router-link>
       <nav class="labels left">
         <a href="/search/recipe">
           <div class="label-item">Рецепты</div>
