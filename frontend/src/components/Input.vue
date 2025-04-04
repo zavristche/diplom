@@ -5,16 +5,18 @@
       :type="type"
       :name="name"
       class="input-form"
+      :class="{ 'invalid': isInvalid, 'valid': isValid && !isInvalid }"
       :placeholder="placeholder"
-      :value="value"
+      :value="modelValue"
       :autocomplete="autocomplete"
+      @input="$emit('update:modelValue', $event.target.value)"
     />
-    <span v-if="isInvalid" class="invalid-feedback">Text</span>
+    <span v-if="isInvalid && errorMessage" class="invalid-feedback">{{ errorMessage }}</span>
   </label>
 </template>
 
 <script setup>
-import { defineProps } from "vue";
+import { defineProps, defineEmits } from "vue";
 
 defineProps({
   label: String,
@@ -28,16 +30,25 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  isValid: {
+    type: Boolean,
+    default: false,
+  },
+  errorMessage: {
+    type: String,
+    default: "",
+  },
   autocomplete: {
     type: String,
-    default: 'off'
+    default: "off",
   },
-  value: {
-    type: [String, Number, null], // Разрешаем несколько типов
-    default: null, // Значение по умолчанию
-    required: false // Явно указываем, что пропс необязательный
-  }
+  modelValue: {
+    type: [String, Number, null],
+    default: null,
+  },
 });
+
+defineEmits(["update:modelValue"]);
 </script>
 
 <style lang="scss" scoped>
@@ -71,6 +82,6 @@ defineProps({
 .invalid-feedback {
   font-size: 16px;
   color: $error;
-  display: none;
+  display: block;
 }
 </style>

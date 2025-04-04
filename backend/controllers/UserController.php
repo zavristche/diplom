@@ -57,41 +57,55 @@ class UserController extends BaseApiController
 
     public function actionRegister()
     {
-        $model = new RegisterForm();
-
-        if(Yii::$app->request->isPost){
-            if ($model->load(Yii::$app->request->post())){
-
-                if ($model->validate() && $user = $model->register()) {
-                    return [
-                        'id' => $user->id,
-                        'login' => $user->login,
-                        'auth_key' => $user->auth_key,
-                    ];
-                }        
-            }
+      $model = new RegisterForm();
+      
+      if (Yii::$app->request->isPost) {
+        $postData = Yii::$app->request->getBodyParams();
+        
+        if ($model->load($postData, '')) {
+          if ($model->validate() && $user = $model->register()) {
+            return [
+              'success' => true,
+              'user' => [
+                'id' => $user->id,
+                'login' => $user->login,
+                'auth_key' => $user->auth_key,
+              ]
+            ];
+          }
         }
-        return [
-            'attributes' => $model->attributes,
-            'errors' => $model->errors,
-        ];
+      }
+      
+      return [
+        'success' => false,
+        'errors' => $model->errors,
+        'attributes' => $model->attributes
+      ];
     }
 
     public function actionLogin()
     {
         $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
+        
+        if (Yii::$app->request->isPost) {
+            $postData = Yii::$app->request->getBodyParams();
+            
+            if ($model->load($postData, '') && $model->login()) {
+                return [
+                    'success' => true,
+                    'auth_key' => Yii::$app->user->identity->auth_key,
+                    'user_id' => Yii::$app->user->id
+                ];
+            }
+            
             return [
-                'auth_key' => Yii::$app->user->identity->auth_key,
+                'success' => false,
+                'errors' => $model->errors,
+                'attributes' => $model->attributes
             ];
-
         }
-        $model->password = '';
-        return [
-            // $model->load(Yii::$app->request->post()),
-            'attributes' => $model->attributes,
-            'errors' => $model->errors,
-        ];
+        
+        throw new \yii\web\BadRequestHttpException('Invalid request');
     }
 
     public function actionLogout()

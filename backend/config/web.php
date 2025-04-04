@@ -71,7 +71,9 @@ $config = [
                     'prefix' => 'api',
                     'extraPatterns' => [
                         'GET search' => 'search',
+                        'POST validate-field' => 'validateField'
                     ],
+                    
                 ],
 
                 //Профиль
@@ -225,9 +227,6 @@ $config = [
                 ],
             ],
         ],
-        'on beforeSend' => function ($event) {
-            $event->sender->headers->add('Access-Control-Allow-Origin', '*');
-        },
         'assetManager' => [
             'bundles' => [
                 'yii\bootstrap\BootstrapAsset' => false,
@@ -241,7 +240,10 @@ $config = [
         'cors' => [
             'Origin' => ['http://localhost:5173'],
             'Access-Control-Request-Method' => ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-            'Access-Control-Allow-Credentials' => true,
+            'Access-Control-Request-Headers' => ['Content-Type', 'Authorization'],
+            'Access-Control-Allow-Credentials' => false,
+            'Access-Control-Max-Age' => 86400,
+            'Access-Control-Expose-Headers' => ['X-Pagination-Total-Count'],
         ],
     ],
     'params' => $params,

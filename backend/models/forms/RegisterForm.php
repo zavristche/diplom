@@ -43,7 +43,8 @@ class RegisterForm extends \yii\base\Model
             [[ 'name', 'surname', 'email', 'login', 'password', 'password_repeat',], 'required'],
             [['name', 'surname', 'email', 'login', 'password', 'password_repeat'], 'string', 'max' => 255],
             
-            [['login', 'email'], 'unique', 'targetClass' => User::class],
+            ['login', 'unique', 'targetClass' => '\app\models\user\User', 'message' => 'Логин уже занят'],
+            ['email', 'unique', 'targetClass' => '\app\models\user\User', 'message' => 'Email уже занят'],
             ['email', 'email'],
 
             [['name', 'surname'], 'match', 'pattern' => '/^[а-яё\s]+$/ui', 'message' => 'Разрешена только кириллица и пробелы'],

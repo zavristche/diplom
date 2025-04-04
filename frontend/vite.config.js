@@ -22,16 +22,9 @@ export default defineConfig({
       },
       proxy: {
         '/api': {
-          target: 'http://localhost:8080',  // Прокси для Yii2 API
-          changeOrigin: true
-        }
-      },
-      // proxy: {
-      //     '/api': {
-      //         target: 'http://localhost:8080', // Адрес Yii2
-      //         changeOrigin: true,
-      //         rewrite: (path) => path.replace(/^\/api/, '')
-      //     }
-      // }
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ''),
+        },
     },
 });
