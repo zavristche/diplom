@@ -8,7 +8,7 @@ export default defineConfig({
       '@': '/src',
     },
     server: {
-      host: '0.0.0.0',  // Позволяет работать в Docker
+      host: '0.0.0.0',
       port: 5173,
       css: {
           preprocessorOptions: {
@@ -16,7 +16,6 @@ export default defineConfig({
               additionalData: `@use "./src/assets/styles/_variables.scss" as *;`,
               test: /\.scss$/,
               use: ["style-loader", "css-loader", "sass-loader"],
-              // isCustomElement: (tag) => ['container'].includes(tag),
             },
           },
       },
@@ -26,5 +25,6 @@ export default defineConfig({
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         },
-    },
+      },
+    }
 });

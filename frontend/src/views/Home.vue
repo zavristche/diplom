@@ -1,45 +1,36 @@
 <script setup>
-import { ref, computed } from "vue";
-import { useRoute } from "vue-router";
+import { ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import BaseIcon from "../components/BaseIcon.vue";
 import Recipe from "../components/Recipe.vue";
-import RecipeService from '../api/RecipeService';
-
-const myRecipes = ref([]);
 
 const route = useRoute();
+const router = useRouter();
 const recipes = route.meta.data;
-console.log(recipes);
-
 </script>
+
 <template>
   <section class="hero">
     <div class="container-col">
       <h1>РЕЦЕПТИЩЕ</h1>
-      <p class="slogan">Готовь просто – удивляй вкусно! </p>
+      <p class="slogan">Готовь просто – удивляй вкусно!</p>
       <div class="search">
         <div class="btn icon">
-          <BaseIcon class="icon-dark-45-1" viewBox="0 0 45 45" name="search"/>
+          <BaseIcon class="icon-dark-45-1" viewBox="0 0 45 45" name="search" />
         </div>
-        <input
-          type="text"
-          id="search"
-          placeholder="Поиск"
-        />
+        <input type="text" id="search" placeholder="Поиск" />
         <div class="btn-container">
           <button type="submit" id="btn-search" class="btn-salat">Найти</button>
         </div>
       </div>
-      <button type="submit" id="" class="btn-dark line"><BaseIcon viewBox="0 0 45 45" class="icon-dark-45-1" name="random" />Случайный рецепт</button>
+      <button type="submit" id="" class="btn-dark line">
+        <BaseIcon viewBox="0 0 45 45" class="icon-dark-45-1" name="random" />Случайный рецепт
+      </button>
     </div>
-    <img src="/img/mascot.png" alt="Test Image">
+    <img src="/img/mascot.png" alt="Test Image" />
   </section>
   <section class="content-container">
-    <Recipe
-      v-for="recipe in recipes"
-      :key="recipe.id"
-      :recipe="recipe"
-    />
+    <Recipe v-for="recipe in recipes" :key="recipe.id" :recipe="recipe" />
   </section>
 </template>
 
@@ -50,9 +41,8 @@ console.log(recipes);
 .content-container {
   display: grid;
   width: 100%;
-  grid-template-columns: repeat(3, 1fr); // Три равные колонки
-  gap: 40px; // Расстояние между карточками
-  // margin-top: 50px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
 }
 
 .hero {
@@ -60,9 +50,6 @@ console.log(recipes);
   flex-direction: row;
   align-items: center;
   width: 100%;
-  // height: 36rem;
-  align-content: center;
-  // background-color: $accent-color-2;
 
   h1 {
     font-weight: 600;

@@ -1,3 +1,82 @@
+<script setup>
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import BaseIcon from "./BaseIcon.vue";
+import Input from "./Input.vue";
+import userService from "../api/UserService";
+import { defineProps, defineEmits } from "vue";
+import { useAuthStore } from '../stores/auth';
+
+const authStore = useAuthStore();
+const router = useRouter();
+
+defineProps(["isOpen"]);
+const emit = defineEmits(["close"]);
+
+const form = ref({
+  login: "",
+  password: "",
+});
+
+const errors = ref({});
+const serverError = ref("");
+const isLoading = ref(false);
+const hasResponse = ref(false);
+
+const closeModal = () => {
+  resetForm();
+  emit("close");
+};
+
+const resetForm = () => {
+  form.value = {
+    login: "",
+    password: "",
+  };
+  errors.value = {};
+  serverError.value = "";
+  hasResponse.value = false;
+};
+
+const submitForm = async () => {
+  isLoading.value = true;
+  hasResponse.value = false;
+  errors.value = {};
+  serverError.value = "";
+
+  try {
+    const response = await userService.login(form.value);
+    hasResponse.value = true;
+
+    if (response.data.success) {
+      console.log("Авторизация успешна:", response.data);
+      authStore.setUser(response.data.auth_key, response.data.user);
+      
+      // Перенаправляем на профиль пользователя
+      router.push(`/profile/${response.data.user.id}`);
+      
+      closeModal();
+    } else {
+      Object.keys(response.data.errors).forEach((key) => {
+        errors.value[key] = response.data.errors[key][0];
+      });
+    }
+  } catch (error) {
+    hasResponse.value = true;
+    if (error.response?.data?.errors) {
+      Object.keys(error.response.data.errors).forEach((key) => {
+        errors.value[key] = error.response.data.errors[key][0];
+      });
+    } else {
+      serverError.value = "Ошибка сервера. Попробуйте позже.";
+    }
+    console.error("Ошибка при авторизации:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+</script>
+
 <template>
   <div v-if="isOpen" class="modal-overlay" @click.self="closeModal">
     <div class="modal-container">
@@ -43,77 +122,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref } from "vue";
-import BaseIcon from "./BaseIcon.vue";
-import Input from "./Input.vue";
-import userService from "../api/UserService";
-import { defineProps, defineEmits } from "vue";
-
-defineProps(["isOpen"]);
-const emit = defineEmits(["close"]);
-
-const form = ref({
-  login: "",
-  password: "",
-});
-
-const errors = ref({});
-const serverError = ref("");
-const isLoading = ref(false);
-const hasResponse = ref(false);
-
-const closeModal = () => {
-  resetForm();
-  emit("close");
-};
-
-const resetForm = () => {
-  form.value = {
-    login: "",
-    password: "",
-  };
-  errors.value = {};
-  serverError.value = "";
-  hasResponse.value = false;
-};
-
-const submitForm = async () => {
-  isLoading.value = true;
-  hasResponse.value = false; // Сбрасываем перед запросом
-  errors.value = {};
-  serverError.value = "";
-
-  try {
-    const response = await userService.login(form.value);
-    hasResponse.value = true; // Устанавливаем после ответа
-    console.log("Ответ сервера:", response.data);
-
-    if (response.data.success) {
-      console.log("Авторизация успешна:", response.data);
-      closeModal();
-    } else {
-      Object.keys(response.data.errors).forEach((key) => {
-        errors.value[key] = response.data.errors[key][0];
-      });
-      console.log("Ошибки авторизации:", errors.value);
-    }
-  } catch (error) {
-    hasResponse.value = true; // Устанавливаем даже при ошибке
-    if (error.response && error.response.data && error.response.data.errors) {
-      Object.keys(error.response.data.errors).forEach((key) => {
-        errors.value[key] = error.response.data.errors[key][0];
-      });
-    } else {
-      serverError.value = "Ошибка сервера. Попробуйте позже.";
-    }
-    console.error("Ошибка при авторизации:", error);
-  } finally {
-    isLoading.value = false;
-  }
-};
-</script>
 
 <style lang="scss" scoped>
 @use "../assets/styles/variables" as *;

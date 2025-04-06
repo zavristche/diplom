@@ -1,20 +1,34 @@
 <script setup>
-import { useRoute } from "vue-router";
 import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useProfileAuth } from "../../composables/useProfileAuth";
+
 import BaseIcon from "../../components/BaseIcon.vue";
 import Recipe from "../../components/Recipe.vue";
 import Tabs from "../../components/Tabs.vue";
 import Collection from "../../components/Collection.vue";
 import Setting from "../../components/Setting.vue";
 
-const route = useRoute();
-const profile = route.meta.profile;
+// Используем composable
+const { profile, isOwnProfile } = useProfileAuth();
+const router = useRouter();
 
 const isSettingOpen = ref(false);
 const activeTab = ref(0);
 
 const handleTabChange = (index) => {
   activeTab.value = index;
+};
+
+const handleLogout = async () => {
+  try {
+    await useProfileAuth().authStore.logout();
+    setTimeout(() => {
+      router.push({ path: "/", replace: true });
+    }, 100);
+  } catch (error) {
+    console.error("Ошибка при выходе:", error);
+  }
 };
 </script>
 
@@ -35,7 +49,7 @@ const handleTabChange = (index) => {
       <div class="profile-info__container">
         <h1>{{ profile.login }}</h1>
         <span>{{ profile.status }}</span>
-        <div class="btn-group">
+        <div class="btn-group" v-if="isOwnProfile">
           <button class="btn-dark no-line" @click="isSettingOpen = true">
             <BaseIcon
               viewBox="0 0 29 27"
@@ -43,7 +57,7 @@ const handleTabChange = (index) => {
               name="setting"
             />
           </button>
-          <button class="btn-dark no-line">
+          <button class="btn-dark no-line" @click="handleLogout">
             <BaseIcon
               viewBox="0 0 29 29"
               class="icon-pale-30-2"
@@ -60,7 +74,7 @@ const handleTabChange = (index) => {
       :tabs="['Рецепты', 'Коллекции']"
       @update:activeTab="handleTabChange"
     />
-    <div class="btn-group">
+    <div class="btn-group" v-if="isOwnProfile">
       <router-link to="/collection/create" class="btn-dark">
         Создать коллекцию
       </router-link>
@@ -154,72 +168,10 @@ const handleTabChange = (index) => {
   }
 }
 
-//Карточка контента
-.cards-info {
-  display: flex;
-  flex-direction: row;
-  gap: 40px;
-}
-
-.card-info {
-  display: flex;
-  gap: 10px;
-  flex-direction: column;
-
-  .card-info__title {
-    font-weight: 500;
-  }
-
-  .card-info__var {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-direction: row;
-  }
-}
-
-.time {
-  color: $text-info;
-  font-weight: 400;
-}
-
-.author {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  gap: 10px;
-  font-weight: 400;
-
-  img {
-    object-fit: cover;
-    width: 40px;
-    height: 40px;
-    border-radius: 100%;
-  }
-}
-
 .content-container {
   display: grid;
   width: 100%;
   grid-template-columns: repeat(3, 1fr);
   gap: 40px;
-}
-
-.content-info {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.description {
-  line-height: 150%;
-}
-
-.content-container {
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(3, 1fr); // Три равные колонки
-  gap: 40px; // Расстояние между карточками
-  // margin-top: 50px;
 }
 </style>
