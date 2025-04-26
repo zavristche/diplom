@@ -4,11 +4,11 @@ namespace app\modules\profile\models;
 
 use app\models\user\User;
 use Yii;
+use yii\web\NotFoundHttpException;
 
 class UpdateForm extends \yii\base\Model
 {
     public int $id;
-    public int $private_id;
     public string $name = '';
     public string $surname = '';
     public string $email = '';
@@ -28,20 +28,13 @@ class UpdateForm extends \yii\base\Model
     public function rules()
     {
         return [
-            [[ 'name', 'surname', 'email', 'login', 'password', 'password_repeat', 'private_id'], 'required'],
-            [['name', 'surname', 'email', 'login', 'password', 'password_repeat'], 'string', 'max' => 255],
-            
+            [['name', 'surname', 'email', 'login', 'password'], 'string', 'max' => 255],
+            [['name', 'surname', 'email', 'login'], 'required'], // Оставляем обязательными только ключевые поля
             ['email', 'email'],
-
             [['name', 'surname'], 'match', 'pattern' => '/^[а-яё\s]+$/ui', 'message' => 'Разрешена только кириллица и пробелы'],
             ['login', 'match', 'pattern' => '/^[a-z\d\-]+$/i', 'message' => 'Разрешена только латиница, цифры и знак тире'],
-            
-            // ['password_old', 'validateOldPassword'],
-            ['password', 'string', 'min' => 6 ],
-            ['password_repeat', 'compare', 'compareAttribute' => 'password'], 
-
+            ['password', 'string', 'min' => 6, 'skipOnEmpty' => true], // Пароль необязателен
             [['avatar', 'photo_header'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg'],
-
             [['delete_avatar', 'delete_photo_header'], 'boolean'],
         ];
     }
@@ -53,7 +46,6 @@ class UpdateForm extends \yii\base\Model
     {
         return [
             'id' => 'ID',
-            'private_id' => 'Кто может видеть мой профиль?',
             'name' => 'Имя',
             'surname' => 'Фамилия',
             'email' => 'Почта',
@@ -68,32 +60,21 @@ class UpdateForm extends \yii\base\Model
         ];
     }
 
-    // public function validateOldPassword($attribute, $params)
-    // {
-    //     if (!$this->hasErrors()) {
-    //         $user = $this->user($this->id);
-
-    //         if (!$user || !$user->validatePassword($this->password_щдв)) {
-    //             $this->addError($attribute, 'Неверный старый пароль');
-    //         }
-    //     }
-    // }
-
     private function uploadImage($file)
     {
         if ($file['error'] !== UPLOAD_ERR_OK) {
             return ['success' => false, 'message' => 'Ошибка при загрузке файла.', 'e' => $file['error']];
         }
-    
+
         $uploadDir = Yii::getAlias('@webroot/uploads/');
         !is_dir($uploadDir) && mkdir($uploadDir, 0777, true);
-    
+
         $fileName = Yii::$app->user->id . '_' . time() . '_' . Yii::$app->security->generateRandomString() . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
         $filePath = $uploadDir . $fileName;
         $fileUrl = Yii::$app->request->hostInfo . '/uploads/' . $fileName;
-    
-        return (move_uploaded_file($file['tmp_name'], $filePath) || copy($file['tmp_name'], $filePath)) 
-            ? ['success' => true, 'url' => $fileUrl] 
+
+        return (move_uploaded_file($file['tmp_name'], $filePath) || copy($file['tmp_name'], $filePath))
+            ? ['success' => true, 'url' => $fileUrl, 'filePath' => $filePath]
             : ['success' => false, 'message' => 'Ошибка при сохранении файла.'];
     }
 
@@ -137,29 +118,38 @@ class UpdateForm extends \yii\base\Model
 
     public function update($id)
     {
-
-        if($this->validate()){
-            $user = User::findIdentity($id);
-            if(!empty($_FILES)){
-                $this->validateImg($user);
-                $this->validate();
-            }
-
-            foreach ($this->attributes as $attribute => $value) {
-                if ($value !== null && $user->hasAttribute($attribute)) {
-                    $user->$attribute = $value;
-                }
-            }
-            // return $user;
-            
-            if(!empty($this->password)){
-                $user->password = Yii::$app->security->generatePasswordHash($this->password);
-            }
-
-            $user->save();
+        $user = User::findIdentity($id);
+        if (!$user) {
+            throw new NotFoundHttpException('Пользователь не найден');
         }
-
-        return empty($this->errors) ? $user : $this->errors;
+    
+        if (!$this->validate()) {
+            return $this->errors;
+        }
+    
+        if (!empty($_FILES)) {
+            $this->validateImg($user);
+            if (!$this->validate()) {
+                return $this->errors;
+            }
+        }
+    
+        foreach ($this->attributes as $attribute => $value) {
+            if ($value !== null && $user->hasAttribute($attribute) && $attribute !== 'password') {
+                $user->$attribute = $value;
+            }
+        }
+    
+        if (!empty($this->password)) {
+            $user->password = Yii::$app->security->generatePasswordHash($this->password);
+        }
+    
+        if (!$user->save()) {
+            $this->addErrors($user->errors);
+            return $this->errors;
+        }
+    
+        return $user;
     }
 
     public function getUser($id)

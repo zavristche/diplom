@@ -37,42 +37,30 @@ defineProps({
 <template>
   <section class="card recipe" v-if="recipe && recipe.id">
     <router-link :to="`/recipe/${recipe.id}`" class="card__preview">
-      <img :src="`${recipe.photo}`" alt="" />
+      <img :src="recipe.photo" alt="Recipe photo" width="300" height="200" />
     </router-link>
     <div class="card__info">
       <div class="card__title">
         <router-link :to="`/profile/${recipe.user.id}`">
-          <img :src="`${recipe.user.avatar}`" alt="" />
+          <img :src="recipe.user.avatar" alt="User avatar" width="40" height="40" />
         </router-link>
         <div class="card__text">
           <h3>
-            <router-link :to="`/recipe/${recipe.id}`">{{
-              recipe.title
-            }}</router-link>
+            <router-link :to="`/recipe/${recipe.id}`">{{ recipe.title }}</router-link>
           </h3>
-          <router-link
-            :to="`/profile/${recipe.user.id}`"
-            class="card__author"
-            >{{ recipe.user.login }}</router-link
-          >
+          <router-link :to="`/profile/${recipe.user.id}`" class="card__author">
+            {{ recipe.user.login }}
+          </router-link>
           <div class="card__metadata">
             <span class="date">{{ recipe.created_at }}</span>
             <span class="marker">•</span>
             <span class="reaction">
-              <BaseIcon
-                viewBox="0 0 12 12"
-                class="icon-light-12-1"
-                name="bookmark"
-              />
+              <BaseIcon viewBox="0 0 12 12" class="icon-light-12-1" name="bookmark" />
               <span class="reaction__count">{{ recipe.saved }}</span>
             </span>
             <span class="marker">•</span>
             <span class="reaction">
-              <BaseIcon
-                viewBox="0 0 13 13"
-                class="icon-light-13-1"
-                name="heart"
-              />
+              <BaseIcon viewBox="0 0 13 13" class="icon-light-13-1" name="heart" />
               <span class="reaction__count">{{ recipe.likes }}</span>
             </span>
           </div>
@@ -84,19 +72,11 @@ defineProps({
         </button>
         <div class="btn-popup" v-if="isMenuVisible">
           <button class="btn-item">
-            <BaseIcon
-              viewBox="0 0 65 65"
-              class="icon-dark-55-1"
-              name="heartb"
-            />
+            <BaseIcon viewBox="0 0 65 65" class="icon-dark-55-1" name="heartb" />
             Поставить лайк
           </button>
           <button class="btn-item">
-            <BaseIcon
-              viewBox="0 0 65 65"
-              class="icon-dark-55-1"
-              name="bookmarkb"
-            />
+            <BaseIcon viewBox="0 0 65 65" class="icon-dark-55-1" name="bookmarkb" />
             В коллекцию
           </button>
         </div>
@@ -107,7 +87,5 @@ defineProps({
 
 <style lang="scss">
 @use "../assets/styles/_variables.scss" as *;
-@use "../assets/styles/normalize.scss";
-
 
 </style>

@@ -51,15 +51,34 @@ class UserController extends BaseApiController
         return $actions;
     }
 
-        public function actionUpdate($id)
+    public function actionUpdate($id)
     {
+        Yii::info('Received PATCH request: ' . json_encode([
+            'POST' => Yii::$app->request->post(),
+            'FILES' => $_FILES,
+        ]), __METHOD__);
+    
         $model = new UpdateForm(['id' => $id]);
-        $data = Yii::$app->request->getBodyParams();
-        $model->load($data, '');
+        $postData = Yii::$app->request->post();
+        $model->load($postData, '');
+    
+        // Передаем файлы в модель
+        if (isset($_FILES['avatar'])) {
+            $model->avatar = $_FILES['avatar'];
+        }
+        if (isset($_FILES['photo_header'])) {
+            $model->photo_header = $_FILES['photo_header'];
+        }
+    
         $user = $model->update($id);
-
-        // return [123];
-        return $user;
+    
+        if (!empty($model->errors)) {
+            Yii::$app->response->statusCode = 422;
+            Yii::info('Validation errors: ' . json_encode($model->errors), __METHOD__);
+            return ['success' => false, 'errors' => $model->errors];
+        }
+    
+        return ['success' => true, 'user' => $user->toArray()];
     }
 
     protected function findModel($id)

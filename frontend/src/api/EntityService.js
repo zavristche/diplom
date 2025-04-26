@@ -1,3 +1,4 @@
+// EntityService.js
 import apiClient from './apiClient';
 
 export default class EntityService {
@@ -22,6 +23,7 @@ export default class EntityService {
     }
 
     update(id, data) {
+        // Если data — это FormData, не устанавливаем Content-Type вручную, axios сам это сделает
         return apiClient.patch(`/${this.resource}/${id}`, data);
     }
 

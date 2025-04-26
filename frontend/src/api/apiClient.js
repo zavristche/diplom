@@ -3,13 +3,10 @@ import axios from "axios";
 
 const apiClient = axios.create({
   baseURL: "http://localhost:8080", // адрес API
-  headers: {
-    "Content-Type": "application/json",
-  },
   timeout: 3000,
 });
 
-// Интерцептор для обработки ответов (оставляем как есть)
+// Интерцептор для обработки ответов
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => Promise.reject(error)
@@ -19,7 +16,7 @@ apiClient.interceptors.response.use(
 export function setupAuthInterceptor(authStore) {
   apiClient.interceptors.request.use((config) => {
     if (authStore.authKey) {
-      config.headers['Authorization'] = `Bearer ${authStore.authKey}`;
+      config.headers["Authorization"] = `Bearer ${authStore.authKey}`;
     }
     return config;
   });

@@ -1,160 +1,68 @@
-import { createRouter, createWebHistory } from "vue-router";
+// src/router.js
+import { createRouter, createWebHistory } from 'vue-router';
+import { useRecipeStore } from './stores/recipe';
+import { useProfileStore } from './stores/profile';
+import { useSearchStore } from './stores/search';
+import { useCollectionStore } from './stores/collection';
 
-import RecipeService from "./api/RecipeService";
-import CollectionService from "./api/CollectionService";
-import ProfileService from "./api/ProfileService";
-import SearchService from "./api/SearchService";
-
-import Home from "./views/Home.vue";
-import About from "./views/About.vue";
-import Search from "./views/Search.vue";
-
-import { default as RecipeView } from "./views/recipe/View.vue";
-import { default as RecipeCreate } from "./views/recipe/Create.vue";
-
-import { default as CollectionView } from "./views/collection/View.vue";
-import { default as CollectionCreate } from "./views/collection/Create.vue";
-
-import { default as ProfileView } from "./views/profile/View.vue";
+import Home from './views/Home.vue';
+import About from './views/About.vue';
+import Search from './views/Search.vue';
+import RecipeCreate from './views/recipe/Create.vue';
+import CollectionCreate from './views/collection/Create.vue';
+import CollectionView from './views/collection/View.vue';
 
 const routes = [
+  { path: '/', name: 'home', component: Home, meta: { title: 'Рецептище — Главная' } },
   {
-    path: "/",
-    name: "home",
-    component: Home,
-    meta: {
-      title: "Рецептище",
-    },
-    beforeEnter: async (to, from, next) => {
-      try {
-        const response = await RecipeService.getAll();
-        to.meta.data = response.data;
-        next();
-      } catch (error) {
-        console.error("Error fetching recipe:", error);
-        next({ name: "not-found" });
-      }
-    },
-  },
-
-  {
-    path: "/search",
-    name: "search",
+    path: '/search/:type(recipe|collection|author)?',
+    name: 'search',
     component: Search,
-    meta: {
-      title: "Поиск",
-    },
-    beforeEnter: async (to, from, next) => {
-      try {
-        const response = await SearchService.getData();
-        to.meta.data = response.data;
-        next();
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        next({ name: "not-found" });
-      }
-    },
+    meta: { title: 'Рецептище — Поиск' },
   },
-
+  { path: '/about', name: 'about', component: About, meta: { title: 'Рецептище — О нас' } },
   {
-    path: "/about",
-    name: "about",
-    component: About,
+    path: '/recipe/:id',
+    name: 'RecipeView',
+    component: () => import('./views/recipe/View.vue'),
+    meta: { title: 'Рецептище — Рецепт' },
   },
   {
-    path: "/recipe/:id",
-    name: "recipe-view", // Уникальное имя для просмотра
-    component: RecipeView,
-    beforeEnter: async (to, from, next) => {
-      try {
-        const response = await RecipeService.getById(to.params.id);
-        to.meta.recipe = response.data;
-        to.meta.title = response.data.title;
-        next();
-      } catch (error) {
-        console.error("Error fetching recipe:", error);
-        next({ name: "not-found" });
-      }
-    },
+    path: '/profile/:id',
+    name: 'ProfileView',
+    component: () => import('./views/profile/View.vue'),
+    meta: { title: 'Профиль' },
   },
-
   {
-    path: "/recipe/create",
-    name: "recipe-create",
+    path: '/recipe/create',
+    name: 'recipe-create',
     component: RecipeCreate,
-    meta: {
-      title: "Создать рецепт",
-    },
+    meta: { title: 'Создать рецепт' },
     beforeEnter: async (to, from, next) => {
-      try {
-        const response = await RecipeService.getCreateData();
-        to.meta.data = response.data;
+      const recipeStore = useRecipeStore();
+      if (!recipeStore.createData) {
+        await recipeStore.fetchCreateData();
+      }
+      to.meta.data = recipeStore.createData;
+      if (!to.meta.data) {
+        next('/'); // Перенаправляем на главную вместо not-found
+      } else {
         next();
-      } catch (error) {
-        console.error("Error fetching recipe create data:", error);
-        next({ name: "not-found" });
       }
     },
   },
-
   {
-    path: "/collection/create",
-    name: "collection-create",
+    path: '/collection/create',
+    name: 'collection-create',
     component: CollectionCreate,
-    meta: {
-      title: "Создать коллекцию",
-    },
-    beforeEnter: async (to, from, next) => {
-      try {
-        const response = await CollectionService.getCreateData();
-        to.meta.data = response.data;
-        next();
-      } catch (error) {
-        console.error("Error fetching collection:", error);
-        next({ name: "not-found" });
-      }
-    },
+    meta: { title: 'Создать коллекцию' },
   },
-
   {
-    path: "/collection/:id",
-    name: "collection",
+    path: '/collection/:id',
+    name: 'collection',
     component: CollectionView,
-    beforeEnter: async (to, from, next) => {
-      try {
-        const response = await CollectionService.getById(to.params.id);
-        to.meta.collection = response.data;
-        to.meta.title = response.data.title;
-        next();
-      } catch (error) {
-        console.error("Error fetching collection:", error);
-        next({ name: "not-found" });
-      }
-    },
+    meta: { title: 'Рецептище — Коллекция' },
   },
-
-  {
-    path: "/profile/:id",
-    name: "profile",
-    component: ProfileView,
-    beforeEnter: async (to, from, next) => {
-      try {
-        const response = await ProfileService.getById(to.params.id);
-        to.meta.profile = response.data;
-        to.meta.title = response.data.login;
-        next();
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        next({ name: "not-found" });
-      }
-    },
-  },
-
-  // {
-  //   path: '/:pathMatch(.*)*',
-  //   name: 'not-found',
-  //   component: () => import('./views/NotFound.vue'),
-  // },
 ];
 
 const router = createRouter({
@@ -162,8 +70,52 @@ const router = createRouter({
   routes,
 });
 
-router.afterEach((to) => {
-  document.title = to.meta.title || "Рецептище";
+router.beforeEach(async (to, from, next) => {
+  const recipeStore = useRecipeStore();
+  const profileStore = useProfileStore();
+  const collectionStore = useCollectionStore();
+  const searchStore = useSearchStore();
+
+  // Динамическое обновление заголовков
+  let title = to.meta.title || 'Рецептище';
+  if (to.name === 'RecipeView' && to.params.id) {
+    try {
+      const recipe = await recipeStore.fetchRecipeById(to.params.id);
+      title = `${recipe?.title || 'Рецепт'}`;
+    } catch (error) {
+      console.error('Error fetching recipe:', error);
+      title = 'Рецепт не найден';
+    }
+  } else if (to.name === 'ProfileView' && to.params.id) {
+    try {
+      const profile = await profileStore.fetchProfileById(to.params.id);
+      title = `${profile?.login || 'Профиль'}`;
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      title = 'Профиль не найден';
+    }
+  } else if (to.name === 'collection' && to.params.id) {
+    try {
+      const collection = await collectionStore.fetchCollectionById(to.params.id);
+      title = `${collection?.title || 'Коллекция'}`;
+    } catch (error) {
+      console.error('Error fetching collection:', error);
+      title = 'Коллекция не найден';
+    }
+  }
+
+  // Устанавливаем заголовок страницы
+  document.title = title;
+
+  // Загружаем данные для поиска, если нужно
+  if (to.name === 'search' && !searchStore.searchData) {
+    await searchStore.fetchSearchData();
+  }
+
+  // Прокрутка наверх при смене маршрута
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  next();
 });
 
 export default router;

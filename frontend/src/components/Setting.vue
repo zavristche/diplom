@@ -1,8 +1,8 @@
 <script setup>
-import { ref, defineProps, defineEmits } from "vue";
+import { ref, defineProps, defineEmits, nextTick } from "vue";
 import BaseIcon from "./BaseIcon.vue";
 import Input from "./Input.vue";
-import SettingService from "../api/SettingService"; // Импорт сервиса
+import SettingService from "../api/SettingService";
 
 const props = defineProps(["isOpen", "profile"]);
 const emit = defineEmits(["close"]);
@@ -20,15 +20,30 @@ const initialData = {
 const userData = ref({ ...initialData });
 const avatarInput = ref(null);
 const backgroundInput = ref(null);
+const avatarPreview = ref(userData.value.avatar);
+const backgroundPreview = ref(userData.value.photo_header);
 
-const uploadFile = (inputRef) => inputRef.value.click();
+const uploadFile = async (inputType) => {
+  await nextTick(); // Ждем, пока DOM обновится
+  let input;
+  if (inputType === "avatar") {
+    input = avatarInput.value || document.querySelector('input[name="avatar"]');
+  } else if (inputType === "photo_header") {
+    input = backgroundInput.value || document.querySelector('input[name="photo_header"]');
+  }
+  if (input && typeof input.click === "function") {
+    input.click();
+  } else {
+    console.error(`Input for ${inputType} is not ready or invalid:`, input);
+  }
+};
 
 const handleFileChange = (event, field) => {
   const file = event.target.files[0];
   if (file) {
-    if (userData.value[field]?.startsWith("blob:"))
-      URL.revokeObjectURL(userData.value[field]);
-    userData.value[field] = URL.createObjectURL(file);
+    const previewUrl = URL.createObjectURL(file);
+    if (field === "avatar") avatarPreview.value = previewUrl;
+    else if (field === "photo_header") backgroundPreview.value = previewUrl;
   }
 };
 
@@ -39,30 +54,32 @@ const submitForm = async () => {
     formData.append("surname", userData.value.surname);
     formData.append("login", userData.value.login);
     formData.append("email", userData.value.email);
-    if (userData.value.password)
-      formData.append("password", userData.value.password);
-    if (avatarInput.value?.files[0])
-      formData.append("avatar", avatarInput.value.files[0]);
-    if (backgroundInput.value?.files[0])
-      formData.append("photo_header", backgroundInput.value.files[0]);
+    if (userData.value.password) formData.append("password", userData.value.password);
+    if (avatarInput.value?.files[0]) formData.append("avatar", avatarInput.value.files[0]);
+    if (backgroundInput.value?.files[0]) formData.append("photo_header", backgroundInput.value.files[0]);
 
-    // Отправка PATCH-запроса на /api/profile/setting/account/<id>
-    await SettingService.update(props.profile.id, formData);
-    closeModal(); // Закрываем модалку после успешного сохранения
+    console.log("Sending FormData:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}: ${value instanceof File ? value.name : value}`);
+    }
+
+    const response = await SettingService.update(props.profile.id, formData);
+    console.log("Server response:", response.data); // Логируем ответ сервера
+
+    closeModal();
+    window.location.reload();
   } catch (error) {
-    console.error("Ошибка при сохранении настроек:", error);
+    console.error("Ошибка при сохранении настроек:", error.response?.data || error.message);
   }
 };
 
 const closeModal = () => {
-  ["avatar", "photo_header"].forEach((field) => {
-    if (userData.value[field]?.startsWith("blob:"))
-      URL.revokeObjectURL(userData.value[field]);
-  });
+  if (avatarPreview.value?.startsWith("blob:")) URL.revokeObjectURL(avatarPreview.value);
+  if (backgroundPreview.value?.startsWith("blob:")) URL.revokeObjectURL(backgroundPreview.value);
   userData.value = { ...initialData };
-  [avatarInput, backgroundInput].forEach(
-    (input) => input.value && (input.value.value = "")
-  );
+  avatarPreview.value = initialData.avatar;
+  backgroundPreview.value = initialData.photo_header;
+  [avatarInput, backgroundInput].forEach((input) => input.value && (input.value.value = ""));
   emit("close");
 };
 </script>
@@ -81,26 +98,14 @@ const closeModal = () => {
           <div class="setting-photo">
             <div
               class="setting-photo__background"
-              :style="{
-                backgroundImage: userData.photo_header
-                  ? `url(${userData.photo_header})`
-                  : 'none',
-              }"
+              :style="{ backgroundImage: backgroundPreview ? `url(${backgroundPreview})` : 'none' }"
             ></div>
             <div
               class="setting-photo__avatar"
-              :style="{
-                backgroundImage: userData.avatar
-                  ? `url(${userData.avatar})`
-                  : 'none',
-              }"
+              :style="{ backgroundImage: avatarPreview ? `url(${avatarPreview})` : 'none' }"
             ></div>
             <div class="setting-photo__actions">
-              <button
-                type="button"
-                class="action-button"
-                @click="uploadFile(avatarInput)"
-              >
+              <button type="button" class="action-button" @click="uploadFile('avatar')">
                 Загрузить аватар
               </button>
               <input
@@ -111,11 +116,7 @@ const closeModal = () => {
                 @change="handleFileChange($event, 'avatar')"
                 hidden
               />
-              <button
-                type="button"
-                class="action-button"
-                @click="uploadFile(backgroundInput)"
-              >
+              <button type="button" class="action-button" @click="uploadFile('photo_header')">
                 Загрузить фон
               </button>
               <input
@@ -128,36 +129,17 @@ const closeModal = () => {
               />
             </div>
           </div>
-          <Input
-            label="Имя"
-            name="name"
-            placeholder="Введите имя"
-            v-model="userData.name"
-          />
-          <Input
-            label="Фамилия"
-            name="surname"
-            placeholder="Введите фамилию"
-            v-model="userData.surname"
-          />
-          <Input
-            label="Логин"
-            name="login"
-            placeholder="Введите логин"
-            v-model="userData.login"
-          />
-          <Input
-            label="Email"
-            name="email"
-            placeholder="Введите email"
-            v-model="userData.email"
-          />
+          <Input label="Имя" name="name" placeholder="Введите имя" v-model="userData.name" />
+          <Input label="Фамилия" name="surname" placeholder="Введите фамилию" v-model="userData.surname" />
+          <Input label="Логин" name="login" placeholder="Введите логин" v-model="userData.login" />
+          <Input label="Email" name="email" placeholder="Введите email" v-model="userData.email" />
           <Input
             label="Новый пароль"
             name="password"
             type="password"
             placeholder="Введите новый пароль"
             autocomplete="current-password"
+            v-model="userData.password"
           />
           <input class="btn-dark" type="submit" value="Сохранить" />
         </form>
@@ -212,7 +194,7 @@ const closeModal = () => {
 .action-button {
   color: $text-info-light;
   font: map-get(map-get($font-weather, "medium"), "weight")
-      map-get(map-get($font-weather, "medium"), "size") "Rubik",
+    map-get(map-get($font-weather, "medium"), "size") "Rubik",
     sans-serif;
   background: none;
   border: none;

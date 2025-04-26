@@ -1,27 +1,20 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "../stores/auth";
 import BaseIcon from "./BaseIcon.vue";
 import Input from "./Input.vue";
 import userService from "../api/UserService";
-import { defineProps, defineEmits } from "vue";
-import { useAuthStore } from '../stores/auth';
-
-const authStore = useAuthStore();
-const router = useRouter();
 
 defineProps(["isOpen"]);
 const emit = defineEmits(["close"]);
+const router = useRouter();
+const authStore = useAuthStore();
 
-const form = ref({
-  login: "",
-  password: "",
-});
-
+const form = ref({ login: "", password: "" });
 const errors = ref({});
 const serverError = ref("");
 const isLoading = ref(false);
-const hasResponse = ref(false);
 
 const closeModal = () => {
   resetForm();
@@ -29,48 +22,31 @@ const closeModal = () => {
 };
 
 const resetForm = () => {
-  form.value = {
-    login: "",
-    password: "",
-  };
+  form.value = { login: "", password: "" };
   errors.value = {};
   serverError.value = "";
-  hasResponse.value = false;
 };
 
 const submitForm = async () => {
   isLoading.value = true;
-  hasResponse.value = false;
   errors.value = {};
   serverError.value = "";
 
   try {
     const response = await userService.login(form.value);
-    hasResponse.value = true;
-
     if (response.data.success) {
-      console.log("Авторизация успешна:", response.data);
       authStore.setUser(response.data.auth_key, response.data.user);
-      
-      // Перенаправляем на профиль пользователя
       router.push(`/profile/${response.data.user.id}`);
-      
       closeModal();
     } else {
-      Object.keys(response.data.errors).forEach((key) => {
-        errors.value[key] = response.data.errors[key][0];
-      });
+      errors.value = response.data.errors;
     }
   } catch (error) {
-    hasResponse.value = true;
     if (error.response?.data?.errors) {
-      Object.keys(error.response.data.errors).forEach((key) => {
-        errors.value[key] = error.response.data.errors[key][0];
-      });
+      errors.value = error.response.data.errors;
     } else {
       serverError.value = "Ошибка сервера. Попробуйте позже.";
     }
-    console.error("Ошибка при авторизации:", error);
   } finally {
     isLoading.value = false;
   }
@@ -78,49 +54,49 @@ const submitForm = async () => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click.self="closeModal">
-    <div class="modal-container">
-      <div class="modal-header">
-        <button class="btn-icon" @click="closeModal">
-          <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-2" name="close" />
-        </button>
-      </div>
-      <div class="content">
-        <div class="logo">
-          <BaseIcon class="logo" name="logo" />
+  <transition name="fade">
+    <div v-if="isOpen" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-container">
+        <div class="modal-header">
+          <button class="btn-icon" @click="closeModal">
+            <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-2" name="close" />
+          </button>
         </div>
-        <h1 class="title">Добро пожаловать в <br />Рецептище</h1>
-        <form @submit.prevent="submitForm" class="form">
-          <Input
-            label="Логин"
-            name="login"
-            placeholder="Введите логин"
-            v-model="form.login"
-            :is-invalid="hasResponse && !!errors.login"
-            :is-valid="hasResponse && form.login && !errors.login"
-            :error-message="errors.login"
-          />
-          <Input
-            label="Пароль"
-            name="password"
-            type="password"
-            placeholder="Введите пароль"
-            v-model="form.password"
-            :is-invalid="hasResponse && !!errors.password"
-            :is-valid="hasResponse && form.password && !errors.password"
-            :error-message="errors.password"
-          />
-          <input
-            class="btn-dark"
-            type="submit"
-            value="Войти"
-            :disabled="isLoading"
-          />
-        </form>
-        <div v-if="serverError" class="error-message">{{ serverError }}</div>
+        <div class="content">
+          <div class="logo">
+            <BaseIcon class="logo" name="logo" />
+          </div>
+          <h1 class="title">Добро пожаловать в <br />Рецептище</h1>
+          <form @submit.prevent="submitForm" class="form">
+            <Input
+              label="Логин"
+              name="login"
+              placeholder="Введите логин"
+              v-model="form.login"
+              :is-invalid="!!errors.login"
+              :error-message="errors.login"
+            />
+            <Input
+              label="Пароль"
+              name="password"
+              type="password"
+              placeholder="Введите пароль"
+              v-model="form.password"
+              :is-invalid="!!errors.password"
+              :error-message="errors.password"
+            />
+            <input
+              class="btn-dark"
+              type="submit"
+              :value="isLoading ? 'Вход...' : 'Войти'"
+              :disabled="isLoading"
+            />
+          </form>
+          <div v-if="serverError" class="error-message">{{ serverError }}</div>
+        </div>
       </div>
     </div>
-  </div>
+  </transition>
 </template>
 
 <style lang="scss" scoped>
@@ -137,28 +113,18 @@ const submitForm = async () => {
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  overflow-y: auto;
-  padding: 20px;
 }
 
 .modal-container {
   width: 455px;
   padding: 30px;
   background: $background;
-  box-shadow: $shadow;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  margin: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: flex-end;
 }
 
 .content {
-  width: 395px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -185,8 +151,6 @@ const submitForm = async () => {
   border-radius: $border;
   color: $light-text;
   font-size: 18px;
-  font-family: Rubik;
-  font-weight: map-get($font-weather, "small", "weight");
   border: none;
   cursor: pointer;
 }
@@ -194,6 +158,14 @@ const submitForm = async () => {
 .error-message {
   color: $error;
   font-size: 14px;
-  text-align: center;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

@@ -1,112 +1,111 @@
 <script setup>
-import { useRoute } from "vue-router";
-import BaseIcon from "../../components/BaseIcon.vue";
 import { ref, onMounted, watch, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useProfileAuth } from "../../composables/useProfileAuth";
+import { useAuthStore } from "../../stores/auth";
+import RecipeService from "../../api/RecipeService";
+import BaseIcon from "../../components/BaseIcon.vue";
+import Input from "../../components/Input.vue";
+import Select from "../../components/Select.vue";
 
 const route = useRoute();
-const data = route.meta.data.data; // Доступ к данным из маршрута
+const router = useRouter();
+const { isAuthenticated, currentUser } = useProfileAuth();
+const authStore = useAuthStore();
+const data = route.meta.data.data;
 
-// Состояние для ингредиентов
-const portions = ref(1);
-const ingredients = ref([]);
+// Проверка авторизации и данных
+console.log("isAuthenticated:", isAuthenticated.value);
+console.log("currentUser:", currentUser.value);
+console.log("authStore.authKey:", authStore.authKey);
+console.log("localStorage.auth_key:", localStorage.getItem("auth_key"));
+console.log("localStorage.user:", localStorage.getItem("user"));
 
-// Состояние для шагов
-const steps = ref([
-  { description: "", previewUrl: null }, // Изначально один шаг
-]);
-
-// Добавление нового продукта
-const addIngredient = () => {
-  ingredients.value.push({
-    product_id: "",
-    count: "",
-    measure_id: "",
-  });
-};
-
-// Удаление продукта
-const removeIngredient = (index) => {
-  ingredients.value.splice(index, 1);
-};
-
-// Обработка изменения порций
-const updatePortions = (delta) => {
-  portions.value = Math.max(1, portions.value + delta);
-};
-
-// Добавление нового шага
-const addStep = () => {
-  steps.value.push({ description: "", previewUrl: null });
-};
-
-// Удаление шага
-const removeStep = (index) => {
-  if (steps.value.length > 1) {
-    // Оставляем минимум один шаг
-    steps.value.splice(index, 1);
-  }
-};
-
-// Основное описание рецепта
+// Состояние формы
+const title = ref("");
 const description = ref("");
-const textareaRef = ref(null); // Для основного описания
-const stepTextareaRefs = ref([]); // Для текстовых полей шагов
-
-// Превью изображения для основного фото
-const previewUrl = ref(null);
-
-// Выбор сложности и приватности
+const time = ref("");
 const selectedComplexity = ref("");
 const selectedPrivate = ref("");
-
-// Метки
+const portions = ref(1);
+const ingredients = ref([]);
+const steps = ref([{ description: "", previewUrl: null, file: null }]);
+const previewUrl = ref(null);
+const recipePhotoFile = ref(null);
 const searchMark = ref("");
 const selectedMarks = ref([]);
 const activeMarkType = ref(null);
 const isMarkInputFocused = ref(false);
 
-// Автоматическая подстройка высоты textarea
-const adjustTextareaHeight = (textarea) => {
-  if (textarea) {
-    textarea.style.height = "auto";
-    textarea.style.height = `${textarea.scrollHeight}px`;
+// Ошибки валидации
+const errors = ref({});
+
+// Refs для textarea
+const textareaRef = ref(null);
+const stepTextareaRefs = ref([]);
+
+// Добавление ингредиента
+const addIngredient = () => {
+  ingredients.value.push({ product_id: "", count: "", measure_id: "" });
+};
+
+// Удаление ингредиента
+const removeIngredient = (index) => {
+  ingredients.value.splice(index, 1);
+};
+
+// Обработка порций
+const updatePortions = (delta) => {
+  portions.value = Math.max(1, portions.value + delta);
+};
+
+// Добавление шага
+const addStep = () => {
+  steps.value.push({ description: "", previewUrl: null, file: null });
+};
+
+// Удаление шага
+const removeStep = (index) => {
+  if (steps.value.length > 1) {
+    steps.value.splice(index, 1);
   }
 };
 
-// Обработка загрузки фото для основного изображения
+// Обработка основного фото
 const onFileSelected = (event) => {
   const file = event.target.files[0];
   if (file) {
+    recipePhotoFile.value = file;
     previewUrl.value = URL.createObjectURL(file);
   }
 };
 
-// Обработка загрузки фото для шага
+// Обработка фото шага
 const onStepFileSelected = (event, index) => {
   const file = event.target.files[0];
   if (file) {
+    steps.value[index].file = file;
     steps.value[index].previewUrl = URL.createObjectURL(file);
   }
 };
 
 // Фильтрация меток
 const filteredMarks = computed(() => {
-  const marks = Object.values(data.marks);
+  const marks = Object.values(data.marks || {});
   if (!searchMark.value && !activeMarkType.value) return marks;
 
   return marks.filter((mark) => {
     const matchesType = activeMarkType.value
       ? mark.type_id === Number(activeMarkType.value)
       : true;
-
     const searchValue = searchMark.value.toLowerCase();
     const markTitle = mark.title.toLowerCase();
     const matchesSearch = searchValue ? markTitle.includes(searchValue) : true;
-
     return matchesType && matchesSearch;
   });
 });
 
+// Обработка меток
 const selectMarkType = (typeId) => {
   activeMarkType.value = typeId;
   searchMark.value = "";
@@ -131,32 +130,154 @@ const handleBlur = () => {
   }, 200);
 };
 
-// Отслеживание изменений в основном описании
+// Автоматическая подстройка высоты textarea
+const adjustTextareaHeight = (textarea) => {
+  if (textarea) {
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }
+};
+
 watch(description, () => {
   adjustTextareaHeight(textareaRef.value);
 });
 
-// Отслеживание изменений в описании шагов
 watch(
   () => steps.value.map((step) => step.description),
   () => {
-    stepTextareaRefs.value.forEach((textarea) =>
-      adjustTextareaHeight(textarea)
-    );
+    stepTextareaRefs.value.forEach((textarea) => adjustTextareaHeight(textarea));
   },
   { deep: true }
 );
 
-// Инициализация высоты всех textarea при монтировании
 onMounted(() => {
   adjustTextareaHeight(textareaRef.value);
   stepTextareaRefs.value.forEach((textarea) => adjustTextareaHeight(textarea));
 });
+
+// Нормализация серверных ошибок
+const normalizeServerErrors = (serverErrors) => {
+  const normalized = {};
+  for (const [key, value] of Object.entries(serverErrors)) {
+    normalized[key] = Array.isArray(value) ? value[0] : value;
+  }
+  return normalized;
+};
+
+// Валидация формы
+const validateForm = () => {
+  errors.value = {};
+
+  if (!title.value) errors.value.title = "Заголовок обязателен";
+  if (!description.value) errors.value.description = "Описание обязательно";
+  if (!time.value) errors.value.time = "Укажите время приготовления";
+  if (!selectedComplexity.value) errors.value.complexity_id = "Выберите сложность";
+  if (!selectedPrivate.value) errors.value.private_id = "Выберите доступ";
+  if (ingredients.value.length === 0) errors.value.ingredients = "Добавьте хотя бы один ингредиент";
+  ingredients.value.forEach((ingredient, index) => {
+    if (!ingredient.product_id) errors.value[`products[${index}][product_id]`] = "Выберите продукт";
+    if (!ingredient.count) errors.value[`products[${index}][count]`] = "Укажите количество";
+    if (!ingredient.measure_id) errors.value[`products[${index}][measure_id]`] = "Выберите единицу измерения";
+  });
+  if (steps.value.length === 0) errors.value.steps = "Добавьте хотя бы один шаг";
+  steps.value.forEach((step, index) => {
+    if (!step.description) errors.value[`steps[${index}][description]`] = "Описание шага обязательно";
+  });
+
+  return Object.keys(errors.value).length === 0;
+};
+
+// Отправка формы
+const submitForm = async (event) => {
+  event.preventDefault();
+
+  // Проверка авторизации
+  if (!isAuthenticated.value) {
+    errors.value = { general: "Пожалуйста, войдите в систему для создания рецепта" };
+    console.error("Пользователь не авторизован");
+    router.push({ name: "login" }).catch(() => {
+      console.error("Маршрут /login не найден. Проверьте router.js");
+      errors.value = { general: "Ошибка: страница входа недоступна" };
+    });
+    return;
+  }
+
+  if (!validateForm()) {
+    console.log("Validation errors:", errors.value);
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("title", title.value);
+  formData.append("description", description.value);
+  formData.append("time", time.value);
+  formData.append("complexity_id", selectedComplexity.value);
+  formData.append("private_id", selectedPrivate.value);
+  formData.append("portions", portions.value);
+
+  if (recipePhotoFile.value) {
+    formData.append("recipe_photo", recipePhotoFile.value);
+  }
+
+  ingredients.value.forEach((ingredient, index) => {
+    formData.append(`products[${index}][product_id]`, ingredient.product_id);
+    formData.append(`products[${index}][count]`, ingredient.count);
+    formData.append(`products[${index}][measure_id]`, ingredient.measure_id);
+  });
+
+  steps.value.forEach((step, index) => {
+    formData.append(`steps[${index}][title]`, `Шаг ${index + 1}`);
+    formData.append(`steps[${index}][description]`, step.description);
+    if (step.file) {
+      formData.append(`step_photos[${index}]`, step.file);
+    }
+  });
+
+  selectedMarks.value.forEach((mark, index) => {
+    formData.append(`marks[${index}]`, mark.id);
+  });
+
+  try {
+    console.log("Отправка запроса с authKey:", authStore.authKey);
+    console.log("Sending FormData:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}: ${value instanceof File ? value.name : value}`);
+    }
+
+    const response = await RecipeService.create(formData);
+    console.log("Server response:", response.data);
+
+    if (response.data.success) {
+      const recipeId = response.data.recipe.id;
+      router.push(`/recipe/${recipeId}`);
+    } else {
+      throw new Error(response.data.message || "Ошибка API");
+    }
+  } catch (error) {
+    console.error("Ошибка при создании рецепта:", error.response?.data || error.message);
+    if (error.response?.status === 401) {
+      errors.value = { general: "Не авторизован. Пожалуйста, войдите снова." };
+      authStore.clearUser();
+      router.push({ name: "login" }).catch(() => {
+        console.error("Маршрут /login не найден. Проверьте router.js");
+        errors.value = { general: "Ошибка: страница входа недоступна" };
+      });
+    } else if (error.response?.data?.errors) {
+      errors.value = normalizeServerErrors(error.response.data.errors);
+      console.log("Normalized server errors:", errors.value);
+    } else {
+      errors.value = { general: error.response?.data?.message || "Произошла ошибка. Попробуйте снова." };
+    }
+  }
+};
 </script>
 
 <template>
-  <form action="" class="create-form">
+  <form @submit="submitForm" class="create-form">
     <h1>Создать рецепт</h1>
+    <div v-if="errors.general" class="error-message general-error">
+      {{ errors.general }}
+    </div>
     <div class="btn-group start">
       <div v-if="previewUrl" class="preview">
         <img :src="previewUrl" alt="Превью загружаемого фото" />
@@ -171,80 +292,63 @@ onMounted(() => {
         <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-1" name="img" />
         Загрузить фото
       </label>
-      <input
-        type="text"
-        name="title"
-        class="input-title"
-        placeholder="Заголовок"
-      />
-      <textarea
-        v-model="description"
-        ref="textareaRef"
-        name="description"
-        class="input-description"
-        placeholder="Описание"
-        rows="3"
-      ></textarea>
+      <div v-if="errors.recipe_photo" class="error-message">
+        {{ errors.recipe_photo }}
+      </div>
+      <div class="input-title-wrapper">
+        <input
+          v-model="title"
+          type="text"
+          name="title"
+          class="input-title"
+          placeholder="Заголовок"
+          :class="{ invalid: !!errors.title }"
+        />
+        <div v-if="errors.title" class="error-message">
+          {{ errors.title }}
+        </div>
+      </div>
+      <div class="input-description-wrapper">
+        <textarea
+          v-model="description"
+          ref="textareaRef"
+          name="description"
+          class="input-description"
+          placeholder="Описание"
+          rows="3"
+          :class="{ invalid: !!errors.description }"
+        ></textarea>
+        <div v-if="errors.description" class="error-message">
+          {{ errors.description }}
+        </div>
+      </div>
       <div class="label-group">
-        <label for="time" class="label small">
-          Время приготовления
-          <input
-            type="text"
-            name="time"
-            class="input-form"
-            placeholder="15 минут"
-          />
-        </label>
-        <label for="complexity" class="label small">
-          Сложность
-          <div class="select-wrapper">
-            <select
-              v-model="selectedComplexity"
-              name="complexity"
-              class="input-form custom-select"
-              id="complexity"
-            >
-              <option value="" disabled selected>Выберите сложность</option>
-              <option
-                v-for="(complexity, id) in data.complexities"
-                :key="id"
-                :value="id"
-              >
-                {{ complexity.title }}
-              </option>
-            </select>
-            <BaseIcon
-              viewBox="0 0 29 16"
-              class="icon-dark-25-2 select-arrow"
-              name="arrow"
-            />
-          </div>
-        </label>
-        <label for="private" class="label small">
-          Кому доступен рецепт?
-          <div class="select-wrapper">
-            <select
-              v-model="selectedPrivate"
-              name="private"
-              class="input-form custom-select"
-              id="private"
-            >
-              <option value="" disabled selected>Выберите доступ</option>
-              <option
-                v-for="(value, key) in data.privates"
-                :key="key"
-                :value="key"
-              >
-                {{ value }}
-              </option>
-            </select>
-            <BaseIcon
-              viewBox="0 0 29 16"
-              class="icon-dark-25-2 select-arrow"
-              name="arrow"
-            />
-          </div>
-        </label>
+        <Input
+          v-model="time"
+          label="Время приготовления"
+          name="time"
+          placeholder="15 минут"
+          :is-invalid="!!errors.time"
+          :error-message="errors.time ? ` ${errors.time}` : ''"
+        />
+        <Select
+          v-model="selectedComplexity"
+          label="Сложность"
+          name="complexity_id"
+          placeholder="Выберите сложность"
+          :options="data.complexities"
+          :is-invalid="!!errors.complexity_id"
+          :error-message="errors.complexity_id ? ` ${errors.complexity_id}` : ''"
+        />
+        <Select
+          v-model="selectedPrivate"
+          label="Кому доступен рецепт?"
+          name="private_id"
+          placeholder="Выберите доступ"
+          :options="data.privates"
+          :is-invalid="!!errors.private_id"
+          :error-message="errors.private_id ? ` ${errors.private_id}` : ''"
+        />
       </div>
       <label for="marks" class="marks">
         Метки
@@ -307,14 +411,6 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <!-- Скрытые input для отправки меток в форму -->
-        <input
-          v-for="mark in selectedMarks"
-          :key="mark.id"
-          type="hidden"
-          name="marks[]"
-          :value="mark.id"
-        />
       </label>
     </div>
     <div class="cooking">
@@ -330,12 +426,12 @@ onMounted(() => {
                 name="minus"
               />
             </button>
-            <input
+            <Input
               v-model="portions"
-              class=""
-              id="portions"
+              name="portions"
               type="number"
-              min="1"
+              :is-invalid="!!errors.portions"
+              :error-message="errors.portions ? ` ${errors.portions}` : ''"
             />
             <button type="button" @click="updatePortions(1)">
               <BaseIcon
@@ -369,58 +465,52 @@ onMounted(() => {
               />
             </button>
             <div class="ingredient__container">
-              <div class="select-wrapper">
-                <select
+              <div class="ingredient__fields">
+                <Select
                   v-model="ingredient.product_id"
-                  :name="'product_id_' + index"
-                  class="input-form custom-select"
-                >
-                  <option value="" disabled selected>Выберите продукт</option>
-                  <option
-                    v-for="(product, key) in data.products"
-                    :key="key"
-                    :value="key"
-                  >
-                    {{ product.title }}
-                  </option>
-                </select>
-                <BaseIcon
-                  viewBox="0 0 29 16"
-                  class="icon-dark-15-2 select-arrow"
-                  name="arrow"
+                  :name="'products[' + index + '][product_id]'"
+                  placeholder="Выберите продукт"
+                  :options="data.products"
+                  :is-invalid="!!errors[`products[${index}][product_id]`]"
+                />
+                <Input
+                  v-model="ingredient.count"
+                  :name="'products[' + index + '][count]'"
+                  type="number"
+                  placeholder="N"
+                  :is-invalid="!!errors[`products[${index}][count]`]"
+                />
+                <Select
+                  v-model="ingredient.measure_id"
+                  :name="'products[' + index + '][measure_id]'"
+                  placeholder="Ед."
+                  :options="data.measures"
+                  :is-invalid="!!errors[`products[${index}][measure_id]`]"
                 />
               </div>
-              <input
-                v-model="ingredient.count"
-                :name="'count_' + index"
-                type="number"
-                min="1"
-                class="input-count"
-                placeholder="N"
-              />
-              <div class="select-wrapper">
-                <select
-                  v-model="ingredient.measure_id"
-                  :name="'measure_id_' + index"
-                  class="input-form custom-select"
-                >
-                  <option value="" disabled selected>Ед.</option>
-                  <option
-                    v-for="(value, key) in data.measures"
-                    :key="key"
-                    :value="key"
-                  >
-                    {{ value }}
-                  </option>
-                </select>
-                <BaseIcon
-                  viewBox="0 0 29 16"
-                  class="icon-dark-15-2 select-arrow"
-                  name="arrow"
-                />
+              <div
+                v-if="
+                  errors[`products[${index}][product_id]`] ||
+                  errors[`products[${index}][count]`] ||
+                  errors[`products[${index}][measure_id]`]
+                "
+                class="error-message"
+              >
+                {{
+                  [
+                    errors[`products[${index}][product_id]`],
+                    errors[`products[${index}][count]`],
+                    errors[`products[${index}][measure_id]`],
+                  ]
+                    .filter(Boolean)
+                    .join(", ")
+                }}
               </div>
             </div>
           </label>
+          <div v-if="errors.ingredients" class="error-message">
+            {{ errors.ingredients }}
+          </div>
         </div>
       </div>
       <label for="steps" class="steps">
@@ -452,18 +542,40 @@ onMounted(() => {
               Загрузить фото
             </label>
           </div>
+          <div v-if="errors[`step_photo_${index}`]" class="error-message">
+            {{ errors[`step_photo_${index}`] }}
+          </div>
           <div class="step__info">
-            <input type="text" class="input-title" placeholder="Шаг" />
-            <textarea
-              v-model="step.description"
-              :ref="(el) => (stepTextareaRefs[index] = el)"
-              name="step-description"
-              class="input-description"
-              placeholder="Описание"
-              rows="3"
-            ></textarea>
+            <div class="input-title-wrapper">
+              <input
+                type="text"
+                class="input-title"
+                :value="`Шаг ${index + 1}`"
+                readonly
+              />
+            </div>
+            <div class="input-description-wrapper">
+              <textarea
+                v-model="step.description"
+                :ref="(el) => (stepTextareaRefs[index] = el)"
+                :name="'steps[' + index + '][description]'"
+                class="input-description"
+                placeholder="Описание"
+                rows="3"
+                :class="{ invalid: !!errors[`steps[${index}][description]`] }"
+              ></textarea>
+              <div
+                v-if="errors[`steps[${index}][description]`]"
+                class="error-message"
+              >
+                {{ errors[`steps[${index}][description]`] }}
+              </div>
+            </div>
           </div>
         </section>
+        <div v-if="errors.steps" class="error-message">
+          {{ errors.steps }}
+        </div>
       </label>
     </div>
     <div class="btn-group">
@@ -569,6 +681,20 @@ onMounted(() => {
     width: 100%;
     font-size: 32px;
     font-weight: 600;
+    border: none;
+    padding: 15px 0;
+    border-radius: 0;
+
+    &.invalid {
+      border-bottom: 2px solid $error;
+    }
+  }
+
+  .input-title-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .input-description {
@@ -580,10 +706,23 @@ onMounted(() => {
     resize: none;
     overflow: hidden;
     line-height: 150%;
+    padding: 15px 0;
+    border-radius: 0;
 
     &::placeholder {
       font-weight: 300;
     }
+
+    &.invalid {
+      border-bottom: 2px solid $error;
+    }
+  }
+
+  .input-description-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .label-group {
@@ -600,43 +739,6 @@ onMounted(() => {
     font-weight: 400;
     gap: 10px;
     width: 100%;
-  }
-
-  .select-wrapper {
-    position: relative;
-    width: 100%;
-  }
-
-  .input-form {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 15px 20px;
-    border-radius: $border;
-    font-size: 20px;
-    font-weight: 400;
-    border: 1px solid $text-info-light;
-    width: 100%;
-
-    &::placeholder {
-      font-weight: 300;
-    }
-  }
-
-  .custom-select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    padding-right: 40px;
-  }
-
-  .select-arrow {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
   }
 
   .btn-group {
@@ -665,65 +767,21 @@ onMounted(() => {
     }
   }
 
-  .steps {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    gap: 30px;
-    line-height: 150%;
-
-    .btn-dark {
-      justify-content: center;
-      padding: 5px;
-      width: 100%;
-    }
-
-    .step {
-      display: flex;
-      flex-direction: column;
-      gap: 30px;
-      width: 100%;
-
-      .preview {
-        display: flex;
-        flex-shrink: 0;
-        width: 100%;
-        height: 500px;
-        img {
-          box-shadow: $shadow;
-          object-fit: cover;
-          width: 100%;
-          height: 100%;
-          border-radius: $border;
-        }
-      }
-
-      .input-title {
-        width: 100%;
-        font-size: 25px;
-        font-weight: 500;
-      }
-
-      h3 {
-        font-size: 25px;
-        font-weight: 500;
-      }
-
-      .step__info {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-    }
-  }
-
   .cooking {
     display: grid;
-    grid-template-columns: 1fr 1fr; // Две колонки равной ширины
+    grid-template-columns: 1fr 1fr;
     gap: 30px;
-    width: 100%; // Полная ширина контейнера
-    align-items: start; // Выравнивание элементов по началу
+    width: 100%;
+    align-items: start;
+  }
+
+  .general-error {
+    font-size: 18px;
+    color: $error;
+    text-align: center;
+    padding: 10px;
+    background-color: rgba($error, 0.1);
+    border-radius: $border;
   }
 }
 
@@ -734,10 +792,9 @@ onMounted(() => {
   align-items: center;
   gap: 30px;
   width: 100%;
+  height: auto;
   position: sticky;
-  top: 6.25rem; // Отступ от верха равен высоте header
-  max-height: calc(100vh - 6.25rem); // Учитываем высоту header в максимальной высоте
-  overflow-y: auto; // Прокрутка внутри блока, если контент превышает высоту
+  top: 6.25rem;
 
   .portions-container {
     display: flex;
@@ -785,42 +842,64 @@ onMounted(() => {
 
       .ingredient__container {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         gap: 10px;
-        align-items: center;
         width: 100%;
         border-bottom: 1px solid $text-info-light;
         padding: 10px 0;
 
-        .input-count {
-          width: 60px;
-          height: 40px;
-          padding: 10px 0;
-          text-align: center;
-          font-size: 20px;
-          flex-shrink: 0;
-          display: block;
-        }
+        .ingredient__fields {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 10px;
+          width: 100%;
 
-        .select-wrapper {
-          &:first-child {
-            flex-grow: 1;
+          .label {
+            width: auto;
+            gap: 0;
           }
 
-          &:last-child {
-            width: 90px;
-            flex-shrink: 0;
+          .input-form {
+            border: none;
+            padding: 15px 0;
+            width: 100%;
+            font-size: 20px;
+            font-weight: 400;
           }
 
           .custom-select {
-            border: none;
-            background: transparent;
-            padding: 15px 30px 15px 0;
-            width: 100%;
+            padding-right: 30px;
+          }
+
+          .select-arrow {
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+          }
+
+          > *:first-child {
+            flex-grow: 1;
+          }
+
+          > *:nth-child(2) {
+            width: 60px;
+            flex-shrink: 0;
+          }
+
+          > *:last-child {
+            width: 90px;
+            flex-shrink: 0;
           }
         }
       }
     }
   }
+}
+
+.error-message {
+  font-size: 16px;
+  color: $error;
+  margin-top: 4px;
 }
 </style>

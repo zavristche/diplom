@@ -1,16 +1,14 @@
 <script setup>
-import { useRoute } from "vue-router";
-import BaseIcon from "../components/BaseIcon.vue";
 import { ref, computed } from "vue";
+import { useSearchStore } from "../stores/search";
+import BaseIcon from "../components/BaseIcon.vue";
 import Tabs from "../components/Tabs.vue";
 
-const route = useRoute();
-const data = route.meta.data.data;
+const searchStore = useSearchStore();
+const data = ref(searchStore.searchData); // Берем данные из Pinia
 
 // Активный таб
 const activeTab = ref(0);
-
-// Обработчик события от компонента Tabs
 const updateActiveTab = (index) => {
   activeTab.value = index;
 };
@@ -29,36 +27,28 @@ const isProductInputFocused = ref(false);
 
 // Фильтрация меток
 const filteredMarks = computed(() => {
-  const marks = Object.values(data.marks);
+  const marks = Object.values(data.value?.marks || {});
   if (!searchMark.value && !activeMarkType.value) return marks;
 
   return marks.filter((mark) => {
-    const matchesType = activeMarkType.value
-      ? mark.type_id === Number(activeMarkType.value)
-      : true;
-
+    const matchesType = activeMarkType.value ? mark.type_id === Number(activeMarkType.value) : true;
     const searchValue = searchMark.value.toLowerCase();
     const markTitle = mark.title.toLowerCase();
     const matchesSearch = searchValue ? markTitle.includes(searchValue) : true;
-
     return matchesType && matchesSearch;
   });
 });
 
 // Фильтрация продуктов
 const filteredProducts = computed(() => {
-  const products = Object.values(data.products);
+  const products = Object.values(data.value?.products || {});
   if (!searchProduct.value && !activeProductType.value) return products;
 
   return products.filter((product) => {
-    const matchesType = activeProductType.value
-      ? product.type_id === Number(activeProductType.value)
-      : true;
-
+    const matchesType = activeProductType.value ? product.type_id === Number(activeProductType.value) : true;
     const searchValue = searchProduct.value.toLowerCase();
     const productTitle = product.title.toLowerCase();
     const matchesSearch = searchValue ? productTitle.includes(searchValue) : true;
-
     return matchesType && matchesSearch;
   });
 });
@@ -70,9 +60,7 @@ const selectMarkType = (typeId) => {
 };
 
 const addMark = (mark) => {
-  if (!selectedMarks.value.some((m) => m.id === mark.id)) {
-    selectedMarks.value.push(mark);
-  }
+  if (!selectedMarks.value.some((m) => m.id === mark.id)) selectedMarks.value.push(mark);
   searchMark.value = "";
   isMarkInputFocused.value = false;
 };
@@ -82,9 +70,7 @@ const removeMark = (markId) => {
 };
 
 const handleMarkBlur = () => {
-  setTimeout(() => {
-    isMarkInputFocused.value = false;
-  }, 200);
+  setTimeout(() => (isMarkInputFocused.value = false), 200);
 };
 
 const selectProductType = (typeId) => {
@@ -94,9 +80,7 @@ const selectProductType = (typeId) => {
 };
 
 const addProduct = (product) => {
-  if (!selectedProducts.value.some((p) => p.id === product.id)) {
-    selectedProducts.value.push(product);
-  }
+  if (!selectedProducts.value.some((p) => p.id === product.id)) selectedProducts.value.push(product);
   searchProduct.value = "";
   isProductInputFocused.value = false;
 };
@@ -106,19 +90,12 @@ const removeProduct = (productId) => {
 };
 
 const handleProductBlur = () => {
-  setTimeout(() => {
-    isProductInputFocused.value = false;
-  }, 200);
+  setTimeout(() => (isProductInputFocused.value = false), 200);
 };
 
-// Обработчик отправки формы
 const handleSubmit = (event) => {
   event.preventDefault();
-  console.log({
-    activeTab: activeTab.value,
-    marks: selectedMarks.value,
-    products: selectedProducts.value
-  });
+  console.log({ activeTab: activeTab.value, marks: selectedMarks.value, products: selectedProducts.value });
 };
 </script>
 

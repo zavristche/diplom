@@ -1,4 +1,5 @@
 <?php
+
 namespace app\controllers;
 
 use app\models\forms\LoginForm;
@@ -11,12 +12,24 @@ use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\filters\auth\HttpBasicAuth;
 use app\controllers\BaseApiController;
+use yii\web\NotFoundHttpException;
+use yii\web\ServerErrorHttpException;
+use yii\web\UnauthorizedHttpException;
 
 class UserController extends BaseApiController
 {
     public $modelClass = "app\models\user\User";
 
     public $enableCsrfValidation = false;
+
+    protected function findModel($id)
+    {
+        $model = User::findOne($id);
+        if ($model === null) {
+            throw new NotFoundHttpException('Пользователь не найден.');
+        }
+        return $model;
+    }
 
     public function behaviors()
     {
@@ -35,10 +48,10 @@ class UserController extends BaseApiController
         if (!parent::beforeAction($action)) {
             return false;
         }
-    
+
         return true;
     }
-    
+
     public function actionIndex()
     {
         return new ActiveDataProvider([
@@ -52,87 +65,111 @@ class UserController extends BaseApiController
             return $data;
         }
         return $data;
-
     }
 
     public function actionRegister()
     {
-      $model = new RegisterForm();
-      
-      if (Yii::$app->request->isPost) {
-        $postData = Yii::$app->request->getBodyParams();
-        
-        if ($model->load($postData, '')) {
-          if ($model->validate() && $user = $model->register()) {
-            return [
-              'success' => true,
-              'user' => [
-                'id' => $user->id,
-                'login' => $user->login,
-                'auth_key' => $user->auth_key,
-              ]
-            ];
-          }
+        $model = new RegisterForm();
+
+        if (Yii::$app->request->isPost) {
+            $postData = Yii::$app->request->getBodyParams();
+
+            if ($model->load($postData, '')) {
+
+                if ($model->validate() && $user = $model->register()) {
+                    return [
+                        'success' => true,
+                        'user' => [
+                            'id' => $user->id,
+                            'login' => $user->login,
+                            'auth_key' => $user->auth_key,
+                        ]
+                    ];
+                }
+            }
         }
-      }
-      
-      return [
-        'success' => false,
-        'errors' => $model->errors,
-        'attributes' => $model->attributes
-      ];
+
+        return [
+            'success' => false,
+            'errors' => $model->errors,
+            'attributes' => $model->attributes
+        ];
     }
 
     public function actionLogin()
     {
         $model = new LoginForm();
-        
+
         if (Yii::$app->request->isPost) {
             $postData = Yii::$app->request->getBodyParams();
-            
+
             if ($model->load($postData, '') && $model->login()) {
+                $user = $this->findModel(Yii::$app->user->id);
                 return [
                     'success' => true,
                     'auth_key' => Yii::$app->user->identity->auth_key,
-                    'user_id' => Yii::$app->user->id
+                    'user' => $user->toArray(),
                 ];
             }
-            
+
             return [
                 'success' => false,
                 'errors' => $model->errors,
                 'attributes' => $model->attributes
             ];
         }
-        
+
         throw new \yii\web\BadRequestHttpException('Invalid request');
     }
 
     public function actionLogout()
     {
-        $user = Yii::$app->user->identity;
-        if ($user === null) {
-            throw new \yii\web\UnauthorizedHttpException('Пользователь не авторизован.');
-        }
-        if ($user) {
+        // Проверяем заголовок Authorization
+        $authHeader = Yii::$app->request->headers->get('Authorization');
+        if ($authHeader && preg_match('/Bearer\s+(.+)/', $authHeader, $matches)) {
+            $authKey = $matches[1];
+
+            // Ищем пользователя по auth_key
+            $user = User::findOne(['auth_key' => $authKey]);
+            if ($user === null) {
+                throw new UnauthorizedHttpException('Пользователь не авторизован.');
+            }
+
+            // Сбрасываем auth_key и сохраняем
             $user->auth_key = null;
-            $user->save(false);
-            Yii::$app->user->logout();
-            return ['message' => 'Вы успешно вышли из системы.'];
+            if ($user->save(false)) {
+                // Завершаем сессию, если она есть (опционально)
+                Yii::$app->user->logout();
+                return ['message' => 'Вы успешно вышли из системы.'];
+            } else {
+                throw new ServerErrorHttpException('Не удалось завершить сессию.');
+            }
+        } else {
+            // Если токен не передан, проверяем сессию (для обратной совместимости)
+            $user = Yii::$app->user->identity;
+            if ($user === null) {
+                throw new UnauthorizedHttpException('Пользователь не авторизован.');
+            }
+
+            $user->auth_key = null;
+            if ($user->save(false)) {
+                Yii::$app->user->logout();
+                return ['message' => 'Вы успешно вышли из системы.'];
+            } else {
+                throw new ServerErrorHttpException('Не удалось завершить сессию.');
+            }
         }
-    
-        throw new \yii\web\ServerErrorHttpException('Не удалось завершить сессию.');
     }
 
     public function actionSearch()
     {
         $request = Yii::$app->request;
         $params = $request->getQueryParams();
-        
+
         $searchModel = new UserSearch();
         $dataProvider = $searchModel->search($params);
         $models = $dataProvider->getModels();
-       
+
         $result = array_map(function ($model) {
 
             $data = $model->toArray([], ['name', 'surname', 'login']);
@@ -144,5 +181,4 @@ class UserController extends BaseApiController
         }, $models);
         return $result;
     }
-    
 }

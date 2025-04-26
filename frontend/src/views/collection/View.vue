@@ -1,24 +1,36 @@
 <script setup>
-import { useRoute } from "vue-router";
-import BaseIcon from "../../components/BaseIcon.vue";
 import { ref, computed } from "vue";
-import CollectionService from "../../api/CollectionService";
+import { useRoute } from "vue-router";
+import { useCollectionStore } from "../../stores/collection";
+import BaseIcon from "../../components/BaseIcon.vue";
 import Recipe from "../../components/Recipe.vue";
 
 const route = useRoute();
-const collection = route.meta.collection;
-console.log(collection);
+const collectionStore = useCollectionStore();
+const collection = computed(() => collectionStore.currentCollection);
+
+// Инициализация заголовка страницы
+if (collection.value) {
+  document.title = collection.value.title || "Коллекция";
+} else {
+  // Загружаем данные, если они отсутствуют
+  collectionStore.fetchCollectionById(route.params.id).then((data) => {
+    if (data) {
+      document.title = data.title || "Коллекция";
+    }
+  });
+}
 </script>
 
 <template>
-  <div class="preview">
-    <img :src="`${collection.photo}`" alt="" />
+  <div v-if="collection && collection.photo" class="preview">
+    <img :src="collection.photo" alt="" />
   </div>
-  <div class="content-info">
+  <div v-if="collection" class="content-info">
     <span class="time">{{ collection.created_at }}</span>
     <h1>{{ collection.title }}</h1>
     <div class="author">
-      <img :src="`${collection.user.avatar}`" alt="" />
+      <img :src="collection.user.avatar" alt="" />
       {{ collection.user.login }}
     </div>
     <div class="description">
@@ -41,10 +53,14 @@ console.log(collection);
       </button>
     </div>
   </div>
-  <section class="content-container">
-    <Recipe v-for="recipe in collection.recipes" :key="recipe.id" :recipe="recipe" />
+  <section v-if="collection" class="content-container">
+    <Recipe
+      v-for="recipe in collection.recipes"
+      :key="recipe.id"
+      :recipe="recipe"
+    />
   </section>
-  <div class="btn-group">
+  <div v-if="collection" class="btn-group">
     <button
       v-for="(mark, index) in collection.marks"
       :key="index"
@@ -54,13 +70,26 @@ console.log(collection);
       {{ mark.title }}
     </button>
   </div>
+  <div v-else>Коллекция не найдена</div>
 </template>
 
 <style lang="scss">
 @use "../../assets/styles/variables" as *;
 @use "../../assets/styles/style";
 
-//Карточка контента
+.preview {
+  display: flex;
+  width: 100%;
+  height: 500px;
+  img {
+    box-shadow: $shadow;
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    border-radius: $border;
+  }
+}
+
 .cards-info {
   display: flex;
   flex-direction: row;
@@ -127,13 +156,5 @@ console.log(collection);
 
 .description {
   line-height: 150%;
-}
-
-.content-container {
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(3, 1fr); // Три равные колонки
-  gap: 40px; // Расстояние между карточками
-  // margin-top: 50px;
 }
 </style>

@@ -1,59 +1,56 @@
 <script setup>
-import { useRoute } from "vue-router";
-import BaseIcon from "../../components/BaseIcon.vue";
 import { ref, computed } from "vue";
+import { useRecipeStore } from "../../stores/recipe";
+import BaseIcon from "../../components/BaseIcon.vue";
 import SaveRecipe from "../../components/SaveRecipe.vue";
 
-const route = useRoute();
-const recipe = route.meta.recipe;
-console.log(recipe);
+const recipeStore = useRecipeStore();
+const recipe = computed(() => recipeStore.currentRecipe); // Берем данные из хранилища
 
-// Реактивное значение для количества порций
-const portions = ref(recipe.portions);
+const portions = ref(null);
+const baseIngredients = ref([]);
+const formVisibility = ref({});
+const commentTexts = ref({});
+const previewUrls = ref({});
+const fileNames = ref({});
+const newCommentPreviewUrl = ref(null);
+const newCommentFileName = ref(null);
+const isSaveRecipeOpen = ref(false);
 
-// Исходные значения ингредиентов для пересчета
-const baseIngredients = recipe.products.map((product) => ({
-  ...product,
-  count: product.count,
-}));
+// Инициализация данных при первой загрузке
+if (recipe.value) {
+  portions.value = recipe.value.portions;
+  baseIngredients.value = recipe.value.products.map((product) => ({
+    ...product,
+    count: product.count,
+  }));
+  document.title = recipe.value.title || "Рецепт";
+}
 
-// Функции для управления количеством порций
-const decreasePortions = () => {
-  if (portions.value > 1) {
-    portions.value--;
-  }
-};
-
-const increasePortions = () => {
-  portions.value++;
-};
-
-// Вычисляемое свойство для ингредиентов с учетом порций
 const adjustedIngredients = computed(() => {
-  return baseIngredients.map((product) => ({
+  if (!recipe.value) return []; // Проверка на случай, если данные не загрузились
+  return baseIngredients.value.map((product) => ({
     ...product,
     count:
       product.count === null
         ? null
-        : (product.count * portions.value) / recipe.portions,
+        : (product.count * portions.value) / recipe.value.portions,
   }));
 });
 
-// Форматирование числа для отображения
 const formatCount = (count) => {
   if (count === null) return "";
   const rounded = Number(count.toFixed(1));
   return rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(1);
 };
 
-const formVisibility = ref({});
-const commentTexts = ref({});
-const previewUrls = ref({});
-const fileNames = ref({});
+const decreasePortions = () => {
+  if (portions.value > 1) portions.value--;
+};
 
-// Реактивное значение для превью нового комментария
-const newCommentPreviewUrl = ref(null);
-const newCommentFileName = ref(null);
+const increasePortions = () => {
+  portions.value++;
+};
 
 const toggleForm = (id) => {
   formVisibility.value[id] = !formVisibility.value[id];
@@ -63,31 +60,30 @@ const onFileSelected = (event, id = null) => {
   const file = event.target.files[0];
   if (file) {
     if (id === null) {
-      // Для нового комментария
       newCommentPreviewUrl.value = URL.createObjectURL(file);
       newCommentFileName.value = file.name;
     } else {
-      // Для ответа на комментарий
       previewUrls.value[id] = URL.createObjectURL(file);
       fileNames.value[id] = file.name;
     }
   }
 };
-
-const isSaveRecipeOpen = ref(false);
-
 </script>
 
 <template>
-  <SaveRecipe :isOpen="isSaveRecipeOpen" :recipe_id="recipe.id" @close="isSaveRecipeOpen = false" />
-  <div class="preview">
-    <img :src="`${recipe.photo}`" alt="" />
+  <SaveRecipe
+    :isOpen="isSaveRecipeOpen"
+    :recipe_id="recipe?.id"
+    @close="isSaveRecipeOpen = false"
+  />
+  <div v-if="recipe" class="preview">
+    <img :src="recipe.photo" alt="" />
   </div>
-  <div class="content-info">
+  <div v-if="recipe" class="content-info">
     <span class="time">{{ recipe.created_at }}</span>
     <h1>{{ recipe.title }}</h1>
     <div class="author">
-      <img :src="`${recipe.user.avatar}`" alt="" />
+      <img :src="recipe.user.avatar" alt="" />
       {{ recipe.user.login }}
     </div>
     <div class="cards-info">
@@ -130,7 +126,7 @@ const isSaveRecipeOpen = ref(false);
       </button>
     </div>
   </div>
-  <div class="cooking">
+  <div v-if="recipe" class="cooking">
     <div class="ingredients">
       <h2>Ингредиенты</h2>
       <div class="portions-container">
@@ -175,7 +171,7 @@ const isSaveRecipeOpen = ref(false);
       <h2>Шаги приготовления</h2>
       <section v-for="(step, index) in recipe.steps" :key="index" class="step">
         <div class="preview">
-          <img :src="`${step.photo}`" alt="" />
+          <img :src="step.photo" alt="" />
         </div>
         <div class="step__info">
           <h3>{{ step.title }}</h3>
@@ -184,11 +180,10 @@ const isSaveRecipeOpen = ref(false);
       </section>
     </div>
   </div>
-  <div class="btn-group">
+  <div v-if="recipe" class="btn-group">
     <button
       v-for="(mark, index) in recipe.marks"
       :key="index"
-      id=""
       class="btn-dark line"
     >
       <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-1" name="mark" />{{
@@ -196,10 +191,10 @@ const isSaveRecipeOpen = ref(false);
       }}
     </button>
   </div>
-  <section class="comments">
+  <section v-if="recipe" class="comments">
     <h2>Комментарии</h2>
     <form action="submit" method="post" id="comment">
-      <input name="recipe_id" type="hidden" :value="`${recipe.id}`" />
+      <input name="recipe_id" type="hidden" :value="recipe.id" />
       <textarea
         name="text"
         rows="4"
@@ -231,7 +226,7 @@ const isSaveRecipeOpen = ref(false);
     >
       <span class="time">{{ comment.created_at }}</span>
       <div class="author">
-        <img :src="`${comment.user.avatar}`" alt="" />
+        <img :src="comment.user.avatar" alt="" />
         {{ comment.user.login }}
       </div>
       <p>{{ comment.text }}</p>
@@ -272,12 +267,14 @@ const isSaveRecipeOpen = ref(false);
       </form>
     </div>
   </section>
+  <div v-else>Рецепт не найден</div>
 </template>
 
 <style lang="scss">
 @use "../../assets/styles/variables" as *;
 @use "../../assets/styles/style";
 
+// Стили остаются без изменений, копирую их как есть
 .preview {
   display: flex;
   width: 100%;
@@ -291,7 +288,6 @@ const isSaveRecipeOpen = ref(false);
   }
 }
 
-//Карточка контента
 .cards-info {
   display: flex;
   flex-direction: row;
@@ -362,13 +358,12 @@ const isSaveRecipeOpen = ref(false);
 
 .cooking {
   display: grid;
-  grid-template-columns: 1fr 1fr; // Две колонки равной ширины
+  grid-template-columns: 1fr 1fr;
   gap: 30px;
-  width: 100%; // Полная ширина контейнера
-  align-items: start; // Выравнивание элементов по началу
+  width: 100%;
+  align-items: start;
 }
 
-//Ингредиенты
 .ingredients {
   display: flex;
   flex-direction: column;
@@ -448,6 +443,7 @@ const isSaveRecipeOpen = ref(false);
 
       .ingredient__container {
         display: flex;
+        flex-direction: row;
         justify-content: space-between;
         width: 100%;
         border-bottom: 1px solid $text-info-light;
@@ -457,48 +453,6 @@ const isSaveRecipeOpen = ref(false);
   }
 }
 
-//Шаги
-.steps {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  gap: 30px;
-  line-height: 150%;
-
-  .step {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-
-    .preview {
-      display: flex;
-      flex-shrink: 0;
-      width: 100%;
-      height: 500px;
-      img {
-        box-shadow: $shadow;
-        object-fit: cover;
-        width: 100%;
-        height: 100%;
-        border-radius: $border;
-      }
-    }
-
-    h3 {
-      font-size: 25px;
-      font-weight: 500;
-    }
-
-    .step__info {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-  }
-}
-
-//Комментарии
 .comments {
   display: flex;
   flex-direction: column;

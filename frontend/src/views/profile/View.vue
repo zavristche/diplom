@@ -1,50 +1,47 @@
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import { useProfileAuth } from "../../composables/useProfileAuth";
-
+import { useProfileStore } from "../../stores/profile";
+import { useAuthStore } from "../../stores/auth";
 import BaseIcon from "../../components/BaseIcon.vue";
 import Recipe from "../../components/Recipe.vue";
 import Tabs from "../../components/Tabs.vue";
 import Collection from "../../components/Collection.vue";
 import Setting from "../../components/Setting.vue";
 
-// Используем composable
-const { profile, isOwnProfile } = useProfileAuth();
 const router = useRouter();
+const profileStore = useProfileStore();
+const authStore = useAuthStore();
+const profile = computed(() => profileStore.currentProfile);
 
 const isSettingOpen = ref(false);
 const activeTab = ref(0);
+
+const isOwnProfile = computed(() => authStore.user?.id === profile.value?.id);
 
 const handleTabChange = (index) => {
   activeTab.value = index;
 };
 
 const handleLogout = async () => {
-  try {
-    await useProfileAuth().authStore.logout();
-    setTimeout(() => {
-      router.push({ path: "/", replace: true });
-    }, 100);
-  } catch (error) {
-    console.error("Ошибка при выходе:", error);
-  }
+  await authStore.logout(); // Вызываем logout из хранилища
+  router.push({ path: "/", replace: true }); // Перенаправляем
 };
 </script>
 
 <template>
-  <Setting 
-    :isOpen="isSettingOpen" 
+  <Setting
+    :isOpen="isSettingOpen"
     @close="isSettingOpen = false"
     :profile="profile"
   />
-  <div class="preview profile">
+  <div v-if="profile" class="preview profile">
     <div class="profile_header" v-if="profile.photo_header">
       <img :src="profile.photo_header" />
     </div>
     <div class="profile-info">
       <div class="avatar">
-        <img :src="`${profile.avatar}`" />
+        <img :src="profile.avatar" />
       </div>
       <div class="profile-info__container">
         <h1>{{ profile.login }}</h1>
@@ -69,7 +66,7 @@ const handleLogout = async () => {
     </div>
   </div>
 
-  <div class="profile-active">
+  <div v-if="profile" class="profile-active">
     <Tabs
       :tabs="['Рецепты', 'Коллекции']"
       @update:activeTab="handleTabChange"
@@ -83,20 +80,21 @@ const handleLogout = async () => {
       </router-link>
     </div>
   </div>
-  <section class="content-container" v-if="activeTab === 0">
+  <section v-if="profile && activeTab === 0" class="content-container">
     <Recipe
       v-for="recipe in profile.recipes"
       :key="recipe.id"
       :recipe="recipe"
     />
   </section>
-  <section class="content-container" v-if="activeTab === 1">
+  <section v-if="profile && activeTab === 1" class="content-container">
     <Collection
       v-for="collection in profile.collections"
       :key="collection.id"
       :collection="collection"
     />
   </section>
+  <div v-if="!profile">Профиль не найден</div>
 </template>
 
 <style lang="scss">

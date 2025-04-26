@@ -1,10 +1,10 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "../stores/auth";
 import Register from "../components/Register.vue";
 import Login from "../components/Login.vue";
 import BaseIcon from "./BaseIcon.vue";
-import { useAuthStore } from "../stores/auth";
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -13,11 +13,8 @@ const isRegisterOpen = ref(false);
 const isLoginOpen = ref(false);
 
 const handleLogout = async () => {
-  try {
-    await authStore.logout();
-  } catch (error) {
-    console.error("Ошибка при выходе:", error);
-  }
+  await authStore.logout(); // Вызываем logout из хранилища
+  router.push("/"); // Перенаправляем после успешного выхода
 };
 </script>
 
@@ -30,15 +27,15 @@ const handleLogout = async () => {
         <BaseIcon class="logo" name="logo" />
       </router-link>
       <nav class="labels left">
-        <a href="/search/recipe">
+        <router-link to="/search/recipe">
           <div class="label-item">Рецепты</div>
-        </a>
-        <a href="/search/collection">
+        </router-link>
+        <router-link to="/search/collection">
           <div class="label-item">Коллекции</div>
-        </a>
-        <a href="/search/author">
+        </router-link>
+        <router-link to="/search/author">
           <div class="label-item">Авторы</div>
-        </a>
+        </router-link>
       </nav>
       <div class="search">
         <div class="btn icon">
@@ -57,12 +54,12 @@ const handleLogout = async () => {
           <button class="label-item" @click="isLoginOpen = true">Вход</button>
         </template>
         <template v-else>
-          <router-link :to="`/profile/${authStore.userId}`" class="avatar-link">
-            <img 
-              :src="authStore.avatar" 
-              alt="Аватар пользователя" 
+          <router-link :to="`/profile/${authStore.user?.id}`" class="avatar-link">
+            <img
+              :src="authStore.user?.avatar"
+              alt="Аватар пользователя"
               class="user-avatar"
-              v-if="authStore.avatar"
+              v-if="authStore.user?.avatar"
             />
             <BaseIcon v-else name="user" class="default-avatar" />
           </router-link>
@@ -108,7 +105,6 @@ header {
     align-items: center;
     width: 75rem;
     height: 100%;
-
     max-width: 75rem;
     min-width: 28.75rem;
   }
@@ -134,6 +130,11 @@ header {
     width: 40px;
     height: 40px;
     fill: $light-text;
+  }
+
+  .btn-dark {
+    background-color: none;
+    box-shadow: none;
   }
 }
 </style>

@@ -1,34 +1,28 @@
+<!-- src/App.vue -->
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useRecipeStore } from './stores/recipe';
+import { useSearchStore } from './stores/search';
+import { useCollectionStore } from './stores/collection';
 import Header from './components/Header.vue';
 import Footer from './components/Footer.vue';
 
 const router = useRouter();
+const recipeStore = useRecipeStore();
+const searchStore = useSearchStore();
+const collectionStore = useCollectionStore();
 const isReady = ref(false);
 
 onMounted(async () => {
-  console.log('Starting router.isReady()');
-  try {
-    await router.isReady();
-    console.log('router.isReady() completed');
-    isReady.value = true;
-  } catch (error) {
-    console.error('Error in router.isReady():', error);
-  }
+  await Promise.all([
+    router.isReady(),
+    recipeStore.fetchCreateData(), // Для /recipe/create
+    searchStore.fetchSearchData(), // Для /search
+    collectionStore.fetchCreateData(), // Для /collection/create
+  ]);
+  isReady.value = true;
 });
-
-// Следим за изменением маршрута и прокручиваем вверх резко
-watch(
-  () => router.currentRoute.value.path,
-  () => {
-    window.scrollTo({
-      top: 0
-      // behavior: 'smooth' - убираем этот параметр для резкой прокрутки
-      // или явно указываем behavior: 'auto'
-    });
-  }
-);
 </script>
 
 <template>
@@ -36,23 +30,25 @@ watch(
     <div v-if="!isReady" class="loading-overlay">
       <p>Загрузка...</p>
     </div>
-    <div v-else>
-      <Header />
-      <main>
-        <router-view />
-      </main>
-      <Footer />
-    </div>
+    <router-view v-slot="{ Component }">
+      <transition name="fade">
+        <div v-if="isReady">
+          <Header />
+          <main>
+            <component :is="Component" />
+          </main>
+          <Footer />
+        </div>
+      </transition>
+    </router-view>
   </div>
 </template>
 
 <style scoped lang="scss">
-@use "../src/assets/styles/_variables" as *;
-@use "../src/assets/styles/normalize.scss";
+@use "./assets/styles/_variables" as *;
 
 .app-container {
   width: 100vw;
-  position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -82,5 +78,14 @@ main {
   width: 1200px;
   max-width: 1200px;
   margin: 50px auto 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

@@ -85,4 +85,6 @@ body {
   font-optical-sizing: 1rem;
   font-weight: 300;
   font-style: l;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
