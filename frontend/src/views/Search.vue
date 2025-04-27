@@ -581,15 +581,5 @@ const handleSubmit = (event) => {
   width: 100%;
 }
 
-.btn-group {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-  gap: 30px;
-  justify-content: flex-end;
 
-  &.start {
-    justify-content: flex-start;
-  }
-}
 </style>

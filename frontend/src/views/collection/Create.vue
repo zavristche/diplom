@@ -406,7 +406,7 @@ const submitForm = async (event) => {
         </div>
       </label>
     </div>
-    <div class="btn-group">
+    <div class="btn-group end">
       <input class="btn-dark" type="submit" value="Отправить" />
     </div>
   </form>
@@ -568,17 +568,6 @@ const submitForm = async (event) => {
     gap: 10px;
     width: 100%;
   }
-
-  .btn-group {
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: row;
-    justify-content: flex-end;
-    gap: 30px;
-
-    &.start {
-      justify-content: flex-start;
-    }
   }
 
   .preview {
@@ -611,7 +600,6 @@ const submitForm = async (event) => {
     background-color: rgba($error, 0.1);
     border-radius: $border;
   }
-}
 
 .ingredients {
   display: flex;

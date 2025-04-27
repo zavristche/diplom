@@ -46,7 +46,7 @@ const handleLogout = async () => {
       <div class="profile-info__container">
         <h1>{{ profile.login }}</h1>
         <span>{{ profile.status }}</span>
-        <div class="btn-group" v-if="isOwnProfile">
+        <div class="btn-group start" v-if="isOwnProfile">
           <button class="btn-dark no-line" @click="isSettingOpen = true">
             <BaseIcon
               viewBox="0 0 29 27"
@@ -100,13 +100,6 @@ const handleLogout = async () => {
 <style lang="scss">
 @use "../../assets/styles/variables" as *;
 @use "../../assets/styles/style";
-
-.btn-group {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-  justify-content: start;
-}
 
 .profile-active {
   display: flex;

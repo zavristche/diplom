@@ -3,18 +3,13 @@ import { ref, computed } from "vue";
 import { useRecipeStore } from "../../stores/recipe";
 import BaseIcon from "../../components/BaseIcon.vue";
 import SaveRecipe from "../../components/SaveRecipe.vue";
+import Comments from "../../components/Comments.vue";
 
 const recipeStore = useRecipeStore();
-const recipe = computed(() => recipeStore.currentRecipe); // Берем данные из хранилища
+const recipe = computed(() => recipeStore.currentRecipe);
 
 const portions = ref(null);
 const baseIngredients = ref([]);
-const formVisibility = ref({});
-const commentTexts = ref({});
-const previewUrls = ref({});
-const fileNames = ref({});
-const newCommentPreviewUrl = ref(null);
-const newCommentFileName = ref(null);
 const isSaveRecipeOpen = ref(false);
 
 // Инициализация данных при первой загрузке
@@ -28,7 +23,7 @@ if (recipe.value) {
 }
 
 const adjustedIngredients = computed(() => {
-  if (!recipe.value) return []; // Проверка на случай, если данные не загрузились
+  if (!recipe.value) return [];
   return baseIngredients.value.map((product) => ({
     ...product,
     count:
@@ -50,23 +45,6 @@ const decreasePortions = () => {
 
 const increasePortions = () => {
   portions.value++;
-};
-
-const toggleForm = (id) => {
-  formVisibility.value[id] = !formVisibility.value[id];
-};
-
-const onFileSelected = (event, id = null) => {
-  const file = event.target.files[0];
-  if (file) {
-    if (id === null) {
-      newCommentPreviewUrl.value = URL.createObjectURL(file);
-      newCommentFileName.value = file.name;
-    } else {
-      previewUrls.value[id] = URL.createObjectURL(file);
-      fileNames.value[id] = file.name;
-    }
-  }
 };
 </script>
 
@@ -109,7 +87,7 @@ const onFileSelected = (event, id = null) => {
     <div class="description">
       {{ recipe.description }}
     </div>
-    <div class="btn-group">
+    <div class="btn-group end">
       <button type="submit" class="btn-dark" @click="isSaveRecipeOpen = true">
         <BaseIcon
           viewBox="0 0 25 26"
@@ -180,7 +158,7 @@ const onFileSelected = (event, id = null) => {
       </section>
     </div>
   </div>
-  <div v-if="recipe" class="btn-group">
+  <div v-if="recipe" class="btn-group end">
     <button
       v-for="(mark, index) in recipe.marks"
       :key="index"
@@ -191,82 +169,7 @@ const onFileSelected = (event, id = null) => {
       }}
     </button>
   </div>
-  <section v-if="recipe" class="comments">
-    <h2>Комментарии</h2>
-    <form action="submit" method="post" id="comment">
-      <input name="recipe_id" type="hidden" :value="recipe.id" />
-      <textarea
-        name="text"
-        rows="4"
-        cols="50"
-        placeholder="Введите текст комментария"
-      ></textarea>
-      <div class="btn-group">
-        <div v-if="newCommentPreviewUrl" class="preview-container">
-          <img :src="newCommentPreviewUrl" alt="Превью" class="preview-img" />
-          <span class="file-name">{{ newCommentFileName }}</span>
-        </div>
-        <label class="btn-dark line" style="cursor: pointer">
-          <input
-            type="file"
-            accept="image/*"
-            style="display: none"
-            @change="onFileSelected($event)"
-          />
-          <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-1" name="img" />
-          Загрузить фото
-        </label>
-        <input class="btn-dark" type="submit" value="Отправить" />
-      </div>
-    </form>
-    <div
-      v-for="(comment, index) in recipe.comments"
-      :key="index"
-      class="comment"
-    >
-      <span class="time">{{ comment.created_at }}</span>
-      <div class="author">
-        <img :src="comment.user.avatar" alt="" />
-        {{ comment.user.login }}
-      </div>
-      <p>{{ comment.text }}</p>
-      <button class="btn-small" @click="toggleForm(comment.id)">
-        Ответить
-      </button>
-      <form v-if="formVisibility[comment.id]" action="post" id="comment-answer">
-        <input name="parent_id" type="hidden" :value="comment.id" />
-        <textarea
-          :id="'comment-' + comment.id"
-          name="text"
-          rows="4"
-          cols="50"
-          placeholder="Введите текст комментария"
-          v-model="commentTexts[comment.id]"
-        ></textarea>
-        <div class="btn-group">
-          <div v-if="previewUrls[comment.id]" class="preview-container">
-            <img
-              :src="previewUrls[comment.id]"
-              alt="Превью"
-              class="preview-img"
-            />
-            <span class="file-name">{{ fileNames[comment.id] }}</span>
-          </div>
-          <label class="btn-dark line" style="cursor: pointer">
-            <input
-              type="file"
-              accept="image/*"
-              style="display: none"
-              @change="onFileSelected($event, comment.id)"
-            />
-            <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-1" name="img" />
-            Загрузить фото
-          </label>
-          <input class="btn-dark" type="submit" value="Отправить" />
-        </div>
-      </form>
-    </div>
-  </section>
+  <Comments v-if="recipe" :comments="recipe.comments" :recipeId="recipe.id" />
   <div v-else>Рецепт не найден</div>
 </template>
 
@@ -274,7 +177,7 @@ const onFileSelected = (event, id = null) => {
 @use "../../assets/styles/variables" as *;
 @use "../../assets/styles/style";
 
-// Стили остаются без изменений, копирую их как есть
+// Восстановлены оригинальные стили
 .preview {
   display: flex;
   width: 100%;
@@ -341,14 +244,6 @@ const onFileSelected = (event, id = null) => {
 .content-info {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-
-.btn-group {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-  justify-content: end;
   gap: 20px;
 }
 
@@ -451,47 +346,5 @@ const onFileSelected = (event, id = null) => {
       }
     }
   }
-}
-
-.comments {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-
-  form {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-
-    textarea {
-      box-shadow: 0rem 0rem 0.61rem 0rem rgba(0, 0, 0, 0.1);
-      background: $background;
-      border-radius: 25px;
-      padding: 30px;
-    }
-  }
-
-  .comment {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-}
-
-.preview-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 20px;
-  color: $text-info;
-}
-
-.preview-img {
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
-  border-radius: $border;
 }
 </style>

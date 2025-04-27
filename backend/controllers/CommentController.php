@@ -17,6 +17,15 @@ class CommentController extends BaseApiController
 {
     public $modelClass = "app\models\Comment";
 
+    protected function findModel($id)
+    {
+        $model = Comment::findOne($id);
+        if ($model === null) {
+            throw new NotFoundHttpException('Комментарий не найден.');
+        }
+        return $model;
+    }
+
     public function behaviors()
     {
         $behaviors = parent::behaviors();
@@ -111,11 +120,11 @@ class CommentController extends BaseApiController
         try {
             $comment = new Comment();
             $comment->user_id = Yii::$app->user->id;
-
+    
             if (!$comment->load($data, '') || !$comment->validate()) {
                 $errors = array_merge($errors, $comment->errors);
             }
-
+            
             // Фото комментария
             if (!empty($_FILES["photo"]["name"])) {
                 $upload = $this->uploadImage($_FILES["photo"]);
@@ -126,25 +135,34 @@ class CommentController extends BaseApiController
                     $uploadedFilePath = $upload['filePath'];
                 }
             }
-
+    
             if (!empty($errors)) {
                 if ($uploadedFilePath && file_exists($uploadedFilePath)) {
                     unlink($uploadedFilePath);
                 }
+                // Формируем конкретное сообщение об ошибке
+                $errorMessage = 'Ошибка валидации';
+                foreach ($errors as $field => $fieldErrors) {
+                    if (is_array($fieldErrors) && !empty($fieldErrors)) {
+                        $errorMessage = $fieldErrors[0]; // Берём первую ошибку
+                        break;
+                    }
+                }
                 Yii::$app->response->statusCode = 422;
                 return [
                     'success' => false,
-                    'message' => 'Ошибка валидации',
+                    'message' => $errorMessage,
                     'errors' => $errors,
                     'comment' => $comment->attributes,
                 ];
             }
-
+    
             $comment->photo = $comment->imageFile;
             $comment->save();
-
+            $comment->refresh();
+    
             $transaction->commit();
-
+    
             return [
                 'success' => true,
                 'message' => 'Комментарий успешно создан',

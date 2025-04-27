@@ -36,7 +36,7 @@ if (collection.value) {
     <div class="description">
       {{ collection.description }}
     </div>
-    <div class="btn-group">
+    <div class="btn-group end">
       <button type="submit" class="btn-dark">
         <BaseIcon
           viewBox="0 0 25 26"
@@ -143,14 +143,6 @@ if (collection.value) {
 .content-info {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-
-.btn-group {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-  justify-content: end;
   gap: 20px;
 }
 

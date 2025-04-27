@@ -57,7 +57,7 @@ class Comment extends \yii\db\ActiveRecord
         $fields = parent::fields();
         $fields['user'] = fn() => $this->user;
         $fields['answer'] = fn() => $this->answer;
-        $fields['created_at'] = fn() => Yii::$app->formatter->asDate($this->created_at, 'php:d.m.Y');
+        $fields['created_at'] = fn() => Yii::$app->formatter->asDate($this->created_at, 'php:d.m.Y') . ' в ' . Yii::$app->formatter->asTime($this->created_at, 'H:i');
 
         return $fields;
     }
