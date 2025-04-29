@@ -239,6 +239,7 @@ const closeModal = () => {
 
 .modal-container {
   width: 480px;
+  height: 510px; /* Фиксируем высоту модалки */
   padding: 30px;
   background: $background;
   box-shadow: $shadow;
@@ -264,14 +265,17 @@ const closeModal = () => {
 
 .modal-content {
   width: 420px;
+  height: 390px; /* Фиксируем высоту содержимого */
   display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow-y: auto; /* Добавляем прокрутку, если содержимое не помещается */
 }
 
 .collections-list {
-  height: 314px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .collection-item {
@@ -281,7 +285,6 @@ const closeModal = () => {
   display: flex;
   align-items: center;
   gap: 20px;
-  margin-bottom: 10px;
   cursor: pointer;
   text-decoration: none;
 
@@ -349,7 +352,8 @@ const closeModal = () => {
 }
 
 .loading,
-.saving {
+.saving,
+.no-collections {
   text-align: center;
   font-size: 16px;
   color: $dark-text;
@@ -357,6 +361,9 @@ const closeModal = () => {
   margin: 20px 0;
   font-family: Rubik;
   font-weight: map-get($font-weather, "medium", "weight");
+}
+
+.loading {
   animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -370,11 +377,5 @@ const closeModal = () => {
   100% {
     opacity: 1;
   }
-}
-
-.no-collections {
-  text-align: center;
-  font-size: 16px;
-  color: $text-info;
 }
 </style>

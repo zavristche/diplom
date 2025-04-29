@@ -71,9 +71,9 @@ $config = [
                     'prefix' => 'api',
                     'extraPatterns' => [
                         'GET search' => 'search',
-                        'POST validate-field' => 'validateField'
+                        'POST validate-field' => 'validateField',
+                        'GET current' => 'current',
                     ],
-                    
                 ],
 
                 //Профиль
@@ -163,8 +163,9 @@ $config = [
                     'pluralize' => false,
                     'prefix' => 'api',
                     'extraPatterns' => [
-                        'POST' => 'create',
-                        'DELETE' => 'delete',
+                        'POST check' => 'check',
+                        'POST' => 'create', // POST /api/recipe-reaction → actionCreate
+                        'DELETE' => 'delete', // DELETE /api/recipe-reaction → actionDelete
                     ],
                 ],
 
@@ -210,8 +211,7 @@ $config = [
                     'pluralize' => false,
                     'prefix' => 'api',
                     'extraPatterns' => [
-                        'POST' => 'create',
-                        'DELETE' => 'delete',
+                        'POST check' => 'check',
                     ],
                 ],
 

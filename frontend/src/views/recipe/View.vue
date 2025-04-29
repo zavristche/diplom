@@ -4,6 +4,7 @@ import { useRecipeStore } from "../../stores/recipe";
 import BaseIcon from "../../components/BaseIcon.vue";
 import SaveRecipe from "../../components/SaveRecipe.vue";
 import Comments from "../../components/Comments.vue";
+import ReactionButton from '../../components/ReactionButton.vue';
 
 const recipeStore = useRecipeStore();
 const recipe = computed(() => recipeStore.currentRecipe);
@@ -95,13 +96,7 @@ const increasePortions = () => {
           name="book"
         />Сохранить
       </button>
-      <button type="submit" class="btn-dark">
-        <BaseIcon
-          viewBox="0 0 29 26"
-          class="icon-white-30-2"
-          name="heartb"
-        />Оценить
-      </button>
+      <ReactionButton entity-type="recipe" :entity-id="recipe.id" />
     </div>
   </div>
   <div v-if="recipe" class="cooking">

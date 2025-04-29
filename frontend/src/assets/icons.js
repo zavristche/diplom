@@ -63,4 +63,7 @@ export default {
   arrow: '<path d="M2 2L14.5 14L27 2" stroke-linecap="round" stroke-linejoin="round"/>',
 
   close: '<path d="M2 2L21.2308 22" stroke-linecap="round"/><path d="M22 2L2.76922 22" stroke-linecap="round"/>',
+
+  heart_fill: '  <path d="M15 9.5C12 6 8 5.5 5.5 7.5c-2.5 2-2.8 6.5 1 10.5 2.8 2.8 6.5 6.2 8.5 8 2-1.8 5.7-5.2 8.5-8 3.8-4 3.5-8.5 1-10.5S18 6 15 9.5Z" fill="white" stroke-linecap="round" stroke-linejoin="round"/>',
+  heart_line: '  <path d="M15 9.5C12 6 8 5.5 5.5 7.5c-2.5 2-2.8 6.5 1 10.5 2.8 2.8 6.5 6.2 8.5 8 2-1.8 5.7-5.2 8.5-8 3.8-4 3.5-8.5 1-10.5S18 6 15 9.5Z" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
 };

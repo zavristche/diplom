@@ -12,6 +12,14 @@ class UserService {
   logout() {
     return apiClient.post('/api/logout');
   }
+
+  getCurrentUser(authKey) {
+    return apiClient.get('/api/user/current', {
+      headers: {
+        Authorization: `Bearer ${authKey}`,
+      },
+    });
+  }
 }
 
 export default new UserService();

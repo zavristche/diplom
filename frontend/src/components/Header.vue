@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 import Register from "../components/Register.vue";
@@ -12,9 +12,17 @@ const router = useRouter();
 const isRegisterOpen = ref(false);
 const isLoginOpen = ref(false);
 
+// Отладка: следим за изменением аватара
+watch(
+  () => authStore.avatar,
+  (newAvatar) => {
+    console.log("Avatar URL in Header changed:", newAvatar);
+  }
+);
+
 const handleLogout = async () => {
-  await authStore.logout(); // Вызываем logout из хранилища
-  router.push("/"); // Перенаправляем после успешного выхода
+  await authStore.logout();
+  router.push("/");
 };
 </script>
 
@@ -56,12 +64,11 @@ const handleLogout = async () => {
         <template v-else>
           <router-link :to="`/profile/${authStore.user?.id}`" class="avatar-link">
             <img
-              :src="authStore.user?.avatar"
+              :src="authStore.avatar"
               alt="Аватар пользователя"
               class="user-avatar"
-              v-if="authStore.user?.avatar"
             />
-            <BaseIcon v-else name="user" class="default-avatar" />
+            <BaseIcon v-if="!authStore.avatar" name="user" class="default-avatar" />
           </router-link>
           <button class="btn-dark" @click="handleLogout">
             <BaseIcon

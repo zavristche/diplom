@@ -4,6 +4,7 @@ import { useRoute } from "vue-router";
 import { useCollectionStore } from "../../stores/collection";
 import BaseIcon from "../../components/BaseIcon.vue";
 import Recipe from "../../components/Recipe.vue";
+import ReactionButton from '../../components/ReactionButton.vue';
 
 const route = useRoute();
 const collectionStore = useCollectionStore();
@@ -37,20 +38,7 @@ if (collection.value) {
       {{ collection.description }}
     </div>
     <div class="btn-group end">
-      <button type="submit" class="btn-dark">
-        <BaseIcon
-          viewBox="0 0 25 26"
-          class="icon-white-30-2"
-          name="book"
-        />Сохранить
-      </button>
-      <button type="submit" class="btn-dark">
-        <BaseIcon
-          viewBox="0 0 29 26"
-          class="icon-white-30-2"
-          name="heartb"
-        />Оценить
-      </button>
+      <ReactionButton entity-type="recipe" :entity-id="collection.id" />
     </div>
   </div>
   <section v-if="collection" class="content-container">

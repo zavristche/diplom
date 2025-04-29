@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { useProfileStore } from "../../stores/profile";
 import { useAuthStore } from "../../stores/auth";
 import BaseIcon from "../../components/BaseIcon.vue";
@@ -10,6 +10,7 @@ import Collection from "../../components/Collection.vue";
 import Setting from "../../components/Setting.vue";
 
 const router = useRouter();
+const route = useRoute();
 const profileStore = useProfileStore();
 const authStore = useAuthStore();
 const profile = computed(() => profileStore.currentProfile);
@@ -19,13 +20,24 @@ const activeTab = ref(0);
 
 const isOwnProfile = computed(() => authStore.user?.id === profile.value?.id);
 
+const loadProfile = async () => {
+  const profileId = route.params.id || authStore.user?.id;
+  if (profileId) {
+    await profileStore.fetchProfileById(profileId);
+  }
+};
+
+onMounted(() => {
+  loadProfile();
+});
+
 const handleTabChange = (index) => {
   activeTab.value = index;
 };
 
 const handleLogout = async () => {
-  await authStore.logout(); // Вызываем logout из хранилища
-  router.push({ path: "/", replace: true }); // Перенаправляем
+  await authStore.logout();
+  router.push({ path: "/", replace: true });
 };
 </script>
 

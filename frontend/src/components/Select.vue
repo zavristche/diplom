@@ -97,7 +97,7 @@
   .select-arrow {
     position: absolute;
     right: 10px;
-    top: 50%;
+    top: 70%;
     transform: translateY(-50%);
     pointer-events: none;
   }

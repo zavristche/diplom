@@ -37,7 +37,7 @@ class UserController extends BaseApiController
 
         $behaviors['authenticator'] = [
             'class' => \yii\filters\auth\HttpBearerAuth::class,
-            'except' => ['login', 'register', 'search',],
+            'except' => ['login', 'register', 'search'],
         ];
 
         return $behaviors;
@@ -59,6 +59,27 @@ class UserController extends BaseApiController
         ]);
     }
 
+    public function actionCurrent()
+    {
+        $user = Yii::$app->user->identity;
+        if ($user === null) {
+            throw new UnauthorizedHttpException('Пользователь не авторизован.');
+        }
+
+        return [
+            'success' => true,
+            'user' => $user->toArray([
+                'id',
+                'name',
+                'surname',
+                'login',
+                'email',
+                'avatar',
+                'photo_header',
+            ]),
+        ];
+    }
+
     protected function serializeData($data)
     {
         if ($data instanceof User) {
@@ -75,7 +96,6 @@ class UserController extends BaseApiController
             $postData = Yii::$app->request->getBodyParams();
 
             if ($model->load($postData, '')) {
-
                 if ($model->validate() && $user = $model->register()) {
                     return [
                         'success' => true,
@@ -124,28 +144,23 @@ class UserController extends BaseApiController
 
     public function actionLogout()
     {
-        // Проверяем заголовок Authorization
         $authHeader = Yii::$app->request->headers->get('Authorization');
         if ($authHeader && preg_match('/Bearer\s+(.+)/', $authHeader, $matches)) {
             $authKey = $matches[1];
 
-            // Ищем пользователя по auth_key
             $user = User::findOne(['auth_key' => $authKey]);
             if ($user === null) {
                 throw new UnauthorizedHttpException('Пользователь не авторизован.');
             }
 
-            // Сбрасываем auth_key и сохраняем
             $user->auth_key = null;
             if ($user->save(false)) {
-                // Завершаем сессию, если она есть (опционально)
                 Yii::$app->user->logout();
                 return ['message' => 'Вы успешно вышли из системы.'];
             } else {
                 throw new ServerErrorHttpException('Не удалось завершить сессию.');
             }
         } else {
-            // Если токен не передан, проверяем сессию (для обратной совместимости)
             $user = Yii::$app->user->identity;
             if ($user === null) {
                 throw new UnauthorizedHttpException('Пользователь не авторизован.');
@@ -171,9 +186,7 @@ class UserController extends BaseApiController
         $models = $dataProvider->getModels();
 
         $result = array_map(function ($model) {
-
             $data = $model->toArray([], ['name', 'surname', 'login']);
-
             if (isset($data)) {
                 unset($data['auth_key'], $data['password']);
             }

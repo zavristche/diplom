@@ -1,11 +1,16 @@
 <script setup>
 import { ref, defineProps, defineEmits, nextTick } from "vue";
+import { useAuthStore } from "../stores/auth";
+import { useProfileStore } from "../stores/profile";
 import BaseIcon from "./BaseIcon.vue";
 import Input from "./Input.vue";
 import SettingService from "../api/SettingService";
 
 const props = defineProps(["isOpen", "profile"]);
 const emit = defineEmits(["close"]);
+
+const authStore = useAuthStore();
+const profileStore = useProfileStore();
 
 const initialData = {
   name: props.profile?.name || "",
@@ -24,7 +29,7 @@ const avatarPreview = ref(userData.value.avatar);
 const backgroundPreview = ref(userData.value.photo_header);
 
 const uploadFile = async (inputType) => {
-  await nextTick(); // Ждем, пока DOM обновится
+  await nextTick();
   let input;
   if (inputType === "avatar") {
     input = avatarInput.value || document.querySelector('input[name="avatar"]');
@@ -64,10 +69,24 @@ const submitForm = async () => {
     }
 
     const response = await SettingService.update(props.profile.id, formData);
-    console.log("Server response:", response.data); // Логируем ответ сервера
+    console.log("Server response:", response.data);
+
+    // Обновляем данные в profileStore
+    await profileStore.fetchProfileById(props.profile.id);
+
+    // Если это профиль текущего пользователя, обновляем authStore
+    if (authStore.user?.id === props.profile.id) {
+      await authStore.updateUser({
+        name: userData.value.name,
+        surname: userData.value.surname,
+        login: userData.value.login,
+        email: userData.value.email,
+        avatar: response.data.avatar || userData.value.avatar,
+        photo_header: response.data.photo_header || userData.value.photo_header,
+      });
+    }
 
     closeModal();
-    window.location.reload();
   } catch (error) {
     console.error("Ошибка при сохранении настроек:", error.response?.data || error.message);
   }

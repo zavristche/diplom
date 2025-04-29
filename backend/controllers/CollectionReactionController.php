@@ -25,7 +25,7 @@ class CollectionReactionController extends BaseApiController
                 [
                     'allow' => true,
                     'roles' => ['@'],
-                    'actions' => ['create', 'delete'],
+                    'actions' => ['create', 'delete', 'check'], // Добавляем check
                 ],
             ],
         ];
@@ -38,6 +38,7 @@ class CollectionReactionController extends BaseApiController
 
         unset($actions['create']);
         unset($actions['delete']);
+        unset($actions['check']); // Добавляем check в исключения
 
         return $actions;
     }
@@ -47,7 +48,6 @@ class CollectionReactionController extends BaseApiController
         try {
             return parent::beforeAction($action);
         } catch (\yii\web\UnauthorizedHttpException $e) {
-            // Обработка исключения с кастомным сообщением
             throw new \yii\web\UnauthorizedHttpException('Это действие доступно только авторизированным пользователям');
         }
     }
@@ -57,7 +57,7 @@ class CollectionReactionController extends BaseApiController
         $data = Yii::$app->request->getBodyParams();
         $collection = Collection::findOne($data['collection_id']);
 
-        if($collection->user_id == Yii::$app->user->id){
+        if ($collection->user_id == Yii::$app->user->id) {
             return [
                 'success' => false,
                 'message' => 'Вы не можете лайкнуть свой собственную коллекцию'
@@ -69,11 +69,11 @@ class CollectionReactionController extends BaseApiController
             'user_id' => Yii::$app->user->id,
         ]);
 
-        if($model->save()){
-            return ['success' => true, 'model' => $model->attributes,];
+        if ($model->save()) {
+            return ['success' => true, 'model' => $model->attributes];
         }
 
-        return ['success' => false, 'errors' => $model->errors, $model->attributes];
+        return ['success' => false, 'errors' => $model->errors, 'attributes' => $model->attributes];
     }
 
     public function actionDelete()
@@ -81,7 +81,7 @@ class CollectionReactionController extends BaseApiController
         $data = Yii::$app->request->getBodyParams();
         $model = CollectionReaction::findOne(['collection_id' => $data['collection_id'], 'user_id' => Yii::$app->user->id]);
         
-        if ($model->delete()) {
+        if ($model && $model->delete()) {
             return [
                 'success' => true,
                 'message' => 'Лайк убран',
@@ -89,5 +89,16 @@ class CollectionReactionController extends BaseApiController
         }
 
         throw new \yii\web\ServerErrorHttpException('Ошибка при удалении реакции.'); 
+    }
+
+    public function actionCheck()
+    {
+        $data = Yii::$app->request->getBodyParams();
+        $model = CollectionReaction::findOne(['collection_id' => $data['collection_id'], 'user_id' => $data['user_id']]);
+
+        return [
+            'success' => true,
+            'isLiked' => !is_null($model), // true, если лайк есть, false, если нет
+        ];
     }
 }

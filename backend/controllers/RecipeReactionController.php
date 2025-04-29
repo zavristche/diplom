@@ -28,14 +28,14 @@ class RecipeReactionController extends BaseApiController
             'rules' => [
                 [
                     'allow' => true,
-                    'roles' => ['@'],
-                    'actions' => ['create', 'delete'],
+                    'roles' => ['@'], // Только авторизованные пользователи
+                    'actions' => ['create', 'delete', 'check'], // Разрешённые действия
                 ],
             ],
         ];
         return $behaviors;
     }
-
+    
     public function actions()
     {
         $actions = parent::actions();
@@ -60,7 +60,7 @@ class RecipeReactionController extends BaseApiController
         $data = Yii::$app->request->getBodyParams();
         $recipe = Recipe::findOne($data['recipe_id']);
 
-        if($recipe->user_id == Yii::$app->user->id){
+        if ($recipe->user_id == Yii::$app->user->id) {
             return [
                 'success' => false,
                 'message' => 'Вы не можете лайкнуть свой собственный рецепт'
@@ -72,11 +72,11 @@ class RecipeReactionController extends BaseApiController
             'user_id' => Yii::$app->user->id,
         ]);
 
-        if($model->save()){
-            return ['success' => true, 'model' => $model->attributes,];
+        if ($model->save()) {
+            return ['success' => true, 'model' => $model->attributes];
         }
 
-        return ['success' => false, 'errors' => $model->errors, $model->attributes];
+        return ['success' => false, 'errors' => $model->errors, 'attributes' => $model->attributes];
     }
 
     public function actionDelete()
@@ -84,7 +84,7 @@ class RecipeReactionController extends BaseApiController
         $data = Yii::$app->request->getBodyParams();
         $model = RecipeReaction::findOne(['recipe_id' => $data['recipe_id'], 'user_id' => Yii::$app->user->id]);
         
-        if ($model->delete()) {
+        if ($model && $model->delete()) {
             return [
                 'success' => true,
                 'message' => 'Лайк убран',
@@ -92,5 +92,16 @@ class RecipeReactionController extends BaseApiController
         }
 
         throw new \yii\web\ServerErrorHttpException('Ошибка при удалении реакции.'); 
-    } 
+    }
+
+    public function actionCheck()
+    {
+        $data = Yii::$app->request->getBodyParams();
+        $model = RecipeReaction::findOne(['recipe_id' => $data['recipe_id'], 'user_id' => $data['user_id']]);
+
+        return [
+            'success' => true,
+            'isLiked' => !is_null($model), // true, если лайк есть, false, если нет
+        ];
+    }
 }
