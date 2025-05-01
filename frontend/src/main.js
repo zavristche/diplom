@@ -1,10 +1,8 @@
-// src/main.js
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
-import router from './router.js'; // Явно указываем расширение
+import router from './router.js';
 import apiClient, { setupAuthInterceptor } from './api/apiClient';
-import { useRecipeStore } from './stores/recipe';
 import { useSearchStore } from './stores/search';
 import { useCollectionStore } from './stores/collection';
 import { useProfileStore } from './stores/profile';
@@ -15,7 +13,6 @@ const pinia = createPinia();
 app.use(pinia);
 app.use(router);
 
-const recipeStore = useRecipeStore();
 const searchStore = useSearchStore();
 const collectionStore = useCollectionStore();
 const profileStore = useProfileStore();
@@ -24,27 +21,30 @@ const authStore = useAuthStore();
 // Настраиваем интерцептор для apiClient с authStore
 setupAuthInterceptor(authStore);
 
-// Загружаем данные пользователя из локального хранилища
-authStore.loadUser();
+// Загружаем данные пользователя из локального хранилища и ждем завершения
+authStore.loadUser().then(() => {
+  console.log('User loaded:', authStore.user);
 
-// Предварительная загрузка данных для часто используемых страниц
-Promise.allSettled([
-  recipeStore.fetchRecipes(), // Для Home
-  recipeStore.fetchCreateData(), // Для /recipe/create
-  searchStore.fetchSearchData(), // Для /search
-  collectionStore.fetchCreateData(), // Для /collection/create
-  authStore.isAuthenticated && authStore.user?.id
-    ? profileStore.fetchProfileById(authStore.user.id)
-    : Promise.resolve(), // Для профиля текущего пользователя, если авторизован
-])
-  .then(() => {
-    router.isReady().then(() => {
-      app.mount('#app');
+  // Предварительная загрузка данных для других страниц (кроме рецептов)
+  const preloadPromises = [
+    searchStore.fetchSearchData(), // Для /search
+    collectionStore.fetchCreateData(), // Для /collection/create
+    authStore.isAuthenticated && authStore.user?.id
+      ? profileStore.fetchProfileById(authStore.user.id)
+      : Promise.resolve(), // Для профиля текущего пользователя, если авторизован
+  ];
+
+  Promise.allSettled(preloadPromises)
+    .then((results) => {
+      console.log('Preload results:', results);
+      router.isReady().then(() => {
+        app.mount('#app');
+      });
+    })
+    .catch((error) => {
+      console.error('Error during preloading data:', error);
+      router.isReady().then(() => {
+        app.mount('#app');
+      });
     });
-  })
-  .catch((error) => {
-    console.error('Error during preloading data:', error);
-    router.isReady().then(() => {
-      app.mount('#app');
-    });
-  });
+});

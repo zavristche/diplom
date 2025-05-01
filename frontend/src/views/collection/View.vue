@@ -30,15 +30,15 @@ if (collection.value) {
   <div v-if="collection" class="content-info">
     <span class="time">{{ collection.created_at }}</span>
     <h1>{{ collection.title }}</h1>
-    <div class="author">
+    <router-link :to="`/profile/${collection.user.id}`" class="author">
       <img :src="collection.user.avatar" alt="" />
       {{ collection.user.login }}
-    </div>
+    </router-link>
     <div class="description">
       {{ collection.description }}
     </div>
     <div class="btn-group end">
-      <ReactionButton entity-type="recipe" :entity-id="collection.id" />
+      <ReactionButton :entity-type="'collection'" :entity-id="collection.id" :count="collection.likes" />
     </div>
   </div>
   <section v-if="collection" class="content-container">

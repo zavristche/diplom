@@ -241,14 +241,17 @@ const submitForm = async (event) => {
         {{ errors.photo }}
       </div>
       <div class="input-title-wrapper">
-        <Input
+        <input
           v-model="title"
-          label="Заголовок"
+          type="text"
           name="title"
-          placeholder="Название коллекции"
-          :is-invalid="!!errors.title"
-          :error-message="errors.title"
+          class="input-title"
+          placeholder="Заголовок"
+          :class="{ invalid: !!errors.title }"
         />
+        <div v-if="errors.title" class="error-message">
+          {{ errors.title }}
+        </div>
       </div>
       <div class="input-description-wrapper">
         <textarea

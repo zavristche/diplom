@@ -82,15 +82,16 @@ class UpdateForm extends \yii\base\Model
     {
 
         if (!empty($_FILES["avatar"]["name"])) {
-
             $upload = $this->uploadImage($_FILES["avatar"]);
             if (!$upload['success']) {
                 $this->addError('avatar', $upload['message']);
             } else {
                 $this->avatar = $upload['url'];
-                if($user->avatar){
+                
+                // Проверяем, что у пользователя был аватар И это не дефолтный аватар
+                if ($user->avatar && basename($user->avatar) !== 'default_avatar.jpg') {
                     $photoPath = Yii::getAlias('@webroot') . parse_url($user->avatar, PHP_URL_PATH);
-    
+                    
                     if ($this->avatar && file_exists($photoPath)) {
                         unlink($photoPath);
                     }

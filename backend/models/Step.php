@@ -46,10 +46,32 @@ class Step extends \yii\db\ActiveRecord
             [['title', 'photo'], 'string', 'max' => 255],
             [['recipe_id'], 'exist', 'skipOnError' => true, 'targetClass' => Recipe::class, 'targetAttribute' => ['recipe_id' => 'id']],
 
-            [['imageFile'], 'file', 'skipOnEmpty' => false, 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_CREATE]],
+            [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg'], // Убираем skipOnEmpty => false
+            [['imageFile'], 'validateImageFile', 'on' => [self::SCENARIO_CREATE]], // Кастомная валидация для новых шагов
             [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_UPDATE]],
             ['photo', 'safe'],
         ];
+    }
+
+    /**
+     * Кастомная валидация для imageFile
+     */
+    public function validateImageFile($attribute, $params)
+    {
+        if ($this->isNewRecord && !$this->$attribute) {
+            $this->addError($attribute, 'Фото шага обязательно.');
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_CREATE] = ['recipe_id', 'number', 'title', 'description', 'photo', 'imageFile'];
+        $scenarios[self::SCENARIO_UPDATE] = ['recipe_id', 'number', 'title', 'description', 'photo', 'imageFile'];
+        return $scenarios;
     }
 
     /**

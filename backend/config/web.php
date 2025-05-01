@@ -212,6 +212,7 @@ $config = [
                     'prefix' => 'api',
                     'extraPatterns' => [
                         'POST check' => 'check',
+                        'DELETE' => 'delete',
                     ],
                 ],
 

@@ -84,11 +84,11 @@ const handleLogout = async () => {
       @update:activeTab="handleTabChange"
     />
     <div class="btn-group" v-if="isOwnProfile">
-      <router-link to="/collection/create" class="btn-dark">
-        Создать коллекцию
-      </router-link>
       <router-link to="/recipe/create" class="btn-dark">
         Создать рецепт
+      </router-link>
+      <router-link to="/collection/create" class="btn-dark">
+        Создать коллекцию
       </router-link>
     </div>
   </div>

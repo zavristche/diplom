@@ -1,97 +1,78 @@
-import { ref } from 'vue';
-import RecipeReactionService from '../api/RecipeReactionService';
-import CollectionReactionService from '../api/CollectionReactionService';
-import { useAuthStore } from '../stores/auth';
+import { ref } from "vue";
+import { useAuthStore } from "../stores/auth";
+import RecipeReactionService from "../api/RecipeReactionService";
+import CollectionReactionService from "../api/CollectionReactionService";
 
-export function useReaction(entityType, entityId) {
+export function useReaction(entityType, entityId, initialLikes) {
   const authStore = useAuthStore();
   const isLiked = ref(false);
-  const isLoading = ref(false);
-  const error = ref(null);
+  const likesCount = ref(initialLikes || 0); // Инициализируем количеством лайков из пропса
 
-  const service = entityType === 'recipe' ? RecipeReactionService : CollectionReactionService;
-  const idKey = entityType === 'recipe' ? 'recipe_id' : 'collection_id';
+  console.log(`useReaction initialized with entityType: ${entityType}, entityId: ${entityId}, initialLikes: ${initialLikes}`);
 
-  // Ключ для кэширования
-  const cacheKey = `like_${entityType}_${entityId}_${authStore.user?.id || 'guest'}`;
+  const service = entityType === "recipe" ? RecipeReactionService : CollectionReactionService;
+  const entityKey = entityType === "recipe" ? "recipe_id" : "collection_id";
 
-  // Проверка, лайкнул ли пользователь
-  const checkInitialLike = () => {
-    // Проверяем кэш
-    const cachedLike = localStorage.getItem(cacheKey);
-    if (cachedLike !== null) {
-      isLiked.value = cachedLike === 'true';
-      return Promise.resolve();
-    }
+  console.log(`Using service: ${entityType === "recipe" ? "RecipeReactionService" : "CollectionReactionService"}`);
 
+  const checkInitialLike = async () => {
     if (!authStore.isAuthenticated) {
-      return Promise.resolve();
-    }
-
-    isLoading.value = true;
-    const data = { [idKey]: entityId, user_id: authStore.user.id };
-
-    return service.check(data)
-      .then((response) => {
-        if (response.data.success) {
-          isLiked.value = response.data.isLiked || false;
-          // Сохраняем в кэш
-          localStorage.setItem(cacheKey, isLiked.value.toString());
-        }
-      })
-      .catch((err) => {
-        console.error('Ошибка проверки лайка:', err);
-      })
-      .finally(() => {
-        isLoading.value = false;
-      });
-  };
-
-  // Переключение лайка
-  const toggleLike = async () => {
-    if (!authStore.isAuthenticated) {
-      error.value = 'Пожалуйста, войдите, чтобы оценить';
-      alert(error.value);
-      error.value = null;
+      isLiked.value = false;
       return;
     }
 
-    isLoading.value = true;
-    error.value = null;
-
-    const data = { [idKey]: entityId, user_id: authStore.user.id };
-
     try {
-      if (isLiked.value) {
-        const response = await service.delete(data);
-        if (response.data.success) {
-          isLiked.value = false;
-          localStorage.setItem(cacheKey, 'false');
-        } else {
-          error.value = response.data.message || 'Ошибка при удалении лайка';
-          alert(error.value);
-        }
-      } else {
-        const response = await service.create(data);
-        if (response.data.success) {
-          isLiked.value = true;
-          localStorage.setItem(cacheKey, 'true');
-        } else {
-          error.value = response.data.message || 'Ошибка при добавлении лайка';
-          alert(error.value);
-        }
-      }
-    } catch (err) {
-      error.value = err.response?.data?.message || 'Ошибка сервера';
-      alert(error.value);
-    } finally {
-      isLoading.value = false;
-      error.value = null;
+      const response = await service.check({
+        [entityKey]: entityId,
+        user_id: authStore.userId,
+      });
+      console.log(`Check response for ${entityType}:`, response.data);
+      isLiked.value = response.data.isLiked || false;
+    } catch (error) {
+      console.error(`Ошибка при проверке лайка для ${entityType}:`, error);
+      isLiked.value = false;
     }
   };
 
-  // Запускаем проверку сразу, но не ждём её
-  checkInitialLike();
+  const toggleLike = async () => {
+    if (!authStore.isAuthenticated) {
+      alert("Пожалуйста, войдите в систему, чтобы оставить реакцию.");
+      return;
+    }
 
-  return { isLiked, isLoading, toggleLike, checkInitialLike };
+    try {
+      if (isLiked.value) {
+        console.log(`Removing like for ${entityType} with ID ${entityId}`);
+        await service.delete({
+          [entityKey]: entityId,
+          user_id: authStore.userId,
+        });
+        isLiked.value = false;
+        likesCount.value -= 1; // Уменьшаем количество лайков
+      } else {
+        console.log(`Adding like for ${entityType} with ID ${entityId}`);
+        const response = await service.create({
+          [entityKey]: entityId,
+          user_id: authStore.userId,
+        });
+        if (!response.data.success) {
+          alert(response.data.message);
+          return;
+        }
+        isLiked.value = true;
+        likesCount.value += 1; // Увеличиваем количество лайков
+      }
+    } catch (error) {
+      console.error(`Ошибка при переключении лайка для ${entityType}:`, error);
+      const message = error.response?.data?.message || error.message;
+      alert(`Не удалось ${isLiked.value ? "убрать" : "добавить"} лайк: ${message}`);
+    }
+  };
+
+  return {
+    isLiked,
+    toggleLike,
+    checkInitialLike,
+    likesCount, // Возвращаем локальное состояние для количества лайков
+  };
 }

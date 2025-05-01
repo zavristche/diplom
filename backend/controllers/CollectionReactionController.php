@@ -9,7 +9,7 @@ use app\models\collection\CollectionReaction;
 
 class CollectionReactionController extends BaseApiController
 {
-    public $modelClass = 'app\models\recipe\RecipeReaction';
+    public $modelClass = 'app\models\collection\CollectionReaction'; // Исправлено
 
     public $enableCsrfValidation = false;
      
@@ -25,7 +25,7 @@ class CollectionReactionController extends BaseApiController
                 [
                     'allow' => true,
                     'roles' => ['@'],
-                    'actions' => ['create', 'delete', 'check'], // Добавляем check
+                    'actions' => ['create', 'delete', 'check'],
                 ],
             ],
         ];
@@ -38,7 +38,7 @@ class CollectionReactionController extends BaseApiController
 
         unset($actions['create']);
         unset($actions['delete']);
-        unset($actions['check']); // Добавляем check в исключения
+        unset($actions['check']);
 
         return $actions;
     }
@@ -57,10 +57,18 @@ class CollectionReactionController extends BaseApiController
         $data = Yii::$app->request->getBodyParams();
         $collection = Collection::findOne($data['collection_id']);
 
+        // Проверка, существует ли коллекция
+        if (!$collection) {
+            return [
+                'success' => false,
+                'message' => 'Коллекция не найдена',
+            ];
+        }
+
         if ($collection->user_id == Yii::$app->user->id) {
             return [
                 'success' => false,
-                'message' => 'Вы не можете лайкнуть свой собственную коллекцию'
+                'message' => 'Вы не можете лайкнуть свою собственную коллекцию',
             ];
         }
 
@@ -98,7 +106,7 @@ class CollectionReactionController extends BaseApiController
 
         return [
             'success' => true,
-            'isLiked' => !is_null($model), // true, если лайк есть, false, если нет
+            'isLiked' => !is_null($model),
         ];
     }
 }

@@ -383,132 +383,160 @@ class RecipeController extends BaseApiController
         $products = [];
         $marks = [];
         $steps = [];
-        $recipePhotoPath = null; // Путь к новому фото рецепта
-        $stepPhotoPaths = []; // Пути к новым фото шагов
-
+        $recipePhotoPath = null;
+        $stepPhotoPaths = [];
+    
         $data = Yii::$app->request->getBodyParams();
-
+    
         if (empty($data)) {
             return ['success' => false, 'message' => 'Ошибка загрузки данных рецепта'];
         }
-
+    
         $transaction = Yii::$app->db->beginTransaction();
         $errors = [];
-
+    
         try {
-            // Проверки
             if (!isset($data['steps']) || empty($data['steps'])) {
                 $errors['steps'][] = 'Рецепт должен содержать хотя бы один шаг.';
             }
-
+    
             if (!isset($data['products']) || empty($data['products'])) {
                 $errors['products'][] = 'Рецепт должен содержать хотя бы один продукт.';
+            } else {
+                $hasValidProduct = false;
+                foreach ($data['products'] as $productData) {
+                    if (!empty($productData['product_id']) && !empty($productData['count']) && !empty($productData['measure_id'])) {
+                        $hasValidProduct = true;
+                        break;
+                    }
+                }
+                if (!$hasValidProduct) {
+                    $errors['products'][] = 'Рецепт должен содержать хотя бы один полностью заполненный продукт.';
+                }
             }
-
-            // Рецепт
+    
+            if (!isset($data['marks']) || empty($data['marks'])) {
+                $errors['marks'][] = 'Рецепт должен содержать хотя бы одну метку.';
+            }
+    
             foreach ($data as $attribute => $value) {
                 if ($recipe->hasAttribute($attribute)) {
                     $recipe->$attribute = $value;
                 }
             }
-
-            // Фото рецепта
-            if (!empty($_FILES["recipe_photo"]["name"])) {
-
-                $upload = $this->uploadImage($_FILES["recipe_photo"]);
-                if (!$upload['success']) {
-                    $errors['imageFile'] = $upload['message'];
+    
+            if (isset($_FILES["recipe_photo"]["name"]) && !empty($_FILES["recipe_photo"]["name"])) {
+                $recipe->imageFile = \yii\web\UploadedFile::getInstanceByName("recipe_photo");
+                if ($recipe->imageFile && $recipe->validate(['imageFile'])) {
+                    $upload = $this->uploadImage($_FILES["recipe_photo"]);
+                    if (!$upload['success']) {
+                        $errors['imageFile'] = $upload['message'];
+                    } else {
+                        $recipe->imageFile = $upload['url'];
+                        $recipePhotoPath = $upload['filePath'];
+                    }
                 } else {
-                    $recipe->imageFile = $upload['url'];
-                    $recipePhotoPath = $upload['filePath'];
+                    $errors['imageFile'] = $recipe->getErrors('imageFile');
                 }
             }
-
+    
             if (!$recipe->validate()) {
                 $errors = array_merge($errors, $recipe->errors);
             }
-
-            // Шаги
+    
             $existingSteps = $recipe->getSteps()->indexBy('id')->all();
             $newStepIds = [];
-
+    
             foreach ($data['steps'] as $i => $stepData) {
                 $step = isset($stepData['id']) ? Step::findOne($stepData['id']) : new Step();
                 if (!$step) {
                     $errors["step_{$i}"] = 'Шаг с указанным ID не найден.';
                     continue;
                 }
-
+    
                 $step->scenario = $step->isNewRecord ? Step::SCENARIO_CREATE : Step::SCENARIO_UPDATE;
                 $step->recipe_id = $recipe->id;
                 $step->number = $i + 1;
-
+    
                 foreach ($stepData as $attribute => $value) {
                     if ($step->hasAttribute($attribute)) {
                         $step->$attribute = $value;
                     }
                 }
-
-                // Фото шага
-                if (isset($_FILES["step_photos"]["name"][$i]) && !empty($_FILES["step_photos"]["name"][$i])) {
-                    if (!empty($step->imageFile)) {
-                        $oldPhotoPath = Yii::getAlias('@webroot') . parse_url($step->imageFile, PHP_URL_PATH);
-                        if (file_exists($oldPhotoPath)) {
-                            unlink($oldPhotoPath);
+    
+                // Проверяем фото шага
+                $step->imageFile = \yii\web\UploadedFile::getInstanceByName("step_photos[{$i}]");
+                if ($step->imageFile) {
+                    if ($step->validate(['imageFile'])) {
+                        if (!empty($step->photo)) {
+                            $oldPhotoPath = Yii::getAlias('@webroot') . parse_url($step->photo, PHP_URL_PATH);
+                            if (file_exists($oldPhotoPath)) {
+                                unlink($oldPhotoPath);
+                            }
                         }
-                    }
-
-                    $file = [
-                        'name' => $_FILES["step_photos"]["name"][$i],
-                        'tmp_name' => $_FILES["step_photos"]["tmp_name"][$i],
-                        'type' => $_FILES["step_photos"]["type"][$i],
-                        'error' => $_FILES["step_photos"]["error"][$i],
-                        'size' => $_FILES["step_photos"]["size"][$i],
-                    ];
-
-                    $upload = $this->uploadImage($file);
-                    if ($upload['success']) {
-                        $step->imageFile = $upload['url'];
-                        $stepPhotoPaths[$i] = $upload['filePath']; // Сохраняем путь к новому файлу
+    
+                        $file = [
+                            'name' => $_FILES["step_photos"]["name"][$i],
+                            'tmp_name' => $_FILES["step_photos"]["tmp_name"][$i],
+                            'type' => $_FILES["step_photos"]["type"][$i],
+                            'error' => $_FILES["step_photos"]["error"][$i],
+                            'size' => $_FILES["step_photos"]["size"][$i],
+                        ];
+    
+                        $upload = $this->uploadImage($file);
+                        if ($upload['success']) {
+                            $step->photo = $upload['url'];
+                            $stepPhotoPaths[$i] = $upload['filePath'];
+                        } else {
+                            $errors["step_{$i}"]['imageFile'] = $upload['message'];
+                        }
                     } else {
-                        $errors["step_{$i}"]['imageFile'] = $upload['message'];
+                        $errors["step_{$i}"]['imageFile'] = $step->getErrors('imageFile');
+                    }
+                } elseif ($step->isNewRecord) {
+                    // Если фото не загружено для нового шага, валидация в модели должна сработать
+                    if (!$step->validate(['imageFile'])) {
+                        $errors["step_{$i}"]['imageFile'] = $step->getErrors('imageFile');
                     }
                 }
-
+    
                 if (!$step->validate()) {
                     $errors["step_{$i}"] = $step->errors;
                 }
-
+    
                 $steps[] = $step;
                 if (!$step->isNewRecord) {
-                    $newStepIds[] = $step->id; // Добавляем ID существующего шага
+                    $newStepIds[] = $step->id;
                 }
             }
-
-            // Продукты
+    
             $existingProducts = $recipe->getProducts()->indexBy('id')->all();
             $newProductIds = [];
-
+    
             foreach ($data['products'] as $i => $productData) {
                 $product = isset($productData['id']) ? RecipeProduct::findOne($productData['id']) : new RecipeProduct(['recipe_id' => $recipe->id]);
                 if (!$product) {
                     $errors["product_{$i}"] = 'Продукт с указанным ID не найден.';
                     continue;
                 }
-
+    
+                if (!empty($productData['measure_id']) && $productData['measure_id'] == Measure::getOne('по вкусу')) {
+                    $product->scenario = RecipeProduct::SCENARIO_NO_TASTE;
+                }
+    
                 $product->setAttributes($productData);
-
+    
                 if (!$product->validate()) {
                     $errors["product_{$i}"] = $product->errors;
+                    Yii::debug("Product validation errors for product_{$i}: " . json_encode($product->errors), __METHOD__);
                 }
-
+    
                 $products[] = $product;
                 if (!$product->isNewRecord) {
                     $newProductIds[] = $product->id;
                 }
             }
-
-            // Метки
+    
             if (isset($data['marks'])) {
                 RecipeMark::deleteAll(['recipe_id' => $recipe->id]);
                 foreach ($data['marks'] as $mark) {
@@ -521,10 +549,8 @@ class RecipeController extends BaseApiController
                     $marks[] = $recipeMark;
                 }
             }
-
-            // Обработка ошибок
+    
             if (!empty($errors)) {
-                // Удаляем загруженные файлы при ошибке
                 if ($recipePhotoPath && file_exists($recipePhotoPath)) {
                     unlink($recipePhotoPath);
                 }
@@ -533,7 +559,7 @@ class RecipeController extends BaseApiController
                         unlink($path);
                     }
                 }
-
+    
                 Yii::$app->response->statusCode = 422;
                 return [
                     'success' => false,
@@ -545,8 +571,7 @@ class RecipeController extends BaseApiController
                     'marks' => $marks,
                 ];
             }
-
-            // Сохранение
+    
             if (!empty($recipe->imageFile)) {
                 $photoPath = Yii::getAlias('@webroot') . parse_url($recipe->photo, PHP_URL_PATH);
                 if (file_exists($photoPath)) {
@@ -555,36 +580,32 @@ class RecipeController extends BaseApiController
             }
             $recipe->photo = $recipe->imageFile ?? $recipe->photo;
             $recipe->save();
-
-            // Удаление шагов, которые не пришли в запросе
+    
             $stepsToDelete = array_diff(array_keys($existingSteps), $newStepIds);
             if (!empty($stepsToDelete)) {
                 Step::deleteAll(['id' => $stepsToDelete]);
             }
-
-            // Удаление продуктов, которые не пришли в запросе
+    
             $productsToDelete = array_diff(array_keys($existingProducts), $newProductIds);
             if (!empty($productsToDelete)) {
                 RecipeProduct::deleteAll(['id' => $productsToDelete]);
             }
-
+    
             foreach ($steps as $step) {
-                $step->photo = $step->imageFile ?? $step->photo;
                 $step->save();
             }
-
+    
             foreach ($products as $product) {
                 $product->save();
             }
-
+    
             foreach ($marks as $mark) {
                 $mark->save();
             }
-
+    
             $transaction->commit();
             return ['success' => true, 'message' => 'Рецепт успешно обновлен', 'recipe' => $recipe->toArray()];
         } catch (\Exception $e) {
-            // Удаляем загруженные файлы при исключении
             if ($recipePhotoPath && file_exists($recipePhotoPath)) {
                 unlink($recipePhotoPath);
             }
@@ -593,7 +614,7 @@ class RecipeController extends BaseApiController
                     unlink($path);
                 }
             }
-
+    
             $transaction->rollBack();
             return ['success' => false, 'message' => 'Ошибка обновления', 'error' => $e->getMessage()];
         }

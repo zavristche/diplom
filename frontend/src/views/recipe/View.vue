@@ -61,10 +61,10 @@ const increasePortions = () => {
   <div v-if="recipe" class="content-info">
     <span class="time">{{ recipe.created_at }}</span>
     <h1>{{ recipe.title }}</h1>
-    <div class="author">
+    <router-link :to="`/profile/${recipe.user.id}`" class="author">
       <img :src="recipe.user.avatar" alt="" />
       {{ recipe.user.login }}
-    </div>
+    </router-link>
     <div class="cards-info">
       <div class="card-info">
         <span class="card-info__title">Время приготовления</span>
@@ -89,6 +89,9 @@ const increasePortions = () => {
       {{ recipe.description }}
     </div>
     <div class="btn-group end">
+      <router-link :to="`/recipe/edit/${recipe.id}`" class="btn-dark">
+        Редактировать
+      </router-link>
       <button type="submit" class="btn-dark" @click="isSaveRecipeOpen = true">
         <BaseIcon
           viewBox="0 0 25 26"
@@ -96,7 +99,7 @@ const increasePortions = () => {
           name="book"
         />Сохранить
       </button>
-      <ReactionButton entity-type="recipe" :entity-id="recipe.id" />
+      <ReactionButton :entity-type="'recipe'" :entity-id="recipe.id" :count="recipe.likes" />
     </div>
   </div>
   <div v-if="recipe" class="cooking">

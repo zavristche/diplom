@@ -1,4 +1,3 @@
-// src/router.js
 import { createRouter, createWebHistory } from 'vue-router';
 import { useRecipeStore } from './stores/recipe';
 import { useProfileStore } from './stores/profile';
@@ -9,6 +8,7 @@ import Home from './views/Home.vue';
 import About from './views/About.vue';
 import Search from './views/Search.vue';
 import RecipeCreate from './views/recipe/Create.vue';
+import RecipeEdit from './views/recipe/Edit.vue';
 import CollectionCreate from './views/collection/Create.vue';
 import CollectionView from './views/collection/View.vue';
 
@@ -45,7 +45,25 @@ const routes = [
       }
       to.meta.data = recipeStore.createData;
       if (!to.meta.data) {
-        next('/'); // Перенаправляем на главную вместо not-found
+        next('/');
+      } else {
+        next();
+      }
+    },
+  },
+  {
+    path: '/recipe/edit/:id',
+    name: 'recipe-edit',
+    component: RecipeEdit,
+    meta: { title: 'Редактировать рецепт' },
+    beforeEnter: async (to, from, next) => {
+      const recipeStore = useRecipeStore();
+      if (!recipeStore.createData) {
+        await recipeStore.fetchCreateData();
+      }
+      to.meta.data = recipeStore.createData;
+      if (!to.meta.data) {
+        next('/');
       } else {
         next();
       }
@@ -76,7 +94,6 @@ router.beforeEach(async (to, from, next) => {
   const collectionStore = useCollectionStore();
   const searchStore = useSearchStore();
 
-  // Динамическое обновление заголовков
   let title = to.meta.title || 'Рецептище';
   if (to.name === 'RecipeView' && to.params.id) {
     try {
@@ -100,19 +117,18 @@ router.beforeEach(async (to, from, next) => {
       title = `${collection?.title || 'Коллекция'}`;
     } catch (error) {
       console.error('Error fetching collection:', error);
-      title = 'Коллекция не найден';
+      title = 'Коллекция не найдена';
     }
+  } else if (to.name === 'recipe-edit' && to.params.id) {
+    title = `Редактировать рецепт`;
   }
 
-  // Устанавливаем заголовок страницы
   document.title = title;
 
-  // Загружаем данные для поиска, если нужно
   if (to.name === 'search' && !searchStore.searchData) {
     await searchStore.fetchSearchData();
   }
 
-  // Прокрутка наверх при смене маршрута
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   next();

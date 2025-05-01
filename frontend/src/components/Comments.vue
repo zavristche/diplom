@@ -278,7 +278,6 @@ onUnmounted(() => {
           <img :src="comment.user.avatar" alt="Аватар" />
           {{ comment.user.login }}
         </div>
-        <p v-if="comment.answer_id" class="reply-to">В ответ на: {{ comment.answer?.user?.login || 'Неизвестный пользователь' }}</p>
         <p>{{ comment.text }}</p>
         <div v-if="comment.photo" class="comment-photo">
           <img :src="comment.photo" alt="Фото комментария" />
@@ -355,7 +354,6 @@ onUnmounted(() => {
 .reply-form {
   margin-top: 20px;
   margin-left: 20px;
-  border-left: 1px solid $text-info-light;
   padding-left: 10px;
 }
 

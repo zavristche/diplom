@@ -32,19 +32,10 @@ const error = ref(null);
 const isLoading = ref(false);
 const isSaving = ref(false);
 
-// Отладка пропсов и авторизации
-console.log("Props:", { isOpen: props.isOpen, recipe_id: props.recipe_id });
-console.log("isAuthenticated:", isAuthenticated.value);
-console.log("currentUser:", currentUser.value);
-console.log("authStore.authKey:", authStore.authKey);
-console.log("localStorage.auth_key:", localStorage.getItem("auth_key"));
-console.log("localStorage.user:", localStorage.getItem("user"));
-
 // Загрузка коллекций при открытии модалки
 watch(
   () => props.isOpen,
   async (newValue) => {
-    console.log("isOpen changed:", newValue);
     if (!newValue) {
       return; // Ничего не делаем при закрытии
     }

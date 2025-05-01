@@ -9,7 +9,6 @@ export const useAuthStore = defineStore("auth", {
   }),
   actions: {
     setUser(authKey, user) {
-      console.log("setUser called with:", { authKey, user });
       this.authKey = authKey;
       this.user = user;
       localStorage.setItem("auth_key", authKey);
@@ -22,7 +21,6 @@ export const useAuthStore = defineStore("auth", {
 
       try {
         this.user = userJson ? JSON.parse(userJson) : null;
-        console.log("loadUser: user from localStorage:", this.user);
       } catch (e) {
         console.error("Ошибка при парсинге пользователя из localStorage:", e);
         this.user = null;
@@ -33,7 +31,6 @@ export const useAuthStore = defineStore("auth", {
       }
     },
     clearUser() {
-      console.log("clearUser called");
       this.authKey = null;
       this.user = null;
       localStorage.removeItem("auth_key");
@@ -50,29 +47,23 @@ export const useAuthStore = defineStore("auth", {
       }
     },
     async updateUser(newUserData) {
-      console.log("updateUser called with:", newUserData);
       this.user = { ...this.user, ...newUserData };
       localStorage.setItem("user", JSON.stringify(this.user));
       this.cacheBuster = Date.now();
-      console.log("User updated, new state:", this.user);
 
       await this.syncUser();
     },
     async syncUser() {
       if (!this.authKey) {
-        console.log("syncUser: No authKey, skipping sync");
         return;
       }
 
       try {
-        console.log("syncUser: Fetching user data from server with authKey:", this.authKey);
         const response = await UserService.getCurrentUser(this.authKey);
-        console.log("syncUser: Server response:", response.data);
         if (response.data.success) {
           this.user = response.data.user;
           localStorage.setItem("user", JSON.stringify(this.user));
           this.cacheBuster = Date.now();
-          console.log("syncUser: User updated from server:", this.user);
         } else {
           console.error("syncUser: Failed to fetch user from server:", response.data.message);
           this.clearUser();
@@ -90,7 +81,6 @@ export const useAuthStore = defineStore("auth", {
     userId: (state) => state.user?.id,
     avatar: (state) => {
       const baseAvatar = state.user?.avatar || "/default-avatar.jpg";
-      console.log("avatar getter:", baseAvatar, "cacheBuster:", state.cacheBuster);
       return `${baseAvatar}?cb=${state.cacheBuster}`;
     },
   },

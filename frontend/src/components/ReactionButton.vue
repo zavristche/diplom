@@ -4,6 +4,7 @@
     class="btn-dark"
     @click="toggleLike"
   >
+    <span>{{ likesCount }}</span>
     <BaseIcon
       viewBox="0 0 30 30"
       class="icon-white-30-2"
@@ -16,8 +17,8 @@
 
 <script setup>
 import { defineProps, onBeforeMount } from 'vue';
-import BaseIcon from './BaseIcon.vue'; // Укажи правильный путь
-import { useReaction } from '../composables/useReaction'; // Укажи правильный путь
+import BaseIcon from './BaseIcon.vue';
+import { useReaction } from '../composables/useReaction';
 
 const props = defineProps({
   entityType: {
@@ -29,12 +30,18 @@ const props = defineProps({
     type: [Number, String],
     required: true,
   },
+  likes: {
+    type: [Number],
+    required: true,
+  },
 });
 
-const { isLiked, toggleLike, checkInitialLike } = useReaction(props.entityType, props.entityId);
+console.log('ReactionButton: entityType:', props.entityType, 'entityId:', props.entityId, 'initial likes:', props.likes);
 
-// Запускаем проверку, но не ждём её
+const { isLiked, toggleLike, checkInitialLike, likesCount } = useReaction(props.entityType, props.entityId, props.likes);
+
 onBeforeMount(() => {
+  console.log(`Checking initial like for ${props.entityType} with ID ${props.entityId}`);
   checkInitialLike();
 });
 </script>
@@ -64,7 +71,7 @@ onBeforeMount(() => {
 }
 
 .icon-white-30-2 {
-  stroke: $light-text; /* Белая обводка */
+  stroke: $light-text;
   stroke-width: 2;
 }
 </style>
