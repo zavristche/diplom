@@ -9,7 +9,8 @@
       :placeholder="placeholder"
       :value="modelValue"
       :autocomplete="autocomplete"
-      @input="$emit('update:modelValue', $event.target.value)"
+      :disabled="disabled"
+      @input="handleInput"
     />
 
     <!-- Анимация ошибки -->
@@ -22,9 +23,9 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from "vue";
+import { defineProps, defineEmits, watch } from "vue";
 
-defineProps({
+const props = defineProps({
   label: String,
   name: String,
   type: {
@@ -48,9 +49,22 @@ defineProps({
     type: [String, Number, null],
     default: null,
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue"]);
+
+const handleInput = (event) => {
+  let value = event.target.value;
+  if (event.target.type === "number") {
+    value = value === "" ? null : Number(value);
+  }
+  console.log(`Input ${props.name} updated: ${value}`);
+  emit("update:modelValue", value);
+};
 
 const formatErrorMessage = (message) => {
   if (Array.isArray(message)) {
@@ -58,6 +72,14 @@ const formatErrorMessage = (message) => {
   }
   return message;
 };
+
+// Отладка значения modelValue
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    console.log(`Input ${props.name} modelValue changed: ${newValue}`);
+  }
+);
 </script>
 
 <style lang="scss" scoped>
@@ -84,6 +106,11 @@ const formatErrorMessage = (message) => {
 
   &.invalid {
     border: 2px solid $error;
+  }
+
+  &:disabled {
+    background-color: $background;
+    cursor: not-allowed;
   }
 }
 

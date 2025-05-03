@@ -5,6 +5,7 @@ import BaseIcon from "../../components/BaseIcon.vue";
 import SaveRecipe from "../../components/SaveRecipe.vue";
 import Comments from "../../components/Comments.vue";
 import ReactionButton from '../../components/ReactionButton.vue';
+import DeleteButton from '../../components/DeleteButton.vue';
 
 const recipeStore = useRecipeStore();
 const recipe = computed(() => recipeStore.currentRecipe);
@@ -100,6 +101,7 @@ const increasePortions = () => {
         />Сохранить
       </button>
       <ReactionButton :entity-type="'recipe'" :entity-id="recipe.id" :count="recipe.likes" />
+      <DeleteButton :entity-id="recipe.id" entity-type="recipe" />
     </div>
   </div>
   <div v-if="recipe" class="cooking">

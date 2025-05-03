@@ -84,23 +84,12 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
             [['complexity_id'], 'exist', 'skipOnError' => true, 'targetClass' => Complexity::class, 'targetAttribute' => ['complexity_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
 
-            [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg'], // Убираем skipOnEmpty => false
-            [['imageFile'], 'validateImageFile', 'on' => [self::SCENARIO_CREATE]], // Кастомная валидация для новых рецептов
+            [['imageFile'], 'file', 'skipOnEmpty' => false, 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_CREATE]],
             [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_UPDATE]],
             ['photo', 'safe'],
 
             ['admin_comment', 'required', 'on' => self::SCENARIO_CANCEL],
         ];
-    }
-
-    /**
-     * Кастомная валидация для imageFile
-     */
-    public function validateImageFile($attribute, $params)
-    {
-        if ($this->isNewRecord && !$this->$attribute) {
-            $this->addError($attribute, 'Фото рецепта обязательно.');
-        }
     }
 
     public function attributes()
@@ -266,6 +255,12 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
     {
         return $this->hasMany(Product::class, ['id' => 'product_id'])->via('recipeProducts');
     }
+    
+
+    // public function getProducts()
+    // {
+    //     return $this->hasMany(Product::class, ['id' => 'product_id'])->via('recipeProducts');
+    // }
 
     /**
      * Gets query for [[RecipeReactions]].
@@ -287,8 +282,8 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
         return $this->hasOne(StatusContent::class, ['id' => 'status_id']);
     }
 
-    /**
-     * Gets query for [[Complexity]].
+        /**
+     * Gets query for [[Status]].
      *
      * @return \yii\db\ActiveQuery
      */

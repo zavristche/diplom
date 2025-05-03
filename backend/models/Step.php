@@ -45,24 +45,12 @@ class Step extends \yii\db\ActiveRecord
             [['description'], 'string'],
             [['title', 'photo'], 'string', 'max' => 255],
             [['recipe_id'], 'exist', 'skipOnError' => true, 'targetClass' => Recipe::class, 'targetAttribute' => ['recipe_id' => 'id']],
-
-            [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg'], // Убираем skipOnEmpty => false
-            [['imageFile'], 'validateImageFile', 'on' => [self::SCENARIO_CREATE]], // Кастомная валидация для новых шагов
-            [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_UPDATE]],
+            [['imageFile'], 'file', 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_CREATE], 'skipOnEmpty' => false],
+            [['imageFile'], 'file', 'extensions' => 'png, jpg, jpeg', 'on' => [self::SCENARIO_UPDATE], 'skipOnEmpty' => true],
             ['photo', 'safe'],
         ];
     }
-
-    /**
-     * Кастомная валидация для imageFile
-     */
-    public function validateImageFile($attribute, $params)
-    {
-        if ($this->isNewRecord && !$this->$attribute) {
-            $this->addError($attribute, 'Фото шага обязательно.');
-        }
-    }
-
+    
     /**
      * {@inheritdoc}
      */

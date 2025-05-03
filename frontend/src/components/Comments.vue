@@ -187,13 +187,37 @@ const deleteComment = async (commentId) => {
   if (!confirm('Вы уверены, что хотите удалить комментарий?')) return;
 
   try {
+    console.log('Deleting comment ID:', commentId);
     const response = await CommentService.delete(commentId);
     if (response.data.success) {
-      localComments.value = localComments.value.filter(c => c.id !== commentId);
+      console.log('Before deletion:', localComments.value);
+      localComments.value = removeCommentAndReplies(localComments.value, commentId);
+      console.log('After deletion:', localComments.value);
+    } else {
+      errors.value.main = response.data.message || 'Ошибка при удалении комментария';
     }
   } catch (err) {
     errors.value.main = err.response?.data?.message || 'Ошибка при удалении комментария';
+    console.error('Delete error:', err);
   }
+};
+
+// Рекурсивное удаление комментария и всех его дочерних комментариев
+const removeCommentAndReplies = (commentsArray, commentId) => {
+  // Собираем все id дочерних комментариев рекурсивно
+  const collectChildIds = (parentId, childIds = new Set()) => {
+    commentsArray.forEach((comment) => {
+      if (comment.answer_id === parentId) {
+        childIds.add(comment.id);
+        collectChildIds(comment.id, childIds);
+      }
+    });
+    return childIds;
+  };
+
+  const childIds = collectChildIds(commentId);
+  // Удаляем сам комментарий и все его дочерние
+  return commentsArray.filter((comment) => comment.id !== commentId && !childIds.has(comment.id));
 };
 
 const toggleReplyForm = (event, commentId) => {

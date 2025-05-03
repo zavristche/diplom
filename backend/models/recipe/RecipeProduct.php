@@ -40,27 +40,17 @@ class RecipeProduct extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['product_id', 'measure_id', 'count'], 'required'],
+            [['product_id', 'measure_id'], 'required'],
             [['recipe_id'], 'safe'],
             [['recipe_id', 'product_id', 'measure_id', 'count'], 'integer'],
-            [['count'], 'validateCount'], // Кастомная валидация для count
             [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => Product::class, 'targetAttribute' => ['product_id' => 'id']],
             [['recipe_id'], 'exist', 'skipOnError' => true, 'targetClass' => Recipe::class, 'targetAttribute' => ['recipe_id' => 'id']],
             [['measure_id'], 'exist', 'skipOnError' => true, 'targetClass' => Measure::class, 'targetAttribute' => ['measure_id' => 'id']],
             ['count', 'required', 'on' => self::SCENARIO_NO_TASTE],
+            ['count', 'number', 'min' => 0, 'when' => function($model) {
+                return !$model->getIsToTaste();
+            }],
         ];
-    }
-
-    /**
-     * Кастомная валидация для count
-     */
-    public function validateCount($attribute, $params)
-    {
-        if ($this->$attribute === '' || $this->$attribute === null) {
-            $this->addError($attribute, 'Количество обязательно.');
-        } elseif ($this->$attribute < 1) {
-            $this->addError($attribute, 'Количество должно быть больше или равно 1.');
-        }
     }
 
     /**
@@ -128,6 +118,7 @@ class RecipeProduct extends \yii\db\ActiveRecord
 
     public function getIsToTaste()
     {
-        return $this->measure_id == Measure::getOne('по вкусу');
+        $tasteMeasure = Measure::findOne(['title' => 'по вкусу']);
+        return $this->measure_id && $tasteMeasure && $this->measure_id === $tasteMeasure->id;
     }
 }

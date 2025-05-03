@@ -18,6 +18,8 @@ use app\models\recipe\Recipe;
  */
 class RecipeMark extends \yii\db\ActiveRecord
 {
+    const SCENARIO_CREATE = 'create';
+
     /**
      * {@inheritdoc}
      */
@@ -32,11 +34,21 @@ class RecipeMark extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['recipe_id', 'mark_id'], 'required'],
+            [['mark_id'], 'required'],
             [['recipe_id', 'mark_id'], 'integer'],
             [['mark_id'], 'exist', 'skipOnError' => true, 'targetClass' => Mark::class, 'targetAttribute' => ['mark_id' => 'id']],
-            [['recipe_id'], 'exist', 'skipOnError' => true, 'targetClass' => Recipe::class, 'targetAttribute' => ['recipe_id' => 'id']],
+            [['recipe_id'], 'exist', 'skipOnError' => true, 'skipOnEmpty' => true, 'targetClass' => Recipe::class, 'targetAttribute' => ['recipe_id' => 'id']],
         ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_CREATE] = ['mark_id'];
+        return $scenarios;
     }
 
     /**

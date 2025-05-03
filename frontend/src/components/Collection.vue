@@ -15,28 +15,17 @@ defineProps({
   },
 });
 
-// Функция для получения фото для отображения
-const getPreviewImages = (collection) => {
-  const images = [];
-  
-  // Первое изображение (большое)
-  images.push(collection.photo || (collection.recipes?.[0]?.photo) || null);
-  
-  // Второе и третье изображения (маленькие)
-  images.push(collection.recipes?.[1]?.photo || null);
-  images.push(collection.recipes?.[2]?.photo || null);
-  
-  return images;
-};
+// Логируем preview для отладки
+console.log('Collection preview:', collection => collection.preview);
 </script>
 
 <template>
   <section class="card collection" v-if="collection && collection.id">
     <router-link :to="`/collection/${collection.id}`" class="card__preview">
       <div class="preview-grid">
-        <div class="preview-main" :style="{ backgroundImage: getPreviewImages(collection)[0] ? `url(${getPreviewImages(collection)[0]})` : 'none', backgroundColor: !getPreviewImages(collection)[0] ? '#e0e0e0' : 'transparent' }"></div>
-        <div class="preview-small" :style="{ backgroundImage: getPreviewImages(collection)[1] ? `url(${getPreviewImages(collection)[1]})` : 'none', backgroundColor: !getPreviewImages(collection)[1] ? '#e0e0e0' : 'transparent' }"></div>
-        <div class="preview-small" :style="{ backgroundImage: getPreviewImages(collection)[2] ? `url(${getPreviewImages(collection)[2]})` : 'none', backgroundColor: !getPreviewImages(collection)[2] ? '#e0e0e0' : 'transparent' }"></div>
+        <div class="preview-main" :style="{ backgroundImage: collection.preview?.[0] ? `url(${collection.preview[0]})` : 'none', backgroundColor: !collection.preview?.[0] ? '#e0e0e0' : 'transparent' }"></div>
+        <div class="preview-small" :style="{ backgroundImage: collection.preview?.[1] ? `url(${collection.preview[1]})` : 'none', backgroundColor: !collection.preview?.[1] ? '#e0e0e0' : 'transparent' }"></div>
+        <div class="preview-small" :style="{ backgroundImage: collection.preview?.[2] ? `url(${collection.preview[2]})` : 'none', backgroundColor: !collection.preview?.[2] ? '#e0e0e0' : 'transparent' }"></div>
       </div>
     </router-link>
     <div class="card__info">

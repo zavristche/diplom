@@ -1,5 +1,6 @@
 @use "_variables.scss" as *;
-/* Убираем отступы и рамки для всех элементов */
+
+/* Сброс стилей для всех элементов */
 *,
 *::before,
 *::after {
@@ -8,19 +9,19 @@
   box-sizing: border-box;
 }
 
-/* Убираем стандартные стили для ссылок */
+/* Сброс стилей для ссылок */
 a {
   text-decoration: none;
   color: inherit;
 }
 
-/* Убираем стандартные стили для списков */
+/* Сброс стилей для списков */
 ul,
 ol {
   list-style: none;
 }
 
-/* Убираем стандартные стили для форм */
+/* Сброс стилей для форм */
 input,
 select,
 textarea,
@@ -29,28 +30,36 @@ button {
   border: none;
   outline: none;
   background: none;
+  appearance: none; /* Убирает стандартные стили в WebKit/Blink */
+  -webkit-appearance: none; /* Для старых версий Safari */
+  -moz-appearance: none; /* Для Firefox */
+}
+
+/* Стили для кнопок */
+button {
   cursor: pointer;
 }
 
-/* Убираем стандартные стили для таблиц */
+/* Стили для textarea */
+textarea {
+  resize: none; /* Запрещает изменение размеров; можно заменить на resize: vertical для изменения только по высоте */
+}
+
+/* Сброс стилей для таблиц */
 table {
   border-collapse: collapse;
+  border-spacing: 0;
   width: 100%;
 }
 
-textarea {
-  resize: none;
-
-}
-
-/* Убираем стили для заголовков */
+/* Сброс стилей для заголовков */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-  font-weight: l;
+  font-weight: normal; /* Исправлено с 'l' на 'normal' */
   margin: 0;
 }
 
@@ -65,26 +74,105 @@ img {
   max-width: 100%;
   height: auto;
   display: block;
+  vertical-align: middle; /* Убирает лишние отступы в некоторых браузерах */
 }
 
-/* Поддержка для адаптивных элементов */
+/* Сброс стилей для fieldset и legend (для IE) */
+fieldset,
+legend {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* Стили для checkbox и radio */
 input[type="checkbox"],
 input[type="radio"] {
   cursor: pointer;
+  vertical-align: middle;
+  appearance: none; /* Убирает стандартные стили */
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
-/* Стили для основного контейнера */
+/* Стили для body */
 body {
   display: flex;
-  justify-content: center;
   flex-direction: column;
+  justify-content: center;
+  min-height: 100vh; /* Для полноэкранных layouts */
   max-width: 100%;
-  background-color: $background;
-  color: $dark-text;
-  font-family: "Rubik", sans-serif;
-  font-optical-sizing: 1rem;
+  background-color: $background; /* #f5f5f5 */
+  color: $dark-text; /* #000 */
+  font-family: "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 20px; /* Исправлено с font-optical-sizing */
   font-weight: 300;
-  font-style: l;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-style: normal; /* Исправлено с 'l' */
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased; /* Для WebKit/Blink */
+  -moz-osx-font-smoothing: grayscale; /* Для Firefox на macOS */
+}
+
+/* Сброс стилей для цитат */
+blockquote,
+q {
+  quotes: none;
+  margin: 0;
+}
+
+/* Сброс стилей для hr */
+hr {
+  border: 0;
+  height: 1px;
+  background: $text-info-light; /* #9a997b */
+  margin: 0;
+}
+
+/* Убираем outline при фокусе для базовой нормализации */
+:focus {
+  outline: none;
+}
+
+/* Стили для placeholder */
+::placeholder {
+  color: $text-info-light; /* #9a997b */
+  opacity: 1; /* Для Firefox */
+}
+
+::-webkit-input-placeholder {
+  color: $text-info-light; /* #9a997b */
+}
+
+::-moz-placeholder {
+  color: $text-info-light; /* #9a997b */
+  opacity: 1;
+}
+
+/* Стили для выделения текста */
+::selection {
+  background: $accent-color-1; /* #bfd329, вместо $primary */
+  color: $light-text; /* #fff */
+}
+
+::-moz-selection {
+  background: $accent-color-1; /* #bfd329 */
+  color: $light-text; /* #fff */
+}
+
+input[type="number"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+
+/* Убираем стрелки в WebKit/Blink (Chrome, Safari, Edge) */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Дополнительно убираем любые внутренние элементы управления в Firefox */
+input[type="number"] {
+  -moz-appearance: textfield !important; /* Приоритет для Firefox */
 }

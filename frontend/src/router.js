@@ -1,3 +1,4 @@
+// router.js
 import { createRouter, createWebHistory } from 'vue-router';
 import { useRecipeStore } from './stores/recipe';
 import { useProfileStore } from './stores/profile';
@@ -58,14 +59,25 @@ const routes = [
     meta: { title: 'Редактировать рецепт' },
     beforeEnter: async (to, from, next) => {
       const recipeStore = useRecipeStore();
-      if (!recipeStore.createData) {
-        await recipeStore.fetchCreateData();
-      }
-      to.meta.data = recipeStore.createData;
-      if (!to.meta.data) {
+      try {
+        // Загружаем createData, если еще не загружены
+        if (!recipeStore.createData) {
+          await recipeStore.fetchCreateData();
+        }
+        to.meta.data = recipeStore.createData;
+
+        // Загружаем данные рецепта
+        const recipe = await recipeStore.fetchRecipeById(to.params.id);
+        to.meta.recipe = recipe;
+
+        if (!to.meta.data || !to.meta.recipe) {
+          next('/');
+        } else {
+          next();
+        }
+      } catch (error) {
+        console.error('Error in beforeEnter for recipe-edit:', error);
         next('/');
-      } else {
-        next();
       }
     },
   },

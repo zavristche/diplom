@@ -133,7 +133,7 @@ class Collection extends \yii\db\ActiveRecord implements Linkable
         $fields['recipes'] = function () {
             return $this->recipes ? array_map(function ($recipe) {
                 $recipeData = $recipe->toArray(
-                    array_diff(array_keys($recipe->fields()), ['recipes', 'collections']) // Исключаем вложенные recipes и collections
+                    array_diff(array_keys($recipe->fields()), ['recipes', 'collections'])
                 );
                 if ($recipe->user) {
                     $recipeData['user'] = $recipe->user->toArray(
@@ -142,6 +142,36 @@ class Collection extends \yii\db\ActiveRecord implements Linkable
                 }
                 return $recipeData;
             }, $this->recipes) : [];
+        };
+    
+        // Поле preview: возвращаем массив из трёх превью-фото
+        $fields['preview'] = function () {
+            $preview = [null, null, null]; // [main, small1, small2]
+    
+            // Проверяем наличие фото коллекции
+            if ($this->photo) {
+                $preview[0] = $this->photo;
+                // Берем фото из первых двух рецептов
+                $preview[1] = !empty($this->recipes) && isset($this->recipes[0])
+                    ? ($this->recipes[0]->photo ?? ($this->recipes[0]->steps[0]->photo ?? null))
+                    : null;
+                $preview[2] = !empty($this->recipes) && isset($this->recipes[1])
+                    ? ($this->recipes[1]->photo ?? ($this->recipes[1]->steps[0]->photo ?? null))
+                    : null;
+            } else {
+                // Нет фото коллекции, используем фото рецептов
+                $preview[0] = !empty($this->recipes) && isset($this->recipes[0])
+                    ? ($this->recipes[0]->photo ?? ($this->recipes[0]->steps[0]->photo ?? null))
+                    : null;
+                $preview[1] = !empty($this->recipes) && isset($this->recipes[1])
+                    ? ($this->recipes[1]->photo ?? ($this->recipes[1]->steps[0]->photo ?? null))
+                    : null;
+                $preview[2] = !empty($this->recipes) && isset($this->recipes[2])
+                    ? ($this->recipes[2]->photo ?? ($this->recipes[2]->steps[0]->photo ?? null))
+                    : null;
+            }
+    
+            return $preview;
         };
     
         return $fields;
