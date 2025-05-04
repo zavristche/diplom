@@ -5,6 +5,8 @@ import { useCollectionStore } from "../../stores/collection";
 import BaseIcon from "../../components/BaseIcon.vue";
 import Recipe from "../../components/Recipe.vue";
 import ReactionButton from '../../components/ReactionButton.vue';
+import DeleteButton from '../../components/DeleteButton.vue';
+
 
 const route = useRoute();
 const collectionStore = useCollectionStore();
@@ -38,6 +40,10 @@ if (collection.value) {
       {{ collection.description }}
     </div>
     <div class="btn-group end">
+      <router-link :to="`/collection/edit/${collection.id}`" class="btn-dark">
+        Редактировать
+      </router-link>
+      <DeleteButton :entity-id="collection.id" entity-type="collection" />
       <ReactionButton :entity-type="'collection'" :entity-id="collection.id" :count="collection.likes" />
     </div>
   </div>

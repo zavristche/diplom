@@ -1,4 +1,3 @@
-// EntityService.js
 import apiClient from './apiClient';
 
 export default class EntityService {
@@ -29,5 +28,9 @@ export default class EntityService {
 
     delete(id) {
         return apiClient.delete(`/${this.resource}/${id}`);
+    }
+
+    search(params) {
+        return apiClient.get(`/${this.resource}/search`, { params });
     }
 }

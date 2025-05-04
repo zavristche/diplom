@@ -1,8 +1,7 @@
-// src/api/apiClient.js
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: "http://localhost:8080", // адрес API
+  baseURL: "http://localhost:8080", // Адрес API
   timeout: 3000,
 });
 
@@ -15,8 +14,13 @@ apiClient.interceptors.response.use(
 // Функция для настройки интерцептора запросов
 export function setupAuthInterceptor(authStore) {
   apiClient.interceptors.request.use((config) => {
+    // Добавляем Authorization, если есть authKey
     if (authStore.authKey) {
       config.headers["Authorization"] = `Bearer ${authStore.authKey}`;
+    }
+    // Устанавливаем Content-Type для FormData
+    if (config.data instanceof FormData) {
+      config.headers["Content-Type"] = "multipart/form-data";
     }
     return config;
   });

@@ -5,6 +5,7 @@ import { useProfileAuth } from "../../composables/useProfileAuth";
 import { useAuthStore } from "../../stores/auth";
 import { useRouter, useRoute } from "vue-router";
 import collectionService from "../../api/collectionService";
+import apiClient from "../../api/apiClient";
 import BaseIcon from "../../components/BaseIcon.vue";
 import Input from "../../components/Input.vue";
 import Select from "../../components/Select.vue";
@@ -23,6 +24,8 @@ const data = ref(route.meta.data || { data: { marks: {}, mark_types: {}, product
 console.log("isAuthenticated:", isAuthenticated.value);
 console.log("currentUser:", currentUser.value);
 console.log("authStore.authKey:", authStore.authKey);
+console.log("authStore.user:", authStore.user);
+console.log("route.params.id:", route.params.id);
 console.log("collection:", collection.value);
 console.log("createData:", data.value);
 
@@ -40,11 +43,15 @@ const selectedPrivate = ref(collection.value.private_id || "");
 const previewUrl = ref(collection.value.photo || null);
 const collectionPhotoFile = ref(null);
 const searchMark = ref("");
-const selectedMarks = ref(collection.value.marks?.map(mark => mark.mark) || []);
+const selectedMarks = ref(
+  collection.value.marks?.filter(mark => mark && mark.id) || []
+);
 const activeMarkType = ref(null);
 const isMarkInputFocused = ref(false);
 const searchProduct = ref("");
-const selectedProducts = ref(collection.value.products?.map(product => product.product) || []);
+const selectedProducts = ref(
+  collection.value.products?.filter(product => product && product.id) || []
+);
 const activeProductType = ref(null);
 const isProductInputFocused = ref(false);
 const errors = ref({});
@@ -56,6 +63,8 @@ console.log("mark_types:", mark_types.value);
 console.log("products:", products.value);
 console.log("product_types:", product_types.value);
 console.log("privates:", privates.value);
+console.log("selectedMarks:", selectedMarks.value);
+console.log("selectedProducts:", selectedProducts.value);
 
 // Обработка фото
 const onFileSelected = (event) => {
@@ -114,8 +123,9 @@ const selectMarkType = (typeId) => {
 };
 
 const addMark = (mark) => {
-  if (!selectedMarks.value.some((m) => m.id === mark.id))
+  if (!selectedMarks.value.some((m) => m.id === mark.id)) {
     selectedMarks.value.push(mark);
+  }
   searchMark.value = "";
   isMarkInputFocused.value = false;
 };
@@ -136,8 +146,9 @@ const selectProductType = (typeId) => {
 };
 
 const addProduct = (product) => {
-  if (!selectedProducts.value.some((p) => p.id === product.id))
+  if (!selectedProducts.value.some((p) => p.id === product.id)) {
     selectedProducts.value.push(product);
+  }
   searchProduct.value = "";
   isProductInputFocused.value = false;
 };
@@ -177,7 +188,40 @@ const submitForm = async (event) => {
   if (!isAuthenticated.value) {
     errors.value = { general: "Пожалуйста, войдите в систему для редактирования коллекции" };
     console.error("Пользователь не авторизован");
-    router.push("/login");
+    router.push({ name: "login" });
+    return;
+  }
+
+  // Проверка route.params.id
+  if (!route.params.id) {
+    errors.value = { general: "ID коллекции не указан" };
+    console.error("route.params.id is undefined");
+    router.push({ name: "home" });
+    return;
+  }
+
+  // Проверка, что коллекция принадлежит пользователю
+  if (collection.value.user_id !== authStore.user?.id) {
+    errors.value = { general: "Вы не можете редактировать эту коллекцию" };
+    console.error("Коллекция не принадлежит текущему пользователю", {
+      collectionUserId: collection.value.user_id,
+      currentUserId: authStore.user?.id,
+    });
+    router.push({ name: "home" });
+    return;
+  }
+
+  // Синхронизация пользователя перед отправкой
+  try {
+    console.log("Синхронизация пользователя...");
+    await authStore.syncUser();
+    console.log("Пользователь после синхронизации:", authStore.user);
+    console.log("authKey после синхронизации:", authStore.authKey);
+  } catch (error) {
+    console.error("Ошибка синхронизации пользователя:", error);
+    errors.value = { general: "Ошибка авторизации. Пожалуйста, войдите снова." };
+    authStore.clearUser();
+    router.push({ name: "login" });
     return;
   }
 
@@ -196,23 +240,36 @@ const submitForm = async (event) => {
   });
 
   try {
-    console.log("Отправка запроса с authKey:", authStore.authKey);
-    const response = await collectionService.update(route.params.id, formData);
-    if (response.data.success) {
+    console.log("Отправка PATCH-запроса с authKey:", authStore.authKey);
+    console.log("FormData:", [...formData.entries()]);
+    const response = await apiClient.patch(`/api/collection/${route.params.id}`, formData);
+    console.log("API response:", response.data);
+    
+    if (response.data.success && response.data.collection?.id) {
       const collectionId = response.data.collection.id;
       router.push(`/collection/${collectionId}`);
     } else {
-      throw new Error(response.data.message || "Ошибка API");
+      throw new Error(response.data.message || "Ошибка API: некорректный ответ");
     }
   } catch (error) {
     console.error("Ошибка при редактировании коллекции:", error.response?.data || error.message);
+    console.log("Статус ошибки:", error.response?.status);
+    console.log("Данные ошибки:", error.response?.data);
     if (error.response?.status === 401) {
       errors.value = { general: "Не авторизован. Пожалуйста, войдите снова." };
       authStore.clearUser();
-      router.push("/login");
+      router.push({ name: "login" });
+    } else if (error.response?.status === 403) {
+      errors.value = { general: "Вы не можете редактировать эту коллекцию. Возможно, неверный authKey или пользователь." };
+      console.error("403 Forbidden:", {
+        collectionUserId: collection.value.user_id,
+        currentUserId: authStore.user?.id,
+        authKey: authStore.authKey,
+      });
+      router.push({ name: "home" });
     } else if (error.response?.status === 404) {
       errors.value = { general: "Коллекция не найдена." };
-      router.push("/");
+      router.push({ name: "home" });
     } else if (error.response?.data?.errors) {
       errors.value = normalizeServerErrors(error.response.data.errors);
       console.log("Normalized server errors:", errors.value);

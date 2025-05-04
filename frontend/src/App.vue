@@ -1,27 +1,32 @@
-<!-- src/App.vue -->
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useRecipeStore } from './stores/recipe';
-import { useSearchStore } from './stores/search';
 import { useCollectionStore } from './stores/collection';
 import Header from './components/Header.vue';
 import Footer from './components/Footer.vue';
 
 const router = useRouter();
 const recipeStore = useRecipeStore();
-const searchStore = useSearchStore();
 const collectionStore = useCollectionStore();
 const isReady = ref(false);
 
 onMounted(async () => {
-  await Promise.all([
-    router.isReady(),
-    recipeStore.fetchCreateData(), // Для /recipe/create
-    searchStore.fetchSearchData(), // Для /search
-    collectionStore.fetchCreateData(), // Для /collection/create
-  ]);
-  isReady.value = true;
+  try {
+    await Promise.all([
+      router.isReady(),
+      recipeStore.fetchCreateData().catch(error => {
+        console.error('App.vue: Error fetching recipe createData:', error);
+      }),
+      collectionStore.fetchCreateData().catch(error => {
+        console.error('App.vue: Error fetching collection createData:', error);
+      }),
+    ]);
+    isReady.value = true;
+  } catch (error) {
+    console.error('App.vue: Error during initialization:', error);
+    isReady.value = true;
+  }
 });
 </script>
 
@@ -30,9 +35,9 @@ onMounted(async () => {
     <div v-if="!isReady" class="loading-overlay">
       <p>Загрузка...</p>
     </div>
-    <router-view v-slot="{ Component }">
+    <router-view v-else v-slot="{ Component }">
       <transition name="fade">
-        <div v-if="isReady">
+        <div>
           <Header />
           <main>
             <component :is="Component" />

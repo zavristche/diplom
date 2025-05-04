@@ -1,28 +1,59 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRecipeStore } from "../../stores/recipe";
+import { useAuthStore } from "../../stores/auth";
+
 import BaseIcon from "../../components/BaseIcon.vue";
 import SaveRecipe from "../../components/SaveRecipe.vue";
 import Comments from "../../components/Comments.vue";
-import ReactionButton from '../../components/ReactionButton.vue';
-import DeleteButton from '../../components/DeleteButton.vue';
+import ReactionButton from "../../components/ReactionButton.vue";
+import DeleteButton from "../../components/DeleteButton.vue";
 
 const recipeStore = useRecipeStore();
 const recipe = computed(() => recipeStore.currentRecipe);
+const authStore = useAuthStore();
 
 const portions = ref(null);
 const baseIngredients = ref([]);
 const isSaveRecipeOpen = ref(false);
 
-// Инициализация данных при первой загрузке
-if (recipe.value) {
-  portions.value = recipe.value.portions;
-  baseIngredients.value = recipe.value.products.map((product) => ({
-    ...product,
-    count: product.count,
-  }));
-  document.title = recipe.value.title || "Рецепт";
-}
+// Проверка, является ли текущий пользователь автором
+const isAuthor = computed(() => {
+  if (!authStore.isAuthenticated || !authStore.userId || !recipe.value) {
+    return false;
+  }
+  return authStore.userId === recipe.value.user_id;
+});
+
+// Инициализация данных при загрузке рецепта
+watch(
+  recipe,
+  (newRecipe) => {
+    if (newRecipe) {
+      portions.value = newRecipe.portions;
+      baseIngredients.value = newRecipe.products.map((product) => ({
+        ...product,
+        count: product.count,
+      }));
+      document.title = newRecipe.title || "Рецепт";
+    }
+  },
+  { immediate: true }
+);
+
+// Отладка
+watch(
+  [() => authStore.userId, recipe],
+  () => {
+    console.log("authStore.userId:", authStore.userId);
+    console.log("recipe:", recipe.value);
+    console.log("recipe.user_id:", recipe.value?.user_id);
+    console.log("recipe.likes:", recipe.value?.likes);
+    console.log("isAuthor:", isAuthor.value);
+    console.log("Should render buttons:", isAuthor.value && !!recipe.value);
+  },
+  { immediate: true }
+);
 
 const adjustedIngredients = computed(() => {
   if (!recipe.value) return [];
@@ -90,9 +121,12 @@ const increasePortions = () => {
       {{ recipe.description }}
     </div>
     <div class="btn-group end">
-      <router-link :to="`/recipe/edit/${recipe.id}`" class="btn-dark">
-        Редактировать
-      </router-link>
+      <div v-if="isAuthor" class="btn-group">
+        <router-link :to="`/recipe/edit/${recipe.id}`" class="btn-dark">
+          Редактировать
+        </router-link>
+        <DeleteButton :entity-id="recipe.id" entity-type="recipe" />
+      </div>
       <button type="submit" class="btn-dark" @click="isSaveRecipeOpen = true">
         <BaseIcon
           viewBox="0 0 25 26"
@@ -100,8 +134,11 @@ const increasePortions = () => {
           name="book"
         />Сохранить
       </button>
-      <ReactionButton :entity-type="'recipe'" :entity-id="recipe.id" :count="recipe.likes" />
-      <DeleteButton :entity-id="recipe.id" entity-type="recipe" />
+      <ReactionButton
+        :entity-type="'recipe'"
+        :entity-id="recipe.id"
+        :count="recipe.likes"
+      />
     </div>
   </div>
   <div v-if="recipe" class="cooking">
