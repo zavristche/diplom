@@ -48,41 +48,12 @@ const handleDelete = async () => {
 </script>
 
 <template>
-  <button class="btn-orange" @click="handleDelete">
-    <BaseIcon viewBox="0 0 29 29" class="icon-white-30-2" name="trash" />
+  <button class="btn-dark" @click="handleDelete">
+    <BaseIcon viewBox="0 0 29 29" class="icon-white-30-2" name="close" />
     Удалить
   </button>
 </template>
 
 <style lang="scss">
 @use "../assets/styles/_variables.scss" as *;
-
-// Стиль для .btn-orange
-.btn-orange {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 20px;
-  justify-content: space-between;
-  color: $light-text; // #fff
-  background-color: $accent-color-2; // #faaf2c
-  padding: 15px 20px;
-  border-radius: $border; // 0.5rem
-  font-weight: map-get($font-weather, "medium", "weight"); // 500
-  font-size: map-get($font-weather, "medium", "size"); // 16px
-  cursor: pointer;
-  box-shadow: $shadow; // 0rem 0rem 0.61rem 0rem rgba(0, 0, 0, 0.1)
-  border: none;
-  transition: background-color 0.3s;
-
-  &:hover {
-    background-color: darken($accent-color-2, 10%);
-  }
-
-  .icon-white-30-2 {
-    fill: $light-text; // #fff
-    width: 30px;
-    height: 30px;
-  }
-}
 </style>

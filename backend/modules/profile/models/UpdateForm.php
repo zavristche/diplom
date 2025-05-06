@@ -12,6 +12,7 @@ class UpdateForm extends \yii\base\Model
     public string $name = '';
     public string $surname = '';
     public string $email = '';
+    public string $status = '';
     public string $login = '';
     public string $password = '';
     public string $password_repeat = '';
@@ -28,7 +29,7 @@ class UpdateForm extends \yii\base\Model
     public function rules()
     {
         return [
-            [['name', 'surname', 'email', 'login', 'password'], 'string', 'max' => 255],
+            [['name', 'surname', 'email', 'login', 'password', 'status'], 'string', 'max' => 255],
             [['name', 'surname', 'email', 'login'], 'required'], // Оставляем обязательными только ключевые поля
             ['email', 'email'],
             [['name', 'surname'], 'match', 'pattern' => '/^[а-яё\s]+$/ui', 'message' => 'Разрешена только кириллица и пробелы'],
@@ -50,6 +51,7 @@ class UpdateForm extends \yii\base\Model
             'surname' => 'Фамилия',
             'email' => 'Почта',
             'login' => 'Логин',
+            'status' => 'Статус',
             'password_old' => 'Старый пароль',
             'password' => 'Пароль',
             'password_repeat' => 'Повтор пароля',

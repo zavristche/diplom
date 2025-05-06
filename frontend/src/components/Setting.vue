@@ -20,6 +20,7 @@ const initialData = {
   password: "",
   avatar: props.profile?.avatar || "",
   photo_header: props.profile?.photo_header || "",
+  status: props.profile?.status || "", // Добавляем status
 };
 
 const userData = ref({ ...initialData });
@@ -59,6 +60,7 @@ const submitForm = async () => {
     formData.append("surname", userData.value.surname);
     formData.append("login", userData.value.login);
     formData.append("email", userData.value.email);
+    formData.append("status", userData.value.status); // Добавляем status в FormData
     if (userData.value.password) formData.append("password", userData.value.password);
     if (avatarInput.value?.files[0]) formData.append("avatar", avatarInput.value.files[0]);
     if (backgroundInput.value?.files[0]) formData.append("photo_header", backgroundInput.value.files[0]);
@@ -81,6 +83,7 @@ const submitForm = async () => {
         surname: userData.value.surname,
         login: userData.value.login,
         email: userData.value.email,
+        status: userData.value.status, // Добавляем status
         avatar: response.data.avatar || userData.value.avatar,
         photo_header: response.data.photo_header || userData.value.photo_header,
       });
@@ -152,12 +155,12 @@ const closeModal = () => {
           <Input label="Фамилия" name="surname" placeholder="Введите фамилию" v-model="userData.surname" />
           <Input label="Логин" name="login" placeholder="Введите логин" v-model="userData.login" />
           <Input label="Email" name="email" placeholder="Введите email" v-model="userData.email" />
+          <Input label="Статус" name="status" type="text" placeholder="Введите статус" v-model="userData.status" />
           <Input
             label="Новый пароль"
             name="password"
             type="password"
             placeholder="Введите новый пароль"
-            autocomplete="current-password"
             v-model="userData.password"
           />
           <input class="btn-dark" type="submit" value="Сохранить" />

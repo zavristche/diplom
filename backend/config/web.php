@@ -153,6 +153,7 @@ $config = [
                     'extraPatterns' => [
                         'GET search' => 'search',
                         'GET create-data' => 'create-data',
+                        'GET random' => 'random',
                     ],
                 ],
 

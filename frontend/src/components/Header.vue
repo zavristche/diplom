@@ -2,23 +2,16 @@
 import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth";
-import Register from "../components/Register.vue";
-import Login from "../components/Login.vue";
+import Register from "./Register.vue";
+import Login from "./Login.vue";
 import BaseIcon from "./BaseIcon.vue";
+import Search from "./Search.vue";
 
 const authStore = useAuthStore();
 const router = useRouter();
 
 const isRegisterOpen = ref(false);
 const isLoginOpen = ref(false);
-
-// Отладка: следим за изменением аватара
-watch(
-  () => authStore.avatar,
-  (newAvatar) => {
-    console.log("Avatar URL in Header changed:", newAvatar);
-  }
-);
 
 const handleLogout = async () => {
   await authStore.logout();
@@ -41,19 +34,11 @@ const handleLogout = async () => {
         <router-link to="/search/collection">
           <div class="label-item">Коллекции</div>
         </router-link>
-        <router-link to="/search/author">
-          <div class="label-item">Авторы</div>
+        <router-link to="/search/user">
+          <div class="label-item">Пользователи</div>
         </router-link>
       </nav>
-      <div class="search">
-        <div class="btn icon">
-          <BaseIcon class="icon-dark-45-1" viewBox="0 0 45 45" name="search" />
-        </div>
-        <input type="text" id="search" placeholder="Поиск" />
-        <div class="btn-container">
-          <button type="submit" id="btn-search" class="btn-salat">Найти</button>
-        </div>
-      </div>
+      <Search />
       <nav class="labels left">
         <template v-if="!authStore.isAuthenticated">
           <button class="label-item" @click="isRegisterOpen = true">

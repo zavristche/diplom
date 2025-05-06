@@ -42,7 +42,7 @@ export default {
   
   heartb: '<path d="M2 9.26068C2 9.98154 2.127 10.5342 2.28988 11.3352C3.6816 18.1792 12.5 24 14.5 24C16.5 24 25.3184 18.1792 26.7101 11.3352C26.873 10.5342 27 9.98154 27 9.26068C27 5.25072 23.866 2 20 2C17.769 2 15.7818 3.08254 14.5 4.76881C13.2182 3.08254 11.231 2 9 2C5.13401 2 2 5.25072 2 9.26068Z"/>',
 
-  pluse: '<path d="M20 33H45" stroke-linecap="round"/><path d="M33 20L33 45" stroke-linecap="round"/>',
+  plus: '<path d="M20 33H45" stroke-linecap="round"/><path d="M33 20L33 45" stroke-linecap="round"/>',
 
   minus: '<path d="M20 33H45" stroke="black" stroke-linecap="round"/>',
 

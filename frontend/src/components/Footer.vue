@@ -7,31 +7,31 @@ import BaseIcon from "./BaseIcon.vue";
     <div class="container">
       <div class="container-row">
         <nav>
-          <a href="/recept/all">
+          <router-link to="/search/recipe?marks=42">
             <div class="label-item">Заготовки</div>
-          </a>
-          <a href="/recept/all">
+          </router-link>
+          <router-link to="/search/recipe?marks=1">
             <div class="label-item">Супы</div>
-          </a>
-          <a href="/recept/all">
+          </router-link>
+          <router-link to="/search/recipe?marks=9">
             <div class="label-item">Десерты</div>
-          </a>
+          </router-link>
         </nav>
-        <a href="/recept/all"><BaseIcon viewBox="0 0 35 35" class="icon-dark-45-0" name="vk"/></a>
-        <a href="/">
+        <BaseIcon viewBox="0 0 35 35" class="icon-dark-45-0" name="vk"/>
+        <a to="/">
           <BaseIcon class="logo"  name="logo"/>
         </a>
-        <a href="/recept/all"><BaseIcon viewBox="0 0 35 35" class="icon-dark-45-0" name="tg"/></a>
+        <BaseIcon viewBox="0 0 35 35" class="icon-dark-45-0" name="tg"/>
         <nav>
-          <a href="/recept/all">
+          <router-link to="/search/recipe?marks=4">
             <div class="label-item">Гарниры</div>
-          </a>
-          <a href="/recept/all">
+          </router-link>
+          <router-link to="/search/recipe?marks=5">
             <div class="label-item">Закуски</div>
-          </a>
-          <a href="/recept/all">
+          </router-link>
+          <router-link to="/search/recipe?marks=7">
             <div class="label-item">Выпечка</div>
-          </a>
+          </router-link>
         </nav>
       </div>
       <span class="slogan">Готовь просто – удивляй вкусно!</span>
@@ -47,6 +47,7 @@ import BaseIcon from "./BaseIcon.vue";
     width: 100%;
     height: 11rem;
     font-weight: 500;
+    margin-top: 3rem;
 
     .container {
       display: flex;
@@ -66,6 +67,9 @@ import BaseIcon from "./BaseIcon.vue";
       }
 
       .container-row{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
         gap: 0.3rem;
       }
     }

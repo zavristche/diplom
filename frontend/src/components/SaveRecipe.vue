@@ -194,7 +194,7 @@ const closeModal = () => {
             <BaseIcon
               viewBox="0 0 65 65"
               class="icon-dark-55-2 collection-icon"
-              name="pluse"
+              name="plus"
             />
             <span class="collection-name">Создать коллекцию</span>
           </router-link>

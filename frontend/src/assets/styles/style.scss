@@ -128,6 +128,12 @@ input[type="number"]::-webkit-outer-spin-button {
     font-size: 20px;
     cursor: pointer;
     box-shadow: $shadow;
+    transition: .2s ease;
+
+    
+    &:hover {
+      box-shadow: 0px 0px 0px 5px fade-out($color, .6);
+    }
   }
 }
 
@@ -228,7 +234,8 @@ input[type="number"]::-webkit-outer-spin-button {
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
-  gap: 30px ;
+  width: 100%;
+  gap: 15px 30px ;
   &.start {
     justify-content: flex-start;
   }

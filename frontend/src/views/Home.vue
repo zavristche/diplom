@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import { useRecipeStore } from "../stores/recipe"; // Создаём хранилище
 import BaseIcon from "../components/BaseIcon.vue";
 import Recipe from "../components/Recipe.vue";
+import Search from "../components/Search.vue";
 
 // Используем Pinia для хранения данных
 const recipeStore = useRecipeStore();
@@ -24,15 +25,7 @@ onMounted(async () => {
     <div class="container-col">
       <h1>РЕЦЕПТИЩЕ</h1>
       <p class="slogan">Готовь просто – удивляй вкусно!</p>
-      <div class="search">
-        <div class="btn icon">
-          <BaseIcon class="icon-dark-45-1" viewBox="0 0 45 45" name="search" />
-        </div>
-        <input type="text" id="search" placeholder="Поиск" />
-        <div class="btn-container">
-          <button type="submit" id="btn-search" class="btn-salat">Найти</button>
-        </div>
-      </div>
+      <Search />
       <button type="submit" class="btn-dark line">
         <BaseIcon viewBox="0 0 45 45" class="icon-dark-45-1" name="random" />Случайный рецепт
       </button>
@@ -40,9 +33,7 @@ onMounted(async () => {
     <img src="/img/mascot.png" alt="Mascot" width="600" height="760" />
   </section>
   <section class="content-container">
-    <div v-if="isLoading" class="skeleton-container">
-      <div v-for="n in 6" :key="n" class="skeleton-card"></div>
-    </div>
+    <div  v-if="isLoading" v-for="n in 6" :key="n" class="skeleton-card"></div>
     <Recipe v-else v-for="recipe in recipes" :key="recipe.id" :recipe="recipe" />
   </section>
 </template>

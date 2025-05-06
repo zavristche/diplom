@@ -15,7 +15,7 @@ import CollectionEdit from './views/collection/Edit.vue';
 const routes = [
   { path: '/', name: 'home', component: Home, meta: { title: 'Рецептище — Главная' } },
   {
-    path: '/search/:type(recipe|collection|author)?',
+    path: '/search/:type(recipe|collection|user)?',
     name: 'search',
     component: Search,
     meta: { title: 'Рецептище — Поиск' },

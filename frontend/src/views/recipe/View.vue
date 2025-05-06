@@ -158,7 +158,7 @@ const increasePortions = () => {
             v-model="portions"
           />
           <button type="button" @click="increasePortions">
-            <BaseIcon viewBox="0 0 65 65" class="icon-dark-45-2" name="pluse" />
+            <BaseIcon viewBox="0 0 65 65" class="icon-dark-45-2" name="plus" />
           </button>
         </div>
       </div>

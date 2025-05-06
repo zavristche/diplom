@@ -1,41 +1,54 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
   tabs: {
     type: Array,
     required: true,
     default: () => []
+  },
+  activeTab: {
+    type: Number,
+    default: 0
   }
 });
 
-const emit = defineEmits(['update:activeTab']); // Добавляем событие
+const emit = defineEmits(['update:activeTab']);
 
-const activeTab = ref(0);
+const internalActiveTab = ref(props.activeTab);
+
+// Синхронизация с пропсом activeTab
+watch(() => props.activeTab, (newTab) => {
+  if (newTab !== internalActiveTab.value) {
+    console.log('Tabs.vue: watch activeTab:', newTab);
+    internalActiveTab.value = newTab;
+  }
+});
 
 const setActiveTab = (index) => {
-  activeTab.value = index;
-  emit('update:activeTab', index); // Отправляем индекс активного таба родителю
+  if (internalActiveTab.value === index) {
+    console.log('Tabs.vue: setActiveTab: Ignored:', index);
+    return;
+  }
+  console.log('Tabs.vue: setActiveTab:', index);
+  internalActiveTab.value = index;
+  emit('update:activeTab', index);
 };
 </script>
 
 <template>
-  <div class="tab-container">
+  <div class="tab-container" :key="internalActiveTab">
     <button 
       v-for="(tab, index) in tabs"
       :key="index"
       class="tab"
-      :class="{ active: activeTab === index }"
+      :class="{ active: internalActiveTab === index }"
       @click="setActiveTab(index)"
     >
       {{ tab }}
     </button>
   </div>
 </template>
-
-<style lang="scss">
-/* Ваш существующий SCSS код остается без изменений */
-</style>
 
 <style lang="scss">
 @use "../assets/styles/_variables.scss" as *;
@@ -45,20 +58,20 @@ const setActiveTab = (index) => {
   display: flex;
   flex-direction: row;
   box-shadow: $shadow;
-  width: auto;
   border-radius: $border;
   position: relative;
   background-color: $background;
+  overflow: hidden;
 }
 
 .tab {
+  flex: 0 0 auto;
+  min-width: 0;
   display: flex;
-  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  justify-content: center;
   color: $background-dark;
-  padding: 15px 30px;
+  padding: 15px 25px;
   font-weight: 400;
   font-size: 20px;
   cursor: pointer;
@@ -67,14 +80,21 @@ const setActiveTab = (index) => {
   background: none;
   position: relative;
   z-index: 1;
-  transition: color 0.3s ease;
+  transition: color 0.2s ease;
+  white-space: nowrap;
 
-  &.active {
-    color: #FFF;
+  &:not(:last-child) {
+    margin-right: 2px;
   }
 }
 
-/* Добавляем псевдоэлемент для активного состояния */
+.tab.active {
+  color: #FFF;
+  background-color: $background-dark; // Вернули заливку для активного таба
+  position: relative;
+  z-index: 2;
+}
+
 .tab-container::before {
   content: '';
   position: absolute;
@@ -84,27 +104,48 @@ const setActiveTab = (index) => {
   background-color: $background-dark;
   box-shadow: $shadow;
   border-radius: $border;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease;
   z-index: 0;
+  transform-origin: left;
+  width: 100%;
+  transform: scaleX(0);
 }
 
-/* Динамическая ширина и позиция активного фона */
-.tab-container:has(.tab:nth-child(1).active)::before {
-  width: calc((100% /  var(--tab-count)) * 1);
-  transform: translateX(0%);
+.tab-container .tab.active ~ .tab-container::before {
+  display: none;
 }
 
-.tab-container:has(.tab:nth-child(2).active)::before {
-  width: calc((100% /  var(--tab-count)) * 1);
-  transform: translateX(100%);
+.tab-container .tab.active + .tab-container::before {
+  display: none;
 }
 
-.tab-container:has(.tab:nth-child(3).active)::before {
-  width: calc((100% /  var(--tab-count)) * 1);
-  transform: translateX(200%);
+.tab-container .tab:nth-child(1).active ~ .tab-container::before {
+  transform: scaleX(0);
 }
 
-/* Устанавливаем переменную для количества табов */
+.tab-container .tab:nth-child(1).active + .tab-container::before {
+  transform: translateX(0) scaleX(100%);
+  display: block;
+}
+
+.tab-container .tab:nth-child(2).active ~ .tab-container::before {
+  transform: scaleX(0);
+}
+
+.tab-container .tab:nth-child(2).active + .tab-container::before {
+  transform: translateX(100%) scaleX(100%);
+  display: block;
+}
+
+.tab-container .tab:nth-child(3).active ~ .tab-container::before {
+  transform: scaleX(0);
+}
+
+.tab-container .tab:nth-child(3).active + .tab-container::before {
+  transform: translateX(200%) scaleX(100%);
+  display: block;
+}
+
 .tab-container {
   --tab-count: v-bind('tabs.length');
 }

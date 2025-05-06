@@ -31,10 +31,6 @@ onMounted(() => {
   loadProfile();
 });
 
-const handleTabChange = (index) => {
-  activeTab.value = index;
-};
-
 const handleLogout = async () => {
   await authStore.logout();
   router.push({ path: "/", replace: true });
@@ -81,7 +77,7 @@ const handleLogout = async () => {
   <div v-if="profile" class="profile-active">
     <Tabs
       :tabs="['Рецепты', 'Коллекции']"
-      @update:activeTab="handleTabChange"
+      v-model:activeTab="activeTab"
     />
     <div class="btn-group" v-if="isOwnProfile">
       <router-link to="/recipe/create" class="btn-dark">
