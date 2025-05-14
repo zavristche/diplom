@@ -73,6 +73,10 @@ const formatErrorMessage = (message) => {
   flex-direction: column;
   gap: 8px;
   width: 100%;
+
+  @media (max-width: 768px) {
+    gap: 6px;
+  }
 }
 
 .select-wrapper {
@@ -91,6 +95,16 @@ const formatErrorMessage = (message) => {
   &.invalid {
     border: 2px solid $error;
   }
+
+  @media (max-width: 768px) {
+    padding: 12px 16px;
+    font-size: 18px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px 14px;
+    font-size: 16px;
+  }
 }
 
 .custom-select {
@@ -98,6 +112,10 @@ const formatErrorMessage = (message) => {
   -webkit-appearance: none;
   -moz-appearance: none;
   padding-right: 40px;
+
+  @media (max-width: 480px) {
+    padding-right: 36px;
+  }
 }
 
 .select-arrow {
@@ -106,12 +124,32 @@ const formatErrorMessage = (message) => {
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
+
+  @media (max-width: 768px) {
+    right: 8px;
+    width: 22px;
+    height: 22px;
+  }
+
+  @media (max-width: 480px) {
+    right: 6px;
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .error-message {
   font-size: 16px;
   color: $error;
   margin-top: 4px;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 }
 
 .fade-slide-enter-active,

@@ -23,9 +23,9 @@ console.log('Collection preview:', collection => collection.preview);
   <section class="card collection" v-if="collection && collection.id">
     <router-link :to="`/collection/${collection.id}`" class="card__preview">
       <div class="preview-grid">
-        <div class="preview-main" :style="{ backgroundImage: collection.preview?.[0] ? `url(${collection.preview[0]})` : 'none', backgroundColor: !collection.preview?.[0] ? '#e0e0e0' : 'transparent' }"></div>
-        <div class="preview-small" :style="{ backgroundImage: collection.preview?.[1] ? `url(${collection.preview[1]})` : 'none', backgroundColor: !collection.preview?.[1] ? '#e0e0e0' : 'transparent' }"></div>
-        <div class="preview-small" :style="{ backgroundImage: collection.preview?.[2] ? `url(${collection.preview[2]})` : 'none', backgroundColor: !collection.preview?.[2] ? '#e0e0e0' : 'transparent' }"></div>
+        <div class="preview-main" :style="{ backgroundImage: collection.preview?.[0] ? `url(${collection.preview[0]})` : 'none', backgroundColor: !collection.preview?.[0] ? '#e9e9e2' : 'transparent' }"></div>
+        <div class="preview-small" :style="{ backgroundImage: collection.preview?.[1] ? `url(${collection.preview[1]})` : 'none', backgroundColor: !collection.preview?.[1] ? '#e9e9e2' : 'transparent' }"></div>
+        <div class="preview-small" :style="{ backgroundImage: collection.preview?.[2] ? `url(${collection.preview[2]})` : 'none', backgroundColor: !collection.preview?.[2] ? '#e9e9e2' : 'transparent' }"></div>
       </div>
     </router-link>
     <div class="card__info">

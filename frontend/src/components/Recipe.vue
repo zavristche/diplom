@@ -1,40 +1,60 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
-import { defineProps } from "vue";
-
+import { ref, onMounted, onUnmounted, computed } from "vue";
+import { useAuthStore } from "../stores/auth";
 import BaseIcon from "./BaseIcon.vue";
-import ReactionButton from './ReactionButton.vue';
+import ReactionButton from "./ReactionButton.vue";
 import SaveRecipe from "./SaveRecipe.vue";
 
 const isMenuVisible = ref(false);
 const isSaveRecipeOpen = ref(false);
-const menuRef = ref(null); // Ссылка на контейнер меню
+const menuRef = ref(null);
+const authStore = useAuthStore();
+
+const { recipe } = defineProps({
+  recipe: {
+    type: Object,
+    required: true,
+  },
+});
+
+onMounted(() => {
+  console.log("RecipeCard mounted, recipe:", recipe);
+  console.log("authStore:", authStore.isAuthenticated, authStore.userId);
+});
 
 const toggleMenu = () => {
   isMenuVisible.value = !isMenuVisible.value;
 };
 
-// Функция для закрытия меню при клике вне
 const handleClickOutside = (event) => {
   if (menuRef.value && !menuRef.value.contains(event.target)) {
     isMenuVisible.value = false;
   }
 };
 
-// Добавляем и убираем слушатель событий
+const isAuthor = computed(() => {
+  const result =
+    authStore.isAuthenticated &&
+    authStore.userId &&
+    recipe &&
+    authStore.userId === recipe.user_id;
+  console.log(
+    "isAuthor:",
+    result,
+    "userId:",
+    authStore.userId,
+    "recipe.user_id:",
+    recipe?.user_id
+  );
+  return result;
+});
+
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
 });
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
-});
-
-defineProps({
-  recipe: {
-    type: Object,
-    required: true,
-  },
 });
 </script>
 
@@ -51,7 +71,12 @@ defineProps({
     <div class="card__info">
       <div class="card__title">
         <router-link :to="`/profile/${recipe.user.id}`">
-          <img :src="recipe.user.avatar" alt="User avatar" width="40" height="40" />
+          <img
+            :src="recipe.user.avatar"
+            alt="User avatar"
+            width="40"
+            height="40"
+          />
         </router-link>
         <div class="card__text">
           <h3>
@@ -80,22 +105,41 @@ defineProps({
           <BaseIcon viewBox="0 0 40 40" class="icon-dark-45-0" name="menu" />
         </button>
         <div class="btn-popup" v-if="isMenuVisible">
-          <!-- <button class="btn-item">
-            <BaseIcon viewBox="0 0 65 65" class="icon-dark-55-1" name="heartb" />
-            Оценить
-          </button> -->
-          <ReactionButton entity-type="recipe" :entity-id="recipe.id" />
+          <ReactionButton
+            entity-type="recipe"
+            :entity-id="recipe.id"
+            :count="recipe.likesCount || 0"
+            variant="menu"
+          />
           <button class="btn-item" @click="isSaveRecipeOpen = true">
             <BaseIcon viewBox="0 0 65 65" class="icon-dark-55-1" name="bookmarkb" />
             В коллекцию
+          </button>
+          <router-link
+            v-if="isAuthor"
+            class="btn-item"
+            :to="`/recipe/edit/${recipe.id}`"
+          >
+            <BaseIcon viewBox="0 0 65 65" class="icon-dark-55-1" name="edit" />
+            Редактировать
+          </router-link>
+          <button
+            v-if="isAuthor"
+            class="btn-item"
+            @click="$emit('delete', recipe.id)"
+          >
+            <BaseIcon viewBox="0 0 65 65" class="icon-dark-55-1" name="close" />
+            Удалить
           </button>
         </div>
       </div>
     </div>
   </section>
+  <div v-else>Рецепт не загружен</div>
 </template>
 
 <style lang="scss">
 @use "../assets/styles/_variables.scss" as *;
-
+@use "../assets/styles/cards.scss" as *;
+// Стили оставляем пустыми, они в cards.scss
 </style>

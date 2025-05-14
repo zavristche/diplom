@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch } from "vue";
+import { useRoute } from "vue-router";
 import { useRecipeStore } from "../../stores/recipe";
 import { useAuthStore } from "../../stores/auth";
 
@@ -8,10 +9,15 @@ import SaveRecipe from "../../components/SaveRecipe.vue";
 import Comments from "../../components/Comments.vue";
 import ReactionButton from "../../components/ReactionButton.vue";
 import DeleteButton from "../../components/DeleteButton.vue";
+import Mark from "../../components/Mark.vue";
 
+const route = useRoute();
 const recipeStore = useRecipeStore();
 const recipe = computed(() => recipeStore.currentRecipe);
 const authStore = useAuthStore();
+
+// Загружаем рецепт
+recipeStore.fetchRecipeById(route.params.id);
 
 const portions = ref(null);
 const baseIngredients = ref([]);
@@ -19,10 +25,12 @@ const isSaveRecipeOpen = ref(false);
 
 // Проверка, является ли текущий пользователь автором
 const isAuthor = computed(() => {
-  if (!authStore.isAuthenticated || !authStore.userId || !recipe.value) {
-    return false;
-  }
-  return authStore.userId === recipe.value.user_id;
+  return (
+    authStore.isAuthenticated &&
+    authStore.userId &&
+    recipe.value &&
+    authStore.userId === recipe.value.user_id
+  );
 });
 
 // Инициализация данных при загрузке рецепта
@@ -196,15 +204,13 @@ const increasePortions = () => {
     </div>
   </div>
   <div v-if="recipe" class="btn-group end">
-    <button
+    <Mark
       v-for="(mark, index) in recipe.marks"
       :key="index"
-      class="btn-dark line"
-    >
-      <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-1" name="mark" />{{
-        mark.title
-      }}
-    </button>
+      :mark="mark"
+      markType="mark"
+      contentType="recipe"
+    />
   </div>
   <Comments v-if="recipe" :comments="recipe.comments" :recipeId="recipe.id" />
   <div v-else>Рецепт не найден</div>
@@ -269,13 +275,6 @@ const increasePortions = () => {
     height: 40px;
     border-radius: 100%;
   }
-}
-
-.content-container {
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
 }
 
 .content-info {

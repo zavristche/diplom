@@ -180,7 +180,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 @each $name, $color in $colors {
-  @for $size from 10 through 55 { // Диапазон размеров (например, от 1 до 100 px)
+  @for $size from 10 through 100 { // Диапазон размеров (например, от 1 до 100 px)
     @for $stroke from 0 through 3 { // Диапазон толщин линии
       .icon-#{$name}-#{$size}-#{$stroke} {
         width: #{$size}px;
@@ -247,4 +247,51 @@ input[type="number"]::-webkit-outer-spin-button {
 
 body {
   transition: all 0.3s ease-in-out;
+}
+
+//Контент сетка
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: minmax(min-content, auto); // Динамическая высота строк
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 75rem;
+  height: auto;
+  padding: 1rem 0;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.skeleton-card {
+  width: 100%;
+  height: 100%;
+  height: clamp(10rem, 25vw, 17.5rem);
+  background: $light;
+  border-radius: $border;
+  animation: pulse 1.5s infinite;
+  height: 300px;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.logo {
+  width: 57px;
+  height: 64px;
 }

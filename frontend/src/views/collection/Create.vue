@@ -1,10 +1,11 @@
 <script setup>
-import { ref, watch, computed } from "vue";
+import { ref, watch } from "vue";
 import { useCollectionStore } from "../../stores/collection";
 import { useProfileAuth } from "../../composables/useProfileAuth";
-import { useAuthStore } from "../../stores/auth"; // Добавляем импорт
+import { useAuthStore } from "../../stores/auth";
 import { useRouter } from "vue-router";
 import collectionService from "../../api/collectionService";
+import SelectMultiple from "../../components/SelectMultiple.vue";
 import BaseIcon from "../../components/BaseIcon.vue";
 import Input from "../../components/Input.vue";
 import Select from "../../components/Select.vue";
@@ -12,7 +13,7 @@ import Select from "../../components/Select.vue";
 const router = useRouter();
 const collectionStore = useCollectionStore();
 const { isAuthenticated, currentUser } = useProfileAuth();
-const authStore = useAuthStore(); // Инициализируем authStore
+const authStore = useAuthStore();
 const data = ref(collectionStore.createData);
 
 // Проверка авторизации и данных
@@ -35,14 +36,8 @@ const description = ref("");
 const selectedPrivate = ref("");
 const previewUrl = ref(null);
 const collectionPhotoFile = ref(null);
-const searchMark = ref("");
 const selectedMarks = ref([]);
-const activeMarkType = ref(null);
-const isMarkInputFocused = ref(false);
-const searchProduct = ref("");
 const selectedProducts = ref([]);
-const activeProductType = ref(null);
-const isProductInputFocused = ref(false);
 const errors = ref({});
 const textareaRef = ref(null);
 
@@ -61,90 +56,6 @@ const onFileSelected = (event) => {
     collectionPhotoFile.value = file;
     previewUrl.value = URL.createObjectURL(file);
   }
-};
-
-// Фильтрация меток
-const filteredMarks = computed(() => {
-  const marksList = Object.values(marks.value || {});
-  if (!searchMark.value && !activeMarkType.value) return marksList;
-
-  return marksList.filter((mark) => {
-    const matchesType = activeMarkType.value
-      ? mark.type_id === Number(activeMarkType.value)
-      : true;
-    const searchValue = searchMark.value.toLowerCase();
-    const markTitle = mark.title.toLowerCase();
-    const matchesSearch = searchValue ? markTitle.includes(searchValue) : true;
-    return matchesType && matchesSearch;
-  });
-});
-
-// Фильтрация продуктов
-const filteredProducts = computed(() => {
-  const productsList = Object.values(products.value || {});
-  if (!searchProduct.value && !activeProductType.value) return productsList;
-
-  return productsList.filter((product) => {
-    const matchesType = activeProductType.value
-      ? product.type_id === Number(activeProductType.value)
-      : true;
-    const searchValue = searchProduct.value.toLowerCase();
-    const productTitle = product.title.toLowerCase();
-    const matchesSearch = searchValue ? productTitle.includes(searchValue) : true;
-    return matchesType && matchesSearch;
-  });
-});
-
-// Отладка фильтрованных списков
-watch(filteredMarks, (newMarks) => {
-  console.log("filteredMarks:", newMarks);
-});
-watch(filteredProducts, (newProducts) => {
-  console.log("filteredProducts:", newProducts);
-});
-
-// Обработка меток
-const selectMarkType = (typeId) => {
-  activeMarkType.value = typeId;
-  searchMark.value = "";
-  isMarkInputFocused.value = true;
-};
-
-const addMark = (mark) => {
-  if (!selectedMarks.value.some((m) => m.id === mark.id))
-    selectedMarks.value.push(mark);
-  searchMark.value = "";
-  isMarkInputFocused.value = false;
-};
-
-const removeMark = (markId) => {
-  selectedMarks.value = selectedMarks.value.filter((m) => m.id !== markId);
-};
-
-const handleMarkBlur = () => {
-  setTimeout(() => (isMarkInputFocused.value = false), 200);
-};
-
-// Обработка продуктов
-const selectProductType = (typeId) => {
-  activeProductType.value = typeId;
-  searchProduct.value = "";
-  isProductInputFocused.value = true;
-};
-
-const addProduct = (product) => {
-  if (!selectedProducts.value.some((p) => p.id === product.id))
-    selectedProducts.value.push(product);
-  searchProduct.value = "";
-  isProductInputFocused.value = false;
-};
-
-const removeProduct = (productId) => {
-  selectedProducts.value = selectedProducts.value.filter((p) => p.id !== productId);
-};
-
-const handleProductBlur = () => {
-  setTimeout(() => (isProductInputFocused.value = false), 200);
 };
 
 // Автоматическая подстройка высоты textarea
@@ -280,130 +191,22 @@ const submitForm = async (event) => {
       </div>
       <label for="marks" class="marks">
         Метки
-        <div class="btn-group start">
-          <button
-            class="mark_type"
-            :class="{ active: activeMarkType === null }"
-            @click.prevent="selectMarkType(null)"
-          >
-            Все
-          </button>
-          <button
-            v-for="(type, id) in mark_types"
-            :key="id"
-            class="mark_type"
-            :class="{ active: activeMarkType === id }"
-            @click.prevent="selectMarkType(id)"
-          >
-            {{ type }}
-          </button>
-        </div>
-        <div class="mark-search">
-          <div class="input-with-marks">
-            <div class="mark-items">
-              <span
-                v-for="mark in selectedMarks"
-                :key="mark.id"
-                class="mark-item"
-              >
-                {{ mark.title }}
-                <button class="mark-item__close" @click="removeMark(mark.id)">
-                  <BaseIcon
-                    viewBox="0 0 24 24"
-                    class="icon-dark-15-1"
-                    name="close"
-                  />
-                </button>
-              </span>
-              <input
-                v-model="searchMark"
-                type="text"
-                class="input-form"
-                placeholder="Поиск меток"
-                @focus="isMarkInputFocused = true"
-                @blur="handleMarkBlur"
-              />
-            </div>
-          </div>
-          <div v-if="isMarkInputFocused" class="mark-dropdown">
-            <div v-if="filteredMarks.length" class="mark-options">
-              <div
-                v-for="mark in filteredMarks"
-                :key="mark.id"
-                class="mark-option"
-                @click="addMark(mark)"
-              >
-                {{ mark.title }}
-              </div>
-            </div>
-            <div v-else class="mark-option">Нет подходящих меток</div>
-          </div>
-        </div>
+        <SelectMultiple
+          v-model="selectedMarks"
+          name="mark"
+          :query="{}"
+        />
         <div v-if="errors.marks" class="error-message">
           {{ errors.marks }}
         </div>
       </label>
       <label for="products" class="marks">
         Продукты
-        <div class="btn-group start">
-          <button
-            class="mark_type"
-            :class="{ active: activeProductType === null }"
-            @click.prevent="selectProductType(null)"
-          >
-            Все
-          </button>
-          <button
-            v-for="(type, id) in product_types"
-            :key="id"
-            class="mark_type"
-            :class="{ active: activeProductType === id }"
-            @click.prevent="selectProductType(id)"
-          >
-            {{ type }}
-          </button>
-        </div>
-        <div class="mark-search">
-          <div class="input-with-marks">
-            <div class="mark-items">
-              <span
-                v-for="product in selectedProducts"
-                :key="product.id"
-                class="mark-item"
-              >
-                {{ product.title }}
-                <button class="mark-item__close" @click="removeProduct(product.id)">
-                  <BaseIcon
-                    viewBox="0 0 24 24"
-                    class="icon-dark-15-1"
-                    name="close"
-                  />
-                </button>
-              </span>
-              <input
-                v-model="searchProduct"
-                type="text"
-                class="input-form"
-                placeholder="Поиск продуктов"
-                @focus="isProductInputFocused = true"
-                @blur="handleProductBlur"
-              />
-            </div>
-          </div>
-          <div v-if="isProductInputFocused" class="mark-dropdown">
-            <div v-if="filteredProducts.length" class="mark-options">
-              <div
-                v-for="product in filteredProducts"
-                :key="product.id"
-                class="mark-option"
-                @click="addProduct(product)"
-              >
-                {{ product.title }}
-              </div>
-            </div>
-            <div v-else class="mark-option">Нет подходящих продуктов</div>
-          </div>
-        </div>
+        <SelectMultiple
+          v-model="selectedProducts"
+          name="product"
+          :query="{}"
+        />
         <div v-if="errors.products" class="error-message">
           {{ errors.products }}
         </div>
@@ -424,83 +227,6 @@ const submitForm = async (event) => {
   gap: 15px;
   font-weight: 400;
   width: 100%;
-
-  .input-with-marks {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 100%;
-  }
-
-  .mark-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 20px;
-    border: 1px solid $text-info-light;
-    border-radius: $border;
-    min-height: 50px;
-    align-items: center;
-    width: 100%;
-
-    .mark-item {
-      display: flex;
-      flex-direction: row;
-      gap: 5px;
-      align-items: center;
-      background-color: $background;
-      padding: 5px 10px;
-      border-radius: $border;
-      box-shadow: $shadow;
-
-      .mark-item__close {
-        background: none;
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-      }
-    }
-
-    .input-form {
-      border: none;
-      flex-grow: 1;
-      padding: 5px;
-      font-size: 20px;
-      font-weight: 400;
-      background: transparent;
-      outline: none;
-      min-width: 100px;
-    }
-  }
-
-  .mark-search {
-    position: relative;
-  }
-
-  .mark-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    background-color: $light;
-    border: 1px solid $text-info-light;
-    border-radius: $border;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 10;
-    box-shadow: $shadow;
-  }
-
-  .mark-option {
-    padding: 10px 20px;
-    cursor: pointer;
-
-    &:hover {
-      background-color: $background;
-    }
-  }
 }
 
 .create-form {
@@ -571,38 +297,38 @@ const submitForm = async (event) => {
     gap: 10px;
     width: 100%;
   }
-  }
+}
 
-  .preview {
-    display: flex;
-    flex-shrink: 0;
+.preview {
+  display: flex;
+  flex-shrink: 0;
+  width: 100%;
+  height: 500px;
+  img {
+    box-shadow: $shadow;
+    object-fit: cover;
     width: 100%;
-    height: 500px;
-    img {
-      box-shadow: $shadow;
-      object-fit: cover;
-      width: 100%;
-      height: 100%;
-      border-radius: $border;
-    }
-  }
-
-  .cooking {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    width: 100%;
-    align-items: start;
-  }
-
-  .general-error {
-    font-size: 18px;
-    color: $error;
-    text-align: center;
-    padding: 10px;
-    background-color: rgba($error, 0.1);
+    height: 100%;
     border-radius: $border;
   }
+}
+
+.cooking {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  width: 100%;
+  align-items: start;
+}
+
+.general-error {
+  font-size: 18px;
+  color: $error;
+  text-align: center;
+  padding: 10px;
+  background-color: rgba($error, 0.1);
+  border-radius: $border;
+}
 
 .ingredients {
   display: flex;

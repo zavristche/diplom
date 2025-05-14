@@ -1,28 +1,58 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useCollectionStore } from "../../stores/collection";
-import BaseIcon from "../../components/BaseIcon.vue";
+import { useAuthStore } from "../../stores/auth";
 import Recipe from "../../components/Recipe.vue";
-import ReactionButton from '../../components/ReactionButton.vue';
-import DeleteButton from '../../components/DeleteButton.vue';
-
+import ReactionButton from "../../components/ReactionButton.vue";
+import DeleteButton from "../../components/DeleteButton.vue";
+import Mark from "../../components/Mark.vue";
 
 const route = useRoute();
 const collectionStore = useCollectionStore();
 const collection = computed(() => collectionStore.currentCollection);
+const authStore = useAuthStore();
 
-// Инициализация заголовка страницы
-if (collection.value) {
-  document.title = collection.value.title || "Коллекция";
-} else {
-  // Загружаем данные, если они отсутствуют
+// Загружаем коллекцию
+if (!collection.value) {
   collectionStore.fetchCollectionById(route.params.id).then((data) => {
     if (data) {
       document.title = data.title || "Коллекция";
     }
   });
 }
+
+// Проверка, является ли текущий пользователь автором
+const isAuthor = computed(() => {
+  return (
+    authStore.isAuthenticated &&
+    authStore.userId &&
+    collection.value &&
+    authStore.userId === collection.value.user_id
+  );
+});
+
+// Инициализация заголовка страницы и отладка
+watch(
+  collection,
+  (newCollection) => {
+    console.log("Collection loaded:", newCollection);
+    if (newCollection) {
+      document.title = newCollection.title || "Коллекция";
+    }
+  },
+  { immediate: true }
+);
+
+// Отладка authStore
+watch(
+  [() => authStore.userId],
+  () => {
+    console.log("authStore.userId:", authStore.userId);
+    console.log("isAuthor:", isAuthor.value);
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -40,29 +70,37 @@ if (collection.value) {
       {{ collection.description }}
     </div>
     <div class="btn-group end">
-      <router-link :to="`/collection/edit/${collection.id}`" class="btn-dark">
-        Редактировать
-      </router-link>
-      <DeleteButton :entity-id="collection.id" entity-type="collection" />
+      <div v-if="isAuthor" class="btn-group">
+        <router-link :to="`/collection/edit/${collection.id}`" class="btn-dark">
+          Редактировать
+        </router-link>
+        <DeleteButton :entity-id="collection.id" entity-type="collection" />
+      </div>
       <ReactionButton :entity-type="'collection'" :entity-id="collection.id" :count="collection.likes" />
     </div>
   </div>
-  <section v-if="collection" class="content-container">
+  <section v-if="collection" class="content-grid">
     <Recipe
       v-for="recipe in collection.recipes"
       :key="recipe.id"
       :recipe="recipe"
     />
   </section>
-  <div v-if="collection" class="btn-group">
-    <button
+  <div v-if="collection" class="btn-group end">
+    <Mark
       v-for="(mark, index) in collection.marks"
       :key="index"
-      class="btn-dark line"
-    >
-      <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-1" name="mark" />
-      {{ mark.title }}
-    </button>
+      :mark="mark"
+      markType="mark"
+      contentType="collection"
+    />
+    <Mark
+      v-for="(product, index) in collection.products"
+      :key="index"
+      :mark="product"
+      markType="product"
+      contentType="collection"
+    />
   </div>
   <div v-else>Коллекция не найдена</div>
 </template>
@@ -125,13 +163,6 @@ if (collection.value) {
     height: 40px;
     border-radius: 100%;
   }
-}
-
-.content-container {
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
 }
 
 .content-info {

@@ -6,6 +6,13 @@ import BaseIcon from "./BaseIcon.vue";
   <footer>
     <div class="container">
       <div class="container-row">
+        <BaseIcon viewBox="0 0 35 35" class="icon-dark-45-0" name="vk" />
+        <a to="/">
+          <BaseIcon class="logo" name="logo" />
+        </a>
+        <BaseIcon viewBox="0 0 35 35" class="icon-dark-45-0" name="tg" />
+      </div>
+      <div class="container-row">
         <nav>
           <router-link to="/search/recipe?marks=42">
             <div class="label-item">Заготовки</div>
@@ -16,13 +23,6 @@ import BaseIcon from "./BaseIcon.vue";
           <router-link to="/search/recipe?marks=9">
             <div class="label-item">Десерты</div>
           </router-link>
-        </nav>
-        <BaseIcon viewBox="0 0 35 35" class="icon-dark-45-0" name="vk"/>
-        <a to="/">
-          <BaseIcon class="logo"  name="logo"/>
-        </a>
-        <BaseIcon viewBox="0 0 35 35" class="icon-dark-45-0" name="tg"/>
-        <nav>
           <router-link to="/search/recipe?marks=4">
             <div class="label-item">Гарниры</div>
           </router-link>
@@ -34,44 +34,65 @@ import BaseIcon from "./BaseIcon.vue";
           </router-link>
         </nav>
       </div>
-      <span class="slogan">Готовь просто – удивляй вкусно!</span>
-      <span class="slogan">© 2024 Заврище. Все права защищены.</span>
+      <div class="container-col">
+        <span class="slogan">Готовь просто – удивляй вкусно!</span>
+        <span class="slogan">© 2024 Заврище. Все права защищены.</span>
+      </div>
     </div>
   </footer>
 </template>
 
 <style lang="scss">
-  footer {
+footer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: 11rem;
+  margin-top: 3rem;
+
+  .logo {
+    width: 57px;
+    height: 64px;
+  }
+
+  nav {
     display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    height: auto;
     justify-content: center;
-    width: 100%;
-    height: 11rem;
+    gap: 0.2rem;
     font-weight: 500;
-    margin-top: 3rem;
+  }
 
-    .container {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 0.3rem;
+  .container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.3rem;
 
-      width: 75rem;
-      height: 100%;
+    width: 75rem;
+    height: 100%;
 
     max-width: 75rem;
     min-width: 28.75rem;
 
-      .slogan{
-        font-size: inherit;
-      }
+    .slogan {
+      font-size: inherit;
+    }
 
-      .container-row{
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 0.3rem;
-      }
+    .container-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .container-col {
+      align-items: center;
+      height: auto;
     }
   }
+}
 </style>

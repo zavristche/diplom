@@ -245,7 +245,7 @@ $config = [
             'Access-Control-Request-Headers' => ['Content-Type', 'Authorization'],
             'Access-Control-Allow-Credentials' => false,
             'Access-Control-Max-Age' => 86400,
-            'Access-Control-Expose-Headers' => ['X-Pagination-Total-Count'],
+            'Access-Control-Expose-Headers' => ['*'],
         ],
     ],
     'params' => $params,

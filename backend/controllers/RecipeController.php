@@ -156,20 +156,14 @@ class RecipeController extends BaseApiController
             ])
             ->orderBy('RAND()') // Для MySQL/MariaDB
             ->one();
-
+    
         if ($recipe === null) {
             throw new NotFoundHttpException('Случайный рецепт не найден.');
         }
-
-        // Преобразуем данные в массив, убирая чувствительные поля
-        $data = $recipe->toArray([], ['user', 'status', 'complexity', 'private', 'comments', 'marks', 'products', 'collections', 'calendar_recipe']);
-        if (isset($data['user'])) {
-            unset($data['user']['auth_key'], $data['user']['password']);
-        }
-
+    
         return [
             'success' => true,
-            'recipe' => $data,
+            'id' => $recipe->id, // Возвращаем только id
         ];
     }
 

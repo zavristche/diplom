@@ -49,7 +49,6 @@ const handleDelete = async () => {
 
 <template>
   <button class="btn-dark" @click="handleDelete">
-    <BaseIcon viewBox="0 0 29 29" class="icon-white-30-2" name="close" />
     Удалить
   </button>
 </template>

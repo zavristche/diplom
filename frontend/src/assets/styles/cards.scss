@@ -46,9 +46,9 @@
 
 .card {
   display: grid;
-  grid-template-rows: 200px 1fr; /* Высота превью как в первом варианте */
+  grid-template-rows: 200px 1fr;
   gap: 20px;
-  height: 280px; /* Фиксированная высота карточки как в первом варианте */
+  height: 300px; 
   width: 100%;
 
   &.recipe {

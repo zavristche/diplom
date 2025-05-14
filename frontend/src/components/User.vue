@@ -1,80 +1,87 @@
 <script setup>
 defineProps({
   user: {
-    type: String,
-  },
+    type: Object,
+    required: true
+  }
 });
 </script>
 
 <template>
-  <div class="user-card">
-    <router-link :to="`/profile/${user.id}`" class="author">
-      <img :src="user.avatar" class="user-card__avatar" alt="User avatar" />
+  <article class="user-card">
+    <router-link :to="`/profile/${user.id}`" class="user-card__avatar-link">
+      <img :src="user.avatar" :alt="`${user.login} avatar`" class="user-card__avatar" />
     </router-link>
-    <div class="user-card__info">
-      <div class="user-card__title">
-        <router-link :to="`/profile/${user.id}`" class="author">
-          <h3>{{ user.login }}</h3>
-        </router-link>
-        <div class="user-card__status">{{ user.status }}</div>
-      </div>
+    
+    <div class="user-card__content">
+      <router-link :to="`/profile/${user.id}`" class="user-card__name">
+        <h3>{{ user.login }}</h3>
+      </router-link>
+      <p class="user-card__status">{{ user.status }}</p>
     </div>
-  </div>
+  </article>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @use "../assets/styles/_variables.scss" as *;
 
 .user-card {
-  display: inline-flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.25rem;
   align-items: center;
-  gap: 20px;
-  width: 373px;
+  width: 100%;
+  padding: 0.625rem;
   background: $background;
   border-radius: $border;
   box-shadow: $shadow;
-  padding: 10px;
 
-  .user-card__avatar {
-    width: 125px;
-    height: 125px;
-    padding: 10px;
-    border-radius: 100px;
+  &__avatar {
+    width: 7.8125rem;
+    height: 7.8125rem;
+    padding: 0.625rem;
+    border-radius: 50%;
     object-fit: cover;
   }
 
-  .user-card__info {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: 5px;
-    width: 224px;
+  &__content {
+    display: grid;
+    gap: 0.3125rem;
   }
 
-  .user-card__title {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 5px;
-
+  &__name {
+    text-decoration: none;
+    
     h3 {
+      margin: 0;
       color: $dark-text;
       font-family: Rubik, sans-serif;
-      font-size: 16px;
+      font-size: 1rem; 
       font-weight: 500;
       word-wrap: break-word;
-      margin: 0;
     }
   }
 
-  .user-card__status {
+  &__status {
+    margin: 0;
     color: $text-info;
     font-family: Rubik, sans-serif;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 400;
     word-wrap: break-word;
+  }
+
+  @media (max-width: 768px) {
+
+    &__avatar {
+      width: 6.25rem;
+      height: 6.25rem;
+      margin: 0 auto;
+    }
+
+    &__content {
+      justify-items: flex-start;
+    }
   }
 }
 </style>

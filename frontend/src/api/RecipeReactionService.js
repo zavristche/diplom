@@ -13,9 +13,18 @@ class RecipeReactionService {
     return apiClient.delete(`/${this.resource}`, { data });
   }
 
-  // Проверка, лайкнул ли пользователь
   check(data) {
-    return apiClient.post(`/${this.resource}/check`, data);
+    console.log(`Checking reaction with data:`, data);
+    return apiClient
+      .post(`/${this.resource}/check`, data)
+      .catch(error => {
+        console.error('Error checking reaction:', error);
+        if (error.response?.status === 401) {
+          console.warn('Unauthorized: Token missing or invalid, defaulting to not liked');
+          return { liked: false, count: 0 }; // Дефолтные значения при отсутствии авторизации
+        }
+        throw error;
+      });
   }
 }
 

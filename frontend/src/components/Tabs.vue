@@ -52,101 +52,54 @@ const setActiveTab = (index) => {
 
 <style lang="scss">
 @use "../assets/styles/_variables.scss" as *;
-@use "../assets/styles/normalize.scss";
 
 .tab-container {
   display: flex;
-  flex-direction: row;
+  position: relative;
   box-shadow: $shadow;
   border-radius: $border;
-  position: relative;
   background-color: $background;
   overflow: hidden;
-}
 
-.tab {
-  flex: 0 0 auto;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: $background-dark;
-  padding: 15px 25px;
-  font-weight: 400;
-  font-size: 20px;
-  cursor: pointer;
-  border: none;
-  outline: none;
-  background: none;
-  position: relative;
-  z-index: 1;
-  transition: color 0.2s ease;
-  white-space: nowrap;
-
-  &:not(:last-child) {
-    margin-right: 2px;
+  // Подложка для активного таба
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: calc(100% / var(--tab-count));
+    background-color: $background-dark;
+    border-radius: $border;
+    box-shadow: $shadow;
+    transition: transform 0.3s ease;
+    z-index: 0;
+    transform: translateX(calc(var(--active-index, 0) * 100%));
   }
 }
 
-.tab.active {
-  color: #FFF;
-  background-color: $background-dark; // Вернули заливку для активного таба
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: map-get($colors, "dark");
+  padding: 15px 25px;
+  font-size: 20px;
+  font-weight: 400;
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+  white-space: nowrap;
   position: relative;
-  z-index: 2;
+  z-index: 1;
+  transition: color 0.2s ease;
+
+  &.active {
+    color: map-get($colors, "white");
+    background-color: $background-dark;
+  }
 }
 
-.tab-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  background-color: $background-dark;
-  box-shadow: $shadow;
-  border-radius: $border;
-  transition: transform 0.2s ease;
-  z-index: 0;
-  transform-origin: left;
-  width: 100%;
-  transform: scaleX(0);
-}
-
-.tab-container .tab.active ~ .tab-container::before {
-  display: none;
-}
-
-.tab-container .tab.active + .tab-container::before {
-  display: none;
-}
-
-.tab-container .tab:nth-child(1).active ~ .tab-container::before {
-  transform: scaleX(0);
-}
-
-.tab-container .tab:nth-child(1).active + .tab-container::before {
-  transform: translateX(0) scaleX(100%);
-  display: block;
-}
-
-.tab-container .tab:nth-child(2).active ~ .tab-container::before {
-  transform: scaleX(0);
-}
-
-.tab-container .tab:nth-child(2).active + .tab-container::before {
-  transform: translateX(100%) scaleX(100%);
-  display: block;
-}
-
-.tab-container .tab:nth-child(3).active ~ .tab-container::before {
-  transform: scaleX(0);
-}
-
-.tab-container .tab:nth-child(3).active + .tab-container::before {
-  transform: translateX(200%) scaleX(100%);
-  display: block;
-}
-
-.tab-container {
-  --tab-count: v-bind('tabs.length');
-}
 </style>

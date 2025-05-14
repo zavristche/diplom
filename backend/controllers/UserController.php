@@ -76,6 +76,7 @@ class UserController extends BaseApiController
                 'email',
                 'avatar',
                 'photo_header',
+                'role_id',
             ]),
         ];
     }

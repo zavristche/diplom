@@ -58,8 +58,14 @@ class RecipeReactionController extends BaseApiController
     public function actionCreate()
     {
         $data = Yii::$app->request->getBodyParams();
+        
+        // Проверяем, существует ли рецепт
         $recipe = Recipe::findOne($data['recipe_id']);
+        if (!$recipe) {
+            throw new NotFoundHttpException('Рецепт не найден.');
+        }
 
+        // Проверяем, не лайкает ли пользователь свой собственный рецепт
         if ($recipe->user_id == Yii::$app->user->id) {
             return [
                 'success' => false,
@@ -67,31 +73,88 @@ class RecipeReactionController extends BaseApiController
             ];
         }
 
-        $model = new RecipeReaction([
-            'recipe_id' => $data['recipe_id'],
-            'user_id' => Yii::$app->user->id,
-        ]);
-
-        if ($model->save()) {
-            return ['success' => true, 'model' => $model->attributes];
+        if (Yii::$app->user->identity->isAdmin) {
+            return [
+                'success' => false,
+                'message' => 'Администратор не может ставить реакцию',
+            ];
         }
 
-        return ['success' => false, 'errors' => $model->errors, 'attributes' => $model->attributes];
+        // Проверяем, не существует ли уже реакция
+        $existingReaction = RecipeReaction::findOne(['recipe_id' => $data['recipe_id'], 'user_id' => Yii::$app->user->id]);
+        if ($existingReaction) {
+            return [
+                'success' => false,
+                'message' => 'Вы уже лайкнули этот рецепт'
+            ];
+        }
+
+        // Начинаем транзакцию
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            $model = new RecipeReaction([
+                'recipe_id' => $data['recipe_id'],
+                'user_id' => Yii::$app->user->id,
+            ]);
+
+            if ($model->save()) {
+                // Увеличиваем likes в модели Recipe
+                $recipe->likes = $recipe->likes + 1;
+                if (!$recipe->save(false)) { // Сохраняем без валидации
+                    throw new \yii\web\ServerErrorHttpException('Не удалось обновить количество лайков.');
+                }
+
+                $transaction->commit();
+                return ['success' => true, 'model' => $model->attributes];
+            }
+
+            $transaction->rollBack();
+            return ['success' => false, 'errors' => $model->errors, 'attributes' => $model->attributes];
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw new \yii\web\ServerErrorHttpException('Ошибка при добавлении реакции: ' . $e->getMessage());
+        }
     }
 
     public function actionDelete()
     {
         $data = Yii::$app->request->getBodyParams();
-        $model = RecipeReaction::findOne(['recipe_id' => $data['recipe_id'], 'user_id' => Yii::$app->user->id]);
         
-        if ($model && $model->delete()) {
-            return [
-                'success' => true,
-                'message' => 'Лайк убран',
-            ];
+        // Проверяем, существует ли рецепт
+        $recipe = Recipe::findOne($data['recipe_id']);
+        if (!$recipe) {
+            throw new NotFoundHttpException('Рецепт не найден.');
         }
 
-        throw new \yii\web\ServerErrorHttpException('Ошибка при удалении реакции.'); 
+        // Находим реакцию
+        $model = RecipeReaction::findOne(['recipe_id' => $data['recipe_id'], 'user_id' => Yii::$app->user->id]);
+        if (!$model) {
+            throw new NotFoundHttpException('Реакция не найдена.');
+        }
+
+        // Начинаем транзакцию
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            if ($model->delete()) {
+                // Уменьшаем likes в модели Recipe
+                $recipe->likes = $recipe->likes > 0 ? $recipe->likes - 1 : 0; // Не допускаем отрицательное значение
+                if (!$recipe->save(false)) { // Сохраняем без валидации
+                    throw new \yii\web\ServerErrorHttpException('Не удалось обновить количество лайков.');
+                }
+
+                $transaction->commit();
+                return [
+                    'success' => true,
+                    'message' => 'Лайк убран',
+                ];
+            }
+
+            $transaction->rollBack();
+            throw new \yii\web\ServerErrorHttpException('Ошибка при удалении реакции.');
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw new \yii\web\ServerErrorHttpException('Ошибка при удалении реакции: ' . $e->getMessage());
+        }
     }
 
     public function actionCheck()

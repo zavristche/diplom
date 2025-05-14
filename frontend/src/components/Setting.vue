@@ -107,12 +107,12 @@ const closeModal = () => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="modal-overlay setting">
+  <div v-if="isOpen" class="modal-overlay">
     <div class="modal-container">
-      <div class="modal-header">
+      <div class="modal-header space">
         <h1 class="title">Настройки</h1>
         <button class="btn-icon" @click="closeModal">
-          <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-2" name="close" />
+          <BaseIcon viewBox="0 0 65 65" class="icon-dark-65-2" name="close" />
         </button>
       </div>
       <div class="content">
@@ -172,108 +172,8 @@ const closeModal = () => {
 
 <style lang="scss" scoped>
 @use "../assets/styles/variables" as *;
+@use "../assets/styles/modal" as *;
 
-.setting-photo {
-  width: 100%;
-  height: 180px;
-  position: relative;
 
-  &__background {
-    width: 100%;
-    height: 125px;
-    position: absolute;
-    top: 0;
-    left: 0;
-    border-radius: $border;
-    background-color: $light;
-    background-size: cover;
-    background-position: center;
-  }
 
-  &__avatar {
-    width: 140px;
-    height: 140px;
-    position: absolute;
-    top: 20px;
-    left: 0;
-    background-color: $light;
-    border-radius: 50%;
-    outline: 3px solid $background;
-    outline-offset: -1.5px;
-    background-size: cover;
-    background-position: center;
-  }
-
-  &__actions {
-    position: absolute;
-    left: 187px;
-    top: 141px;
-    display: flex;
-    gap: 20px;
-  }
-}
-
-.action-button {
-  color: $text-info-light;
-  font: map-get(map-get($font-weather, "medium"), "weight")
-    map-get(map-get($font-weather, "medium"), "size") "Rubik",
-    sans-serif;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  overflow-y: auto;
-  padding: 20px;
-
-  &.setting .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 20px;
-  }
-}
-
-.modal-container {
-  width: 455px;
-  padding: 30px;
-  background: $background;
-  box-shadow: $shadow;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  margin: auto;
-
-  .btn-dark {
-    width: 100%;
-  }
-}
-
-.content {
-  width: 395px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 40px;
-}
-
-.title {
-  text-align: center;
-  font: 600 32px sans-serif;
-}
-
-.form {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
 </style>

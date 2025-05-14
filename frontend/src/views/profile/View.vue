@@ -88,14 +88,14 @@ const handleLogout = async () => {
       </router-link>
     </div>
   </div>
-  <section v-if="profile && activeTab === 0" class="content-container">
+  <section v-if="profile && activeTab === 0" class="content-grid">
     <Recipe
       v-for="recipe in profile.recipes"
       :key="recipe.id"
       :recipe="recipe"
     />
   </section>
-  <section v-if="profile && activeTab === 1" class="content-container">
+  <section v-if="profile && activeTab === 1" class="content-grid">
     <Collection
       v-for="collection in profile.collections"
       :key="collection.id"
@@ -114,6 +114,11 @@ const handleLogout = async () => {
   flex-wrap: wrap;
   flex-direction: row;
   justify-content: space-between;
+  width: 100%;
+
+  .btn-group {
+    width: auto;
+  }
 }
 
 .preview {
@@ -165,12 +170,5 @@ const handleLogout = async () => {
       gap: 5px;
     }
   }
-}
-
-.content-container {
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
 }
 </style>

@@ -257,7 +257,7 @@ onUnmounted(() => {
   <section class="comments">
     <h2>Комментарии</h2>
     <div v-if="errors.main" class="error-message">{{ errors.main }}</div>
-    <form v-if="isAuthenticated" @submit.prevent="submitComment()" class="comment-form">
+    <form v-if="isAuthenticated && !authStore.isAdmin" @submit.prevent="submitComment()" class="comment-form">
       <textarea
         v-model="commentText"
         rows="4"
@@ -285,8 +285,11 @@ onUnmounted(() => {
         <button class="btn-dark" type="submit" :disabled="isSubmitting">Отправить</button>
       </div>
     </form>
+    <div v-else-if="authStore.isAdmin" class="no-auth-message">
+      Администратор не может оставлять комментарии
+    </div>
     <div v-else class="no-auth-message">
-      Пожалуйста, <a class="link" @click="isLoginOpen = true">войдите</a>, чтобы оставить комментарий.
+      <a class="link" @click="isLoginOpen = true">Войдите</a>, чтобы оставить комментарий.
     </div>
     <div v-if="groupedComments.length === 0" class="no-comments">Комментариев пока нет. Будьте первыми!</div>
     <div v-else class="comment-list">
@@ -306,7 +309,7 @@ onUnmounted(() => {
         <div v-if="comment.photo" class="comment-photo">
           <img :src="comment.photo" alt="Фото комментария" />
         </div>
-        <div v-if="isAuthenticated" class="comment-actions">
+        <div v-if="isAuthenticated && !authStore.isAdmin" class="comment-actions">
           <button class="btn-small" @click="toggleReplyForm($event, comment.id)">Ответить</button>
           <button
             v-if="comment.user.id === currentUser?.id"

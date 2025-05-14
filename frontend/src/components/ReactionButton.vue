@@ -1,17 +1,18 @@
 <template>
   <button
     type="button"
-    class="btn-dark"
+    :class="['btn-dark', { 'btn-item': variant === 'menu' }]"
     @click="toggleLike"
   >
-    <span>{{ likesCount }}</span>
+    <span v-if="variant === 'menu'">{{ isLiked ? 'Снять оценку' : 'Оценить' }}</span>
+    <span v-if="variant === 'default'">{{ likesCount }}</span>
     <BaseIcon
-      viewBox="0 0 30 30"
-      class="icon-white-30-2"
+      :viewBox="variant === 'menu' ? '0 0 65 65' : '0 0 30 30'"
+      :class="variant === 'menu' ? 'icon-dark-55-1' : 'icon-white-30-2'"
       :name="isLiked ? 'heart_fill' : 'heart_line'"
       :key="isLiked ? 'heart_fill' : 'heart_line'"
     />
-    Оценить
+    <span v-if="variant === 'default'">Оценить</span>
   </button>
 </template>
 
@@ -30,15 +31,20 @@ const props = defineProps({
     type: [Number, String],
     required: true,
   },
-  likes: {
-    type: [Number],
+  count: {
+    type: Number,
     required: true,
+  },
+  variant: {
+    type: String,
+    default: 'default',
+    validator: (value) => ['default', 'menu'].includes(value),
   },
 });
 
-console.log('ReactionButton: entityType:', props.entityType, 'entityId:', props.entityId, 'initial likes:', props.likes);
+console.log('ReactionButton: entityType:', props.entityType, 'entityId:', props.entityId, 'initial count:', props.count);
 
-const { isLiked, toggleLike, checkInitialLike, likesCount } = useReaction(props.entityType, props.entityId, props.likes);
+const { isLiked, toggleLike, checkInitialLike, likesCount } = useReaction(props.entityType, props.entityId, props.count);
 
 onBeforeMount(() => {
   console.log(`Checking initial like for ${props.entityType} with ID ${props.entityId}`);

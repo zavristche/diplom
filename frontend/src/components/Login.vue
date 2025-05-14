@@ -36,7 +36,11 @@ const submitForm = async () => {
     const response = await userService.login(form.value);
     if (response.data.success) {
       authStore.setUser(response.data.auth_key, response.data.user);
-      router.push(`/profile/${response.data.user.id}`);
+      if (authStore.isAdmin) {
+        router.push(`/admin`);
+      } else {
+        router.push(`/profile/${response.data.user.id}`);
+      }
       closeModal();
     } else {
       errors.value = response.data.errors;
@@ -59,11 +63,11 @@ const submitForm = async () => {
       <div class="modal-container">
         <div class="modal-header">
           <button class="btn-icon" @click="closeModal">
-            <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-2" name="close" />
+            <BaseIcon viewBox="0 0 65 65" class="icon-dark-65-2" name="close" />
           </button>
         </div>
         <div class="content">
-          <div class="logo">
+          <div class="logo-container">
             <BaseIcon class="logo" name="logo" />
           </div>
           <h1 class="title">Добро пожаловать в <br />Рецептище</h1>
@@ -101,71 +105,5 @@ const submitForm = async () => {
 
 <style lang="scss" scoped>
 @use "../assets/styles/variables" as *;
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-container {
-  width: 455px;
-  padding: 30px;
-  background: $background;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 40px;
-}
-
-.title {
-  text-align: center;
-  font-size: 32px;
-  font-weight: 600;
-}
-
-.form {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.btn-dark {
-  width: 100%;
-  padding: 11px 18px;
-  background: $background-dark;
-  border-radius: $border;
-  color: $light-text;
-  font-size: 18px;
-  border: none;
-  cursor: pointer;
-}
-
-.error-message {
-  color: $error;
-  font-size: 14px;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+@use "../assets/styles/modal" as *;
 </style>

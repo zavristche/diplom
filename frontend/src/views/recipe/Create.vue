@@ -1,9 +1,10 @@
 <script setup>
-import { ref, watch, computed } from "vue";
+import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useProfileAuth } from "../../composables/useProfileAuth";
 import { useAuthStore } from "../../stores/auth";
 import RecipeService from "../../api/RecipeService";
+import SelectMultiple from "../../components/SelectMultiple.vue";
 import BaseIcon from "../../components/BaseIcon.vue";
 import Input from "../../components/Input.vue";
 import Select from "../../components/Select.vue";
@@ -23,19 +24,13 @@ const ingredients = ref([]);
 const steps = ref([{ description: "", previewUrl: null, file: null }]);
 const previewUrl = ref(null);
 const recipePhotoFile = ref(null);
-const searchMark = ref("");
 const selectedMarks = ref([]);
-const activeMarkType = ref(null);
-const isMarkInputFocused = ref(false);
 const errors = ref({});
 
 const textareaRef = ref(null);
 const stepTextareaRefs = ref([]);
 
-const tasteMeasureId = computed(() => {
-  const measures = Array.isArray(data?.measures) ? data.measures : Object.values(data?.measures || {});
-  return measures.find((m) => m.title?.toLowerCase() === "по вкусу")?.id || null;
-});
+const tasteMeasureId = ref(null);
 
 const addIngredient = () => {
   ingredients.value.push({ product_id: "", count: "", measure_id: "" });
@@ -71,40 +66,6 @@ const onStepFileSelected = (event, index) => {
     steps.value[index].file = file;
     steps.value[index].previewUrl = URL.createObjectURL(file);
   }
-};
-
-const filteredMarks = computed(() => {
-  const marks = Object.values(data?.marks || {});
-  if (!searchMark.value && !activeMarkType.value) return marks;
-  return marks.filter((mark) => {
-    const matchesType = activeMarkType.value ? mark.type_id === Number(activeMarkType.value) : true;
-    const matchesSearch = searchMark.value.toLowerCase() ? mark.title.toLowerCase().includes(searchMark.value.toLowerCase()) : true;
-    return matchesType && matchesSearch;
-  });
-});
-
-const selectMarkType = (typeId) => {
-  activeMarkType.value = typeId;
-  searchMark.value = "";
-  isMarkInputFocused.value = true;
-};
-
-const addMark = (mark) => {
-  if (!selectedMarks.value.some((m) => m.id === mark.id)) {
-    selectedMarks.value.push(mark);
-  }
-  searchMark.value = "";
-  isMarkInputFocused.value = false;
-};
-
-const removeMark = (markId) => {
-  selectedMarks.value = selectedMarks.value.filter((m) => m.id !== markId);
-};
-
-const handleBlur = () => {
-  setTimeout(() => {
-    isMarkInputFocused.value = false;
-  }, 200);
 };
 
 const adjustTextareaHeight = (textarea) => {
@@ -301,49 +262,11 @@ const submitForm = async (event) => {
       </div>
       <label for="marks" class="marks">
         Метки
-        <div class="btn-group start">
-          <button
-            class="mark_type"
-            :class="{ active: activeMarkType === null }"
-            @click.prevent="selectMarkType(null)"
-          >
-            Все
-          </button>
-          <button
-            v-for="(type, id) in data.mark_types"
-            :key="id"
-            class="mark_type"
-            :class="{ active: activeMarkType === id }"
-            @click.prevent="selectMarkType(id)"
-          >
-            {{ type }}
-          </button>
-        </div>
-        <div class="mark-search">
-          <div class="input-with-marks">
-            <div class="mark-items">
-              <span v-for="mark in selectedMarks" :key="mark.id" class="mark-item">
-                {{ mark.title }}
-                <button class="mark-item__close" @click="removeMark(mark.id)">
-                  <BaseIcon viewBox="0 0 24 24" class="icon-dark-15-1" name="close" />
-                </button>
-              </span>
-              <input
-                v-model="searchMark"
-                type="text"
-                class="input-form"
-                placeholder="Поиск меток"
-                @focus="isMarkInputFocused = true"
-                @blur="handleBlur"
-              />
-            </div>
-          </div>
-          <div v-if="isMarkInputFocused && filteredMarks.length" class="mark-dropdown">
-            <div v-for="mark in filteredMarks" :key="mark.id" class="mark-option" @click="addMark(mark)">
-              {{ mark.title }}
-            </div>
-          </div>
-        </div>
+        <SelectMultiple
+          v-model="selectedMarks"
+          name="mark"
+          :query="{}"
+        />
         <div v-if="errors.marks" class="error-message">{{ errors.marks }}</div>
       </label>
     </div>
@@ -353,7 +276,7 @@ const submitForm = async (event) => {
         <div class="portions-container">
           <span>Порции</span>
           <div class="portions">
-            <button type="button" @click="updatePortions(-1)">
+            <button type="button" class="btn-icon" @click="updatePortions(-1)">
               <BaseIcon viewBox="0 0 65 65" class="icon-dark-45-2" name="minus" />
             </button>
             <Input
@@ -363,7 +286,7 @@ const submitForm = async (event) => {
               :is-invalid="!!errors.portions"
               :error-message="errors.portions"
             />
-            <button type="button" @click="updatePortions(1)">
+            <button type="button" class="btn-icon" @click="updatePortions(1)">
               <BaseIcon viewBox="0 0 65 65" class="icon-dark-45-2" name="plus" />
             </button>
           </div>
@@ -412,8 +335,8 @@ const submitForm = async (event) => {
         </button>
         <section v-for="(step, index) in steps" :key="step.id || index" class="step">
           <div class="step-actions">
-            <button class="btn-light btn-icon btn-small" @click.prevent="removeStep(index)">
-              <BaseIcon viewBox="0 0 29 29" class="icon-white-30-2" name="close" />
+            <button class="btn-danger btn-small btn-icon" @click.prevent="removeStep(index)">
+              <BaseIcon viewBox="0 0 65 65" class="icon-white-55-2" name="close" />
             </button>
           </div>
           <div class="photo-upload-wrapper">
@@ -573,80 +496,6 @@ const submitForm = async (event) => {
   gap: 15px;
   font-weight: 400;
   width: 100%;
-
-  .input-with-marks {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 100%;
-  }
-
-  .mark-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 20px;
-    border: 1px solid $text-info-light;
-    border-radius: $border;
-    min-height: 50px;
-    align-items: center;
-    width: 100%;
-
-    .mark-item {
-      display: flex;
-      flex-direction: row;
-      gap: 5px;
-      align-items: center;
-      background-color: $background;
-      padding: 5px 10px;
-      border-radius: $border;
-      box-shadow: $shadow;
-
-      .mark-item__close {
-        background: none;
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-      }
-    }
-
-    .input-form {
-      border: none;
-      flex-grow: 1;
-      padding: 5px;
-      font-size: 20px;
-      font-weight: 400;
-      background: transparent;
-      outline: none;
-      min-width: 100px;
-    }
-  }
-
-  .mark-search {
-    position: relative;
-  }
-
-  .mark-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    background-color: $light;
-    border: 1px solid $text-info-light;
-    border-radius: $border;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 10;
-    box-shadow: $shadow;
-  }
-
-  .mark-option {
-    padding: 10px 20px;
-    cursor: pointer;
-    &:hover { background-color: $background; }
-  }
 }
 
 .ingredients {

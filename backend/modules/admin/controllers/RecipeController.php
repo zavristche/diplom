@@ -63,7 +63,11 @@ class RecipeController extends ActiveController
     
     public function checkAccess($action, $model = null, $params = [])
     {
-        if (Yii::$app->user->identity->role_id !== Role::getOne('admin')) {
+        $user = Yii::$app->user->identity;
+        $adminRoleId = Role::getOne('admin');
+        \Yii::info("Checking access for user_id: {$user->id}, role_id: {$user->role_id}, required admin role_id: {$adminRoleId}", __METHOD__);
+        
+        if ($user->role_id !== $adminRoleId) {
             throw new \yii\web\NotFoundHttpException('Страница не найдена');
         }
     }
@@ -104,7 +108,6 @@ class RecipeController extends ActiveController
             'success' => true,
             'recipes' => $result,
         ];
-        // return Yii::$app->user;
     }
 
     public function actionApply($id)
@@ -123,6 +126,7 @@ class RecipeController extends ActiveController
         $recipe->status_id = StatusContent::getOne('Отклонено');
     
         $data = Yii::$app->request->getBodyParams();
+        \Yii::info("Received data for cancel: " . json_encode($data), __METHOD__);
     
         $transaction = Yii::$app->db->beginTransaction();
         $errors = [];
@@ -137,6 +141,7 @@ class RecipeController extends ActiveController
     
             if (!$recipe->validate()) {
                 $errors = array_merge($errors, $recipe->errors);
+                \Yii::info("Validation errors: " . json_encode($recipe->errors), __METHOD__);
             }
 
             if (!empty($errors)) {
@@ -153,21 +158,6 @@ class RecipeController extends ActiveController
             return ['success' => false, 'message' => 'Ошибка обновления', 'error' => $e->getMessage()];
         }
     }
-
-    // public function actionDelete($id)
-    // {
-    //     $model = $this->findModel($id);
-    //     $this->deleteRelatedData($model);
-
-    //     if ($model->delete()) {
-    //         return [
-    //             'success' => true,
-    //             'message' => 'Рецепт и все связанные данные успешно удалены.',
-    //         ];
-    //     }
-
-    //     throw new \yii\web\ServerErrorHttpException('Ошибка при удалении рецепта.'); 
-    // }
 
     private function deleteRelatedData($model)
     {

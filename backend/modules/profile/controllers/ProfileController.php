@@ -8,6 +8,7 @@ use yii\filters\AccessControl;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use app\controllers\BaseApiController;
+use app\models\Role;
 
 class ProfileController extends BaseApiController
 {
@@ -62,6 +63,9 @@ class ProfileController extends BaseApiController
     public function actionView($id)
     {
         $model = $this->findModel($id);
+        if($model->role_id == Role::getOne('admin')){
+            throw new NotFoundHttpException('Страница не найдена');
+        }
         return $model->toArray([], ['recipes', 'collections']);
     }
     
