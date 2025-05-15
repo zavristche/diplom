@@ -45,11 +45,10 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.vite # Добавляем кэш Vite
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/package-lock.json:/app/package-lock.json
+      - ./frontend/vite.config.js:/app/vite.config.js:ro
     environment:
       - CHOKIDAR_USEPOLLING=true
-      - VITE_APP_API_BASE_URL=http://yii2-app:8080 # Используем имя сервиса
-    networks:
-      - backend-network
