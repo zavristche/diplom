@@ -190,7 +190,6 @@ const submitForm = async (event) => {
         />
       </div>
       <label for="marks" class="marks">
-        Метки
         <SelectMultiple
           v-model="selectedMarks"
           name="mark"
@@ -201,7 +200,6 @@ const submitForm = async (event) => {
         </div>
       </label>
       <label for="products" class="marks">
-        Продукты
         <SelectMultiple
           v-model="selectedProducts"
           name="product"
@@ -218,116 +216,24 @@ const submitForm = async (event) => {
   </form>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @use "../../assets/styles/variables" as *;
+@use "../../assets/styles/form" as *;
 
 .marks {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 0.9375rem; // 15px
   font-weight: 400;
   width: 100%;
-}
-
-.create-form {
-  display: flex;
-  flex-direction: column;
-  gap: 50px;
-
-  .input-title {
-    width: 100%;
-    font-size: 32px;
-    font-weight: 600;
-    border: none;
-    padding: 15px 0;
-    border-radius: 0;
-
-    &.invalid {
-      border-bottom: 2px solid $error;
-    }
-  }
-
-  .input-title-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .input-description {
-    display: flex;
-    width: 100%;
-    font-size: 20px;
-    font-weight: 400;
-    border: none;
-    resize: none;
-    overflow: hidden;
-    line-height: 150%;
-    padding: 15px 0;
-    border-radius: 0;
-
-    &::placeholder {
-      font-weight: 300;
-    }
-
-    &.invalid {
-      border-bottom: 2px solid $error;
-    }
-  }
-
-  .input-description-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .label-group {
-    display: flex;
-    flex-direction: row;
-    gap: 30px;
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .label {
-    display: flex;
-    flex-direction: column;
-    font-weight: 400;
-    gap: 10px;
-    width: 100%;
-  }
-}
-
-.preview {
-  display: flex;
-  flex-shrink: 0;
-  width: 100%;
-  height: 500px;
-  img {
-    box-shadow: $shadow;
-    object-fit: cover;
-    width: 100%;
-    height: 100%;
-    border-radius: $border;
-  }
 }
 
 .cooking {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  gap: 1.875rem; // 30px
   width: 100%;
   align-items: start;
-}
-
-.general-error {
-  font-size: 18px;
-  color: $error;
-  text-align: center;
-  padding: 10px;
-  background-color: rgba($error, 0.1);
-  border-radius: $border;
 }
 
 .ingredients {
@@ -335,69 +241,42 @@ const submitForm = async (event) => {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  gap: 30px;
+  gap: 1.875rem; // 30px
   width: 100%;
   height: auto;
   position: sticky;
   top: 6.25rem;
 
-  .portions-container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    font-weight: 400;
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .portions {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    border: 1px solid $text-info;
-    border-radius: $border;
-    font-size: 24px;
-    font-weight: 400;
-
-    input {
-      width: 70px;
-      text-align: center;
-      border: none;
-      background: transparent;
-    }
-  }
-
   .items {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 1.25rem; // 20px
     width: 100%;
 
     .btn-dark {
       justify-content: center;
-      padding: 5px;
+      padding: 0.3125rem; // 5px
     }
 
     .ingredient {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 0.9375rem; // 15px
       width: 100%;
 
       .ingredient__container {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 0.625rem; // 10px
         width: 100%;
         border-bottom: 1px solid $text-info-light;
-        padding: 10px 0;
+        padding: 0.625rem 0; // 10px
 
         .ingredient__fields {
           display: flex;
           flex-direction: row;
           align-items: center;
-          gap: 10px;
+          gap: 0.625rem; // 10px
           width: 100%;
 
           .label {
@@ -407,14 +286,15 @@ const submitForm = async (event) => {
 
           .input-form {
             border: none;
-            padding: 15px 0;
+            border-bottom: 1px solid $text-info-light;
+            padding: 0.9375rem 0; // 15px
             width: 100%;
-            font-size: 20px;
+            font-size: 1.25rem; // 20px
             font-weight: 400;
           }
 
           .custom-select {
-            padding-right: 30px;
+            padding-right: 1.875rem; // 30px
           }
 
           .select-arrow {
@@ -428,12 +308,12 @@ const submitForm = async (event) => {
           }
 
           > *:nth-child(2) {
-            width: 60px;
+            width: 3.75rem; // 60px
             flex-shrink: 0;
           }
 
           > *:last-child {
-            width: 90px;
+            width: 5.625rem; // 90px
             flex-shrink: 0;
           }
         }
@@ -442,9 +322,123 @@ const submitForm = async (event) => {
   }
 }
 
-.error-message {
-  font-size: 16px;
-  color: $error;
-  margin-top: 4px;
+// Адаптивность
+@media (max-width: 1200px) {
+  .cooking {
+    grid-template-columns: 1fr;
+    gap: 1.25rem; // 20px
+  }
+
+  .ingredients {
+    gap: 1.25rem; // 20px
+    position: static;
+
+    .items {
+      gap: 1rem; // 16px
+
+      .ingredient {
+        gap: 0.625rem; // 10px
+
+        .ingredient__container {
+          padding: 0.5rem 0; // 8px
+
+          .ingredient__fields {
+            gap: 0.5rem; // 8px
+
+            .input-form {
+              font-size: 1.125rem; // 18px
+              padding: 0.75rem 0; // 12px
+            }
+
+            > *:nth-child(2) {
+              width: 3.125rem; // 50px
+            }
+
+            > *:last-child {
+              width: 5rem; // 80px
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .cooking {
+    gap: 1rem; // 16px
+  }
+
+  .ingredients {
+    gap: 1rem; // 16px
+
+    .items {
+      gap: 0.75rem; // 12px
+
+      .ingredient {
+        gap: 0.5rem; // 8px
+
+        .ingredient__container {
+          padding: 0.375rem 0; // 6px
+
+          .ingredient__fields {
+            gap: 0.375rem; // 6px
+
+            .input-form {
+              font-size: 1rem; // 16px
+              padding: 0.625rem 0; // 10px
+            }
+
+            > *:nth-child(2) {
+              width: 2.5rem; // 40px
+            }
+
+            > *:last-child {
+              width: 4.375rem; // 70px
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .cooking {
+    gap: 0.75rem; // 12px
+  }
+
+  .ingredients {
+    gap: 0.75rem; // 12px
+    
+    .items {
+      gap: 0.5rem; // 8px
+
+      .ingredient {
+        gap: 0.375rem; // 6px
+
+        .ingredient__container {
+          padding: 0.25rem 0; // 4px
+
+          .ingredient__fields {
+            gap: 0.25rem; // 4px
+
+            .input-form {
+              font-size: 0.875rem; // 14px
+              padding: 0.5rem 0; // 8px
+            }
+
+            > *:nth-child(2) {
+              width: 2rem; // 32px
+            }
+
+            > *:last-child {
+              width: 3.75rem; // 60px
+            }
+          }
+        }
+      }
+    }
+  }
 }
 </style>

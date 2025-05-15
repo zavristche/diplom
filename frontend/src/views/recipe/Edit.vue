@@ -8,6 +8,8 @@ import SelectMultiple from "../../components/SelectMultiple.vue";
 import BaseIcon from "../../components/BaseIcon.vue";
 import Input from "../../components/Input.vue";
 import Select from "../../components/Select.vue";
+import Portions from "../../components/Portions.vue";
+import Ingredient from "../../components/Ingredient.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -71,12 +73,13 @@ const fillForm = async (recipe) => {
   selectedPrivate.value = recipe.private_id ?? "";
   portions.value = recipe.portions ?? 1;
 
-  ingredients.value = recipe.products?.map((product) => ({
-    id: product.id,
-    product_id: product.product_id,
-    count: product.count != null ? Number(product.count) : null,
-    measure_id: product.measure_id,
-  })) ?? [];
+  ingredients.value =
+    recipe.products?.map((product) => ({
+      id: product.id,
+      product_id: product.product_id,
+      count: product.count != null ? Number(product.count) : null,
+      measure_id: product.measure_id,
+    })) ?? [];
 
   await nextTick();
 
@@ -93,7 +96,12 @@ const fillForm = async (recipe) => {
 
 const addIngredient = () => {
   if (!isEditable.value) return;
-  ingredients.value.push({ id: `new-${Date.now()}`, product_id: "", count: null, measure_id: "" });
+  ingredients.value.push({
+    id: `new-${Date.now()}`,
+    product_id: null,
+    count: null,
+    measure_id: null,
+  });
 };
 
 const removeIngredient = (index) => {
@@ -148,7 +156,9 @@ watch(description, () => {
 watch(
   () => steps.value.map((step) => step.description),
   () => {
-    stepTextareaRefs.value.forEach((textarea) => adjustTextareaHeight(textarea));
+    stepTextareaRefs.value.forEach((textarea) =>
+      adjustTextareaHeight(textarea)
+    );
   },
   { deep: true }
 );
@@ -170,15 +180,25 @@ const normalizeServerErrors = (serverErrors) => {
         normalized[`steps[${index}][description]`] = value;
       } else if (typeof value === "object") {
         for (const [attr, messages] of Object.entries(value)) {
-          normalized[attr === "imageFile" ? `step_photos_${index}` : `steps[${index}][${attr}]`] = Array.isArray(messages) ? messages.join(", ") : messages;
+          normalized[
+            attr === "imageFile"
+              ? `step_photos_${index}`
+              : `steps[${index}][${attr}]`
+          ] = Array.isArray(messages) ? messages.join(", ") : messages;
         }
       }
     } else if (key.startsWith("product_")) {
       const index = parseInt(key.replace("product_", ""), 10);
-      normalized[`products[${index}]`] = typeof value === "string" ? value : Object.values(value).flat().filter(Boolean).join(", ");
+      normalized[`products[${index}]`] =
+        typeof value === "string"
+          ? value
+          : Object.values(value).flat().filter(Boolean).join(", ");
     } else if (key.startsWith("mark_")) {
       const index = parseInt(key.replace("mark_", ""), 10);
-      normalized[`marks[${index}]`] = typeof value === "string" ? value : Object.values(value).flat().join(", ");
+      normalized[`marks[${index}]`] =
+        typeof value === "string"
+          ? value
+          : Object.values(value).flat().join(", ");
     } else {
       normalized[key] = Array.isArray(value) ? value.join(", ") : value;
     }
@@ -192,21 +212,28 @@ const validateForm = () => {
     const productErrors = [];
     if (!ingredient.product_id) productErrors.push("Выберите продукт");
     if (!ingredient.measure_id) productErrors.push("Выберите меру");
-    if (!ingredient.count && ingredient.measure_id !== tasteMeasureId.value) productErrors.push("Укажите количество");
-    if (productErrors.length) errors.value[`products[${index}]`] = productErrors.join(", ");
+    if (!ingredient.count && ingredient.measure_id !== tasteMeasureId.value)
+      productErrors.push("Укажите количество");
+    if (productErrors.length)
+      errors.value[`products[${index}]`] = productErrors.join(", ");
   });
   steps.value.forEach((step, index) => {
-    if (!step.description) errors.value[`steps[${index}][description]`] = "Укажите описание шага";
-    if (!step.previewUrl && !step.file) errors.value[`step_photos_${index}`] = "Загрузите фото шага";
+    if (!step.description)
+      errors.value[`steps[${index}][description]`] = "Укажите описание шага";
+    if (!step.previewUrl && !step.file)
+      errors.value[`step_photos_${index}`] = "Загрузите фото шага";
   });
   if (!title.value) errors.value.title = "Укажите заголовок";
   if (!description.value) errors.value.description = "Укажите описание рецепта";
   if (!time.value) errors.value.time = "Укажите время приготовления";
-  if (!selectedComplexity.value) errors.value.complexity_id = "Выберите сложность";
+  if (!selectedComplexity.value)
+    errors.value.complexity_id = "Выберите сложность";
   if (!selectedPrivate.value) errors.value.private_id = "Выберите доступ";
   if (!portions.value) errors.value.portions = "Укажите количество порций";
-  if (!previewUrl.value && !recipePhotoFile.value) errors.value.imageFile = "Загрузите фото рецепта";
-  if (!selectedMarks.value.length) errors.value.marks = "Выберите хотя бы одну метку";
+  if (!previewUrl.value && !recipePhotoFile.value)
+    errors.value.imageFile = "Загрузите фото рецепта";
+  if (!selectedMarks.value.length)
+    errors.value.marks = "Выберите хотя бы одну метку";
   return !Object.keys(errors.value).length;
 };
 
@@ -230,13 +257,20 @@ const submitForm = async (event) => {
   formData.append("complexity_id", selectedComplexity.value || "");
   formData.append("private_id", selectedPrivate.value || "");
   formData.append("portions", portions.value || "");
-  if (recipePhotoFile.value) formData.append("recipe_photo", recipePhotoFile.value);
+  if (recipePhotoFile.value)
+    formData.append("recipe_photo", recipePhotoFile.value);
 
   ingredients.value.forEach((ingredient, index) => {
     if (ingredient.id) formData.append(`products[${index}][id]`, ingredient.id);
-    formData.append(`products[${index}][product_id]`, ingredient.product_id || "");
+    formData.append(
+      `products[${index}][product_id]`,
+      ingredient.product_id || ""
+    );
     formData.append(`products[${index}][count]`, ingredient.count ?? "");
-    formData.append(`products[${index}][measure_id]`, ingredient.measure_id || "");
+    formData.append(
+      `products[${index}][measure_id]`,
+      ingredient.measure_id || ""
+    );
   });
 
   steps.value.forEach((step, index) => {
@@ -265,7 +299,9 @@ const submitForm = async (event) => {
     } else if (error.response?.status === 422 && error.response?.data?.errors) {
       errors.value = normalizeServerErrors(error.response.data.errors);
     } else {
-      errors.value = { general: error.response?.data?.message || "Произошла ошибка." };
+      errors.value = {
+        general: error.response?.data?.message || "Произошла ошибка.",
+      };
     }
   }
 };
@@ -274,18 +310,28 @@ const submitForm = async (event) => {
 <template>
   <form @submit="submitForm" class="create-form">
     <h1>Редактировать рецепт</h1>
-    <div v-if="errors.general" class="error-message general-error">{{ errors.general }}</div>
+    <div v-if="errors.general" class="error-message general-error">
+      {{ errors.general }}
+    </div>
     <div class="btn-group start">
       <div v-if="previewUrl" class="preview">
         <img :src="previewUrl" alt="Превью фото" />
       </div>
       <div class="photo-upload-wrapper">
         <label v-if="isEditable" class="btn-dark line">
-          <input type="file" accept="image/*" name="recipe_photo" style="display: none" @change="onFileSelected" />
+          <input
+            type="file"
+            accept="image/*"
+            name="recipe_photo"
+            style="display: none"
+            @change="onFileSelected"
+          />
           <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-1" name="img" />
           Загрузить фото
         </label>
-        <div v-if="errors.imageFile" class="photo-error">{{ errors.imageFile }}</div>
+        <div v-if="errors.imageFile" class="photo-error">
+          {{ errors.imageFile }}
+        </div>
       </div>
       <div class="input-title-wrapper">
         <input
@@ -310,7 +356,9 @@ const submitForm = async (event) => {
           :class="{ invalid: errors.description }"
           :disabled="!isEditable"
         ></textarea>
-        <div v-if="errors.description" class="error-message">{{ errors.description }}</div>
+        <div v-if="errors.description" class="error-message">
+          {{ errors.description }}
+        </div>
       </div>
       <div class="label-group">
         <Input
@@ -355,63 +403,33 @@ const submitForm = async (event) => {
     <div class="cooking">
       <div class="ingredients">
         <h2>Ингредиенты</h2>
-        <div class="portions-container">
-          <span>Порции</span>
-          <div class="portions">
-            <button type="button" @click="updatePortions(-1)" :disabled="!isEditable">
-              <BaseIcon viewBox="0 0 65 65" class="icon-dark-45-2" name="minus" />
-            </button>
-            <Input
-              v-model="portions"
-              name="portions"
-              type="number"
-              :is-invalid="!!errors.portions"
-              :error-message="errors.portions"
-              :disabled="!isEditable"
-            />
-            <button type="button" @click="updatePortions(1)" :disabled="!isEditable">
-              <BaseIcon viewBox="0 0 65 65" class="icon-dark-45-2" name="plus" />
-            </button>
-          </div>
-        </div>
+        <Portions
+          v-model:portions="portions"
+          :errors="errors"
+          :is-editable="isEditable"
+        />
         <div class="items">
-          <button v-if="isEditable" class="btn-dark" @click.prevent="addIngredient">
+          <button
+            v-if="isEditable"
+            class="btn-dark"
+            @click.prevent="addIngredient"
+          >
             <BaseIcon viewBox="0 0 65 65" class="icon-white-45-3" name="plus" />
             Добавить продукт
           </button>
-          <label v-for="(ingredient, index) in ingredients" :key="ingredient.id" class="ingredient" for="products">
-            <button v-if="isEditable" type="button" @click="removeIngredient(index)">
-              <BaseIcon viewBox="0 0 65 65" class="icon-dark-45-2" name="minus" />
-            </button>
-            <div class="ingredient__container" :class="{ invalid: errors[`products[${index}]`] }">
-              <div class="ingredient__fields">
-                <Select
-                  v-model="ingredient.product_id"
-                  :name="'products[' + index + '][product_id]'"
-                  placeholder="Выберите продукт"
-                  :options="data.products"
-                  :disabled="!isEditable"
-                />
-                <input
-                  v-model.number="ingredient.count"
-                  :name="'products[' + index + '][count]'"
-                  type="number"
-                  placeholder="N"
-                  class="input-form"
-                  :disabled="!isEditable"
-                />
-                <Select
-                  v-model="ingredient.measure_id"
-                  :name="'products[' + index + '][measure_id]'"
-                  placeholder="Ед."
-                  :options="data.measures"
-                  :disabled="!isEditable"
-                />
-              </div>
-              <div v-if="errors[`products[${index}]`]" class="error-message">{{ errors[`products[${index}]`] }}</div>
-            </div>
-          </label>
-          <div v-if="errors.products" class="error-message">{{ errors.products }}</div>
+          <Ingredient
+            v-for="(ingredient, index) in ingredients"
+            :key="ingredient.id"
+            :ingredient="ingredient"
+            :index="index"
+            :data="data"
+            :errors="errors"
+            :is-editable="isEditable"
+            @remove="removeIngredient"
+          />
+          <div v-if="errors.products" class="error-message">
+            {{ errors.products }}
+          </div>
         </div>
       </div>
       <label for="steps" class="steps">
@@ -420,10 +438,22 @@ const submitForm = async (event) => {
           <BaseIcon viewBox="0 0 65 65" class="icon-white-45-3" name="plus" />
           Добавить шаг
         </button>
-        <section v-for="(step, index) in steps" :key="step.id || index" class="step">
+        <section
+          v-for="(step, index) in steps"
+          :key="step.id || index"
+          class="step"
+        >
           <div class="step-actions">
-            <button v-if="isEditable" class="btn-light btn-icon btn-small" @click.prevent="removeStep(index)">
-              <BaseIcon viewBox="0 0 29 29" class="icon-white-30-2" name="close" />
+            <button
+              v-if="isEditable"
+              class="btn-light btn-icon btn-small"
+              @click.prevent="removeStep(index)"
+            >
+              <BaseIcon
+                viewBox="0 0 29 29"
+                class="icon-white-30-2"
+                name="close"
+              />
             </button>
           </div>
           <div class="photo-upload-wrapper">
@@ -438,14 +468,21 @@ const submitForm = async (event) => {
               <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-1" name="img" />
               Загрузить фото
             </label>
-            <div v-if="errors[`step_photos_${index}`]" class="photo-error">{{ errors[`step_photos_${index}`] }}</div>
+            <div v-if="errors[`step_photos_${index}`]" class="photo-error">
+              {{ errors[`step_photos_${index}`] }}
+            </div>
           </div>
           <div v-if="step.previewUrl" class="preview">
             <img :src="step.previewUrl" alt="Превью шага" />
           </div>
           <div class="step__info">
             <div class="input-title-wrapper">
-              <input type="text" class="input-title" :value="`Шаг ${index + 1}`" readonly />
+              <input
+                type="text"
+                class="input-title"
+                :value="`Шаг ${index + 1}`"
+                readonly
+              />
             </div>
             <div class="input-description-wrapper">
               <textarea
@@ -458,7 +495,10 @@ const submitForm = async (event) => {
                 :class="{ invalid: errors[`steps[${index}][description]`] }"
                 :disabled="!isEditable"
               ></textarea>
-              <div v-if="errors[`steps[${index}][description]`]" class="error-message">
+              <div
+                v-if="errors[`steps[${index}][description]`]"
+                class="error-message"
+              >
                 {{ errors[`steps[${index}][description]`] }}
               </div>
             </div>
@@ -468,14 +508,239 @@ const submitForm = async (event) => {
       </label>
     </div>
     <div class="btn-group end">
-      <input v-if="isEditable" class="btn-dark" type="submit" value="Сохранить изменения" />
-      <button v-else class="btn-dark" @click.prevent="router.push(`/recipe/${recipeId}`)">Вернуться к рецепту</button>
+      <input
+        v-if="isEditable"
+        class="btn-dark"
+        type="submit"
+        value="Сохранить изменения"
+      />
+      <button
+        v-else
+        class="btn-dark"
+        @click.prevent="router.push(`/recipe/${recipeId}`)"
+      >
+        Вернуться к рецепту
+      </button>
     </div>
   </form>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @use "../../assets/styles/variables" as *;
+@use "../../assets/styles/form" as *;
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem; // 32px
+
+  .input-title {
+    width: 100%;
+    font-size: clamp(1.5rem, 5vw, 2rem); // 24-32px
+    font-weight: 600;
+    border: none;
+    padding: 0.75rem 0; // 12px
+    border-radius: 0;
+    &.invalid {
+      border-bottom: 2px solid $error;
+    }
+  }
+
+  .input-title-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem; // 4px
+  }
+
+  .input-description {
+    width: 100%;
+    font-size: clamp(1rem, 3vw, 1.25rem); // 16-20px
+    font-weight: 400;
+    border: none;
+    resize: none;
+    overflow: hidden;
+    line-height: 150%;
+    padding: 0.75rem 0; // 12px
+    border-radius: 0;
+    &::placeholder {
+      font-weight: 300;
+    }
+    &.invalid {
+      border-bottom: 2px solid $error;
+    }
+  }
+
+  .input-description-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem; // 4px
+  }
+
+  .label-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; // 16px
+    width: 100%;
+
+    @media (min-width: 768px) {
+      flex-direction: row;
+      gap: 1.875rem; // 30px
+    }
+  }
+
+  .preview {
+    flex-shrink: 0;
+    width: 100%;
+    height: auto;
+    max-height: 31.25rem; // 500px
+    img {
+      box-shadow: $shadow;
+      object-fit: cover;
+      width: 100%;
+      height: 100%;
+      border-radius: $border;
+    }
+  }
+
+  .cooking {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem; // 32px
+    width: 100%;
+
+    @media (min-width: 992px) {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.875rem; // 30px
+    }
+  }
+
+  .general-error {
+    font-size: 1rem; // 16px
+    color: $error;
+    text-align: center;
+    padding: 0.625rem; // 10px
+    background: rgba($error, 0.1);
+    border-radius: $border;
+
+    @media (min-width: 768px) {
+      font-size: 1.125rem; // 18px
+    }
+  }
+
+  .photo-upload-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem; // 2px
+    width: 100%;
+  }
+
+  .step-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.625rem; // 10px
+  }
+
+  .btn-dark.full-width {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+.marks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9375rem; // 15px
+  font-weight: 400;
+  width: 100%;
+}
+
+.ingredients {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1.25rem; // 20px
+  width: 100%;
+  height: auto;
+
+  @media (min-width: 992px) {
+    position: sticky;
+    top: 6.25rem; // 100px
+    gap: 1.875rem; // 30px
+  }
+
+  .items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; // 16px
+    width: 100%;
+
+    @media (min-width: 768px) {
+      gap: 1.25rem; // 20px
+    }
+
+    .btn-dark {
+      justify-content: center;
+      padding: 0.3125rem; // 5px
+    }
+  }
+}
+
+.error-message {
+  font-size: 0.875rem; // 14px
+  color: $error;
+  margin-top: 0.25rem; // 4px
+
+  @media (min-width: 768px) {
+    font-size: 1rem; // 16px
+  }
+}
+
+.photo-error {
+  font-size: 0.875rem; // 14px
+  color: $error;
+  margin-top: 0.125rem; // 2px
+
+  @media (min-width: 768px) {
+    font-size: 1rem; // 16px
+  }
+}
+
+// Дополнительные адаптивные стили
+.btn-group {
+  &.start,
+  &.end {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; // 16px
+  }
+}
+
+.step {
+  margin-bottom: 1.5rem; // 24px
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Оптимизация для очень маленьких экранов
+@media (max-width: 480px) {
+  .create-form {
+    gap: 1.5rem; // 24px
+  }
+
+  .ingredients {
+    gap: 1rem; // 16px
+  }
+
+  .step {
+    margin-bottom: 1rem; // 16px
+  }
+}
 
 .create-form {
   display: flex;
@@ -489,7 +754,9 @@ const submitForm = async (event) => {
     border: none;
     padding: 15px 0;
     border-radius: 0;
-    &.invalid { border-bottom: 2px solid $error; }
+    &.invalid {
+      border-bottom: 2px solid $error;
+    }
   }
 
   .input-title-wrapper {
@@ -509,8 +776,12 @@ const submitForm = async (event) => {
     line-height: 150%;
     padding: 15px 0;
     border-radius: 0;
-    &::placeholder { font-weight: 300; }
-    &.invalid { border-bottom: 2px solid $error; }
+    &::placeholder {
+      font-weight: 300;
+    }
+    &.invalid {
+      border-bottom: 2px solid $error;
+    }
   }
 
   .input-description-wrapper {
@@ -587,94 +858,23 @@ const submitForm = async (event) => {
 .ingredients {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1.875rem; // 30px
   width: 100%;
+  height: auto;
   position: sticky;
   top: 6.25rem;
-
-  .portions-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 400;
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .portions {
-    display: flex;
-    align-items: center;
-    border: 1px solid $text-info;
-    border-radius: $border;
-    font-size: 24px;
-
-    input {
-      width: 70px;
-      text-align: center;
-      border: none;
-      background: transparent;
-    }
-  }
 
   .items {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 1.25rem; // 20px
     width: 100%;
 
-    .btn-dark { justify-content: center; padding: 5px; }
-
-    .ingredient {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      width: 100%;
-
-      .ingredient__container {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        width: 100%;
-        border-bottom: 1px solid $text-info-light;
-        padding: 10px 0;
-
-        &.invalid {
-          border-bottom: 2px solid $error;
-        }
-
-        .ingredient__fields {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          width: 100%;
-
-          .input-form {
-            padding: 15px 20px;
-            font-size: 20px;
-            font-weight: 400;
-            border: none;
-            border-bottom: 1px solid $text-info-light;
-            width: 60px;
-            flex-shrink: 0;
-            &:disabled {
-              background: $background;
-              cursor: not-allowed;
-            }
-          }
-
-          .custom-select { padding-right: 30px; }
-
-          .select-arrow {
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-          }
-
-          > *:first-child { flex-grow: 1; }
-          > *:nth-child(2) { width: 60px; flex-shrink: 0; }
-          > *:last-child { width: 90px; flex-shrink: 0; }
-        }
-      }
+    .btn-dark {
+      justify-content: center;
+      padding: 0.3125rem; // 5px
     }
   }
 }
@@ -689,5 +889,45 @@ const submitForm = async (event) => {
   font-size: 16px;
   color: $error;
   margin-top: 2px;
+}
+
+@media (max-width: 1200px) {
+  .cooking {
+    grid-template-columns: 1fr;
+    gap: 1.25rem; // 20px
+  }
+
+  .ingredients {
+    gap: 1.25rem; // 20px
+    position: static;
+
+    .items {
+      gap: 1rem; // 16px
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .cooking {
+    gap: 1rem; // 16px
+  }
+
+  .ingredients {
+    gap: 1rem; // 16px
+
+    .items {
+      gap: 0.75rem; // 12px
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .cooking {
+    gap: 0.75rem; // 12px
+  }
+
+  .ingredients {
+    gap: 0.75rem; // 12px
+  }
 }
 </style>

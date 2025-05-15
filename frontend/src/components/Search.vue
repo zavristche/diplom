@@ -12,9 +12,7 @@ const searchQuery = ref('');
 const handleSearch = () => {
   if (searchQuery.value.trim()) {
     recipeStore.searchRecipes({ title: searchQuery.value.trim() })
-      .then(() => {
-        router.push(`/search/recipe?title=${encodeURIComponent(searchQuery.value.trim())}`);
-      })
+      .then(() => router.push(`/search/recipe?title=${encodeURIComponent(searchQuery.value.trim())}`))
       .catch(console.error);
   }
 };
@@ -31,9 +29,7 @@ const handleSearch = () => {
         @keyup.enter="handleSearch"
       />
     </div>
-    <button class="btn-search" @click="handleSearch">
-      Найти
-    </button>
+    <button class="btn-search" @click="handleSearch">Найти</button>
   </div>
 </template>
 
@@ -46,16 +42,15 @@ const handleSearch = () => {
   width: 100%;
   height: 2.5rem;
   border-radius: $border;
-  overflow: hidden;
   background: $background;
-  
+  overflow: hidden;
+
   .search-input {
     flex: 1;
     display: flex;
     align-items: center;
     padding: 0 0.75rem;
-    height: 100%;
-    
+
     input {
       flex: 1;
       height: 100%;
@@ -64,25 +59,27 @@ const handleSearch = () => {
       background: transparent;
       padding-left: 0.5rem;
       font-size: 0.875rem;
-      
-      &::placeholder {
-        color: $text-info-light;
-      }
+
+      &::placeholder { color: $text-info-light; }
     }
   }
-  
+
   .btn-search {
     height: 100%;
-    padding: 0 1rem;
+    padding: 0 0.75rem;
     background: $accent-color-1;
     color: $dark-text;
     border: none;
     font-weight: 400;
     cursor: pointer;
     transition: background 0.2s;
-    
-    &:hover {
-      background: darken($accent-color-1, 5%);
+    white-space: nowrap;
+
+    &:hover { background: darken($accent-color-1, 5%); }
+
+    @media (max-width: 768px) {
+      padding: 0 0.5rem;
+      font-size: 0.75rem;
     }
   }
 }

@@ -10,6 +10,7 @@ import Comments from "../../components/Comments.vue";
 import ReactionButton from "../../components/ReactionButton.vue";
 import DeleteButton from "../../components/DeleteButton.vue";
 import Mark from "../../components/Mark.vue";
+import Step from "../../components/Step.vue";
 
 const route = useRoute();
 const recipeStore = useRecipeStore();
@@ -192,15 +193,13 @@ const increasePortions = () => {
     </div>
     <div class="steps">
       <h2>Шаги приготовления</h2>
-      <section v-for="(step, index) in recipe.steps" :key="index" class="step">
-        <div class="preview">
-          <img :src="step.photo" alt="" />
-        </div>
-        <div class="step__info">
-          <h3>{{ step.title }}</h3>
-          <p>{{ step.description }}</p>
-        </div>
-      </section>
+      <Step
+        v-for="(step, index) in recipe.steps"
+        :key="index"
+        :step="step"
+        :index="index"
+        mode="view"
+      />
     </div>
   </div>
   <div v-if="recipe" class="btn-group end">
@@ -216,15 +215,14 @@ const increasePortions = () => {
   <div v-else>Рецепт не найден</div>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @use "../../assets/styles/variables" as *;
-@use "../../assets/styles/style";
+@use "../../assets/styles/form" as *;
 
-// Восстановлены оригинальные стили
 .preview {
   display: flex;
   width: 100%;
-  height: 500px;
+  height: 31.25rem; // 500px
   img {
     box-shadow: $shadow;
     object-fit: cover;
@@ -237,12 +235,12 @@ const increasePortions = () => {
 .cards-info {
   display: flex;
   flex-direction: row;
-  gap: 40px;
+  gap: 2.5rem; // 40px
 }
 
 .card-info {
   display: flex;
-  gap: 10px;
+  gap: 0.625rem; // 10px
   flex-direction: column;
 
   .card-info__title {
@@ -251,7 +249,7 @@ const increasePortions = () => {
 
   .card-info__var {
     display: flex;
-    gap: 10px;
+    gap: 0.625rem; // 10px
     align-items: center;
     flex-direction: row;
   }
@@ -266,13 +264,13 @@ const increasePortions = () => {
   display: flex;
   align-items: center;
   flex-direction: row;
-  gap: 10px;
+  gap: 0.625rem; // 10px
   font-weight: 400;
 
   img {
     object-fit: cover;
-    width: 40px;
-    height: 40px;
+    width: 2.5rem; // 40px
+    height: 2.5rem; // 40px
     border-radius: 100%;
   }
 }
@@ -280,7 +278,7 @@ const increasePortions = () => {
 .content-info {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 1.25rem; // 20px
 }
 
 .description {
@@ -290,7 +288,7 @@ const increasePortions = () => {
 .cooking {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  gap: 1.875rem; // 30px
   width: 100%;
   align-items: start;
 }
@@ -298,46 +296,23 @@ const increasePortions = () => {
 .ingredients {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  gap: 30px;
+  gap: 1.875rem; // 30px
   width: 100%;
-
-  .portions-container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    font-weight: 400;
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .portions {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    border: 1px solid $text-info;
-    border-radius: $border;
-    font-size: 24px;
-    font-weight: 400;
-
-    input {
-      width: 70px;
-      text-align: center;
-    }
-  }
+  position: sticky;
+  top: 6.25rem; // 100px
 
   .items {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 1.25rem; // 20px
     width: 100%;
 
     .ingredient {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 0.9375rem; // 15px
       width: 100%;
       cursor: pointer;
 
@@ -354,7 +329,7 @@ const increasePortions = () => {
             align-items: center;
             justify-content: center;
             color: $light-text;
-            font-size: 14px;
+            font-size: 0.875rem; // 14px
             font-weight: bold;
           }
         }
@@ -362,8 +337,8 @@ const increasePortions = () => {
 
       .ingredient__checkbox {
         flex-shrink: 0;
-        width: 30px;
-        height: 30px;
+        width: 1.875rem; // 30px
+        height: 1.875rem; // 30px
         border: 1px solid $text-info-light;
         border-radius: 100%;
         display: flex;
@@ -378,9 +353,189 @@ const increasePortions = () => {
         justify-content: space-between;
         width: 100%;
         border-bottom: 1px solid $text-info-light;
-        padding: 10px 0;
+        padding: 0.625rem 0; // 10px
       }
     }
+  }
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.875rem; // 30px
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .preview {
+    height: 25rem; // 400px
+  }
+
+  .cards-info {
+    gap: 1.875rem; // 30px
+  }
+
+  .card-info {
+    gap: 0.5rem; // 8px
+  }
+
+  .author {
+    gap: 0.5rem; // 8px
+
+    img {
+      width: 2rem; // 32px
+      height: 2rem; // 32px
+    }
+  }
+
+  .content-info {
+    gap: 1rem; // 16px
+  }
+
+  .cooking {
+    grid-template-columns: 1fr;
+    gap: 1.25rem; // 20px
+  }
+
+  .ingredients {
+    gap: 1.25rem; // 20px
+    position: static;
+
+
+    .items {
+      gap: 1rem; // 16px
+
+      .ingredient {
+        gap: 0.625rem; // 10px
+
+        .ingredient__checkbox {
+          width: 1.5rem; // 24px
+          height: 1.5rem; // 24px
+        }
+
+        .ingredient__container {
+          padding: 0.5rem 0; // 8px
+        }
+      }
+    }
+  }
+
+  .steps {
+    gap: 1.25rem; // 20px
+  }
+}
+
+@media (max-width: 768px) {
+  .preview {
+    height: 18.75rem; // 300px
+  }
+
+  .cards-info {
+    gap: 1.25rem; // 20px
+  }
+
+  .card-info {
+    gap: 0.375rem; // 6px
+  }
+
+  .author {
+    gap: 0.375rem; // 6px
+
+    img {
+      width: 1.75rem; // 28px
+      height: 1.75rem; // 28px
+    }
+  }
+
+  .content-info {
+    gap: 0.75rem; // 12px
+  }
+
+  .cooking {
+    gap: 1rem; // 16px
+  }
+
+  .ingredients {
+    gap: 1rem; // 16px
+
+
+    .items {
+      gap: 0.75rem; // 12px
+
+      .ingredient {
+        gap: 0.5rem; // 8px
+
+        .ingredient__checkbox {
+          width: 1.25rem; // 20px
+          height: 1.25rem; // 20px
+        }
+
+        .ingredient__container {
+          padding: 0.375rem 0; // 6px
+        }
+      }
+    }
+  }
+
+  .steps {
+    gap: 1rem; // 16px
+  }
+}
+
+@media (max-width: 480px) {
+  .preview {
+    height: 12.5rem; // 200px
+  }
+
+  .cards-info {
+    gap: 0.75rem; // 12px
+    flex-direction: column;
+  }
+
+  .card-info {
+    gap: 0.25rem; // 4px
+  }
+
+  .author {
+    gap: 0.25rem; // 4px
+
+    img {
+      width: 1.5rem; // 24px
+      height: 1.5rem; // 24px
+    }
+  }
+
+  .content-info {
+    gap: 0.5rem; // 8px
+  }
+
+  .cooking {
+    gap: 0.75rem; // 12px
+  }
+
+  .ingredients {
+    gap: 0.75rem; // 12px
+
+    .items {
+      gap: 0.5rem; // 8px
+
+      .ingredient {
+        gap: 0.375rem; // 6px
+
+        .ingredient__checkbox {
+          width: 1rem; // 16px
+          height: 1rem; // 16px
+        }
+
+        .ingredient__container {
+          padding: 0.25rem 0; // 4px
+        }
+      }
+    }
+  }
+
+  .steps {
+    gap: 0.75rem; // 12px
   }
 }
 </style>

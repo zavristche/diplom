@@ -362,7 +362,7 @@ watch(
           @vue:mounted="() => console.log('Search.vue: User card mounted:', { id: user.id, login: user.login, status: user.status })"
         />
         <p v-if="recipes.length === 0 && activeTab === 0" class="no-results">
-          {{ isQueryEmpty ? "Результаты отсутствуют" : "Рецепт не найдены" }}
+          {{ isQueryEmpty ? "Результаты отсутствуют" : "Рецепты не найдены" }}
         </p>
         <p v-if="collections.length === 0 && activeTab === 1" class="no-results">
           {{ isQueryEmpty ? "Результаты отсутствуют" : "Коллекции не найдены" }}
@@ -375,41 +375,15 @@ watch(
   </div>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @use "../assets/styles/variables" as *;
-@use "../assets/styles/style" as *;
+@use "../assets/styles/form" as *;
 
-.skeleton-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
-}
-
-.skeleton-card {
-  height: 280px;
-  background: #eee;
-  border-radius: 8px;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-}
-
-.create-form {
+.search-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 50px;
+  gap: 3.125rem; // 50px
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  align-items: flex-start;
-
-  .btn-group {
-    width: 100%;
-  }
 }
 
 .tab-content {
@@ -422,39 +396,62 @@ watch(
   &.active {
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 1.875rem; // 30px
   }
-}
-
-.label-group {
-  display: flex;
-  flex-direction: row;
-  gap: 30px;
-  width: 100%;
-  justify-content: space-between;
-}
-
-.label {
-  display: flex;
-  flex-direction: column;
-  font-weight: 400;
-  gap: 10px;
-  width: 100%;
-}
-
-.search-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 50px;
-  width: 100%;
 }
 
 .no-results {
   grid-column: 1 / -1;
   text-align: center;
   color: $text-info;
-  font-size: 20px;
+  font-size: 1.25rem; // 20px
   font-family: Rubik, sans-serif;
-  padding: 20px;
+  padding: 1.25rem; // 20px
+}
+
+// Адаптивность
+@media (max-width: 1200px) {
+  .search-wrapper {
+    gap: 2.5rem; // 40px
+  }
+
+  .tab-pane.active {
+    gap: 1.25rem; // 20px
+  }
+
+  .no-results {
+    font-size: 1.125rem; // 18px
+    padding: 1rem; // 16px
+  }
+}
+
+@media (max-width: 768px) {
+  .search-wrapper {
+    gap: 1.875rem; // 30px
+  }
+
+  .tab-pane.active {
+    gap: 1rem; // 16px
+  }
+
+  .no-results {
+    font-size: 1rem; // 16px
+    padding: 0.75rem; // 12px
+  }
+}
+
+@media (max-width: 480px) {
+  .search-wrapper {
+    gap: 1.25rem; // 20px
+  }
+
+  .tab-pane.active {
+    gap: 0.75rem; // 12px
+  }
+
+  .no-results {
+    font-size: 0.875rem; // 14px
+    padding: 0.5rem; // 8px
+  }
 }
 </style>

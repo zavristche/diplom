@@ -1,6 +1,7 @@
 @use "_variables.scss" as *;
 @use "normalize.scss";
 @use "cards.scss";
+@use "form.scss";
 
 #app {
   display: flex;

@@ -277,121 +277,43 @@ const submitForm = async (event) => {
   </form>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @use "../../assets/styles/variables" as *;
+@use "../../assets/styles/form" as *;
 
 .marks {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 0.9375rem; // 15px
   font-weight: 400;
   width: 100%;
-}
-
-.create-form {
-  display: flex;
-  flex-direction: column;
-  gap: 50px;
-
-  .input-title {
-    width: 100%;
-    font-size: 32px;
-    font-weight: 600;
-    border: none;
-    padding: 15px 0;
-    border-radius: 0;
-
-    &.invalid {
-      border-bottom: 2px solid $error;
-    }
-  }
-
-  .input-title-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .input-description {
-    display: flex;
-    width: 100%;
-    font-size: 20px;
-    font-weight: 400;
-    border: none;
-    resize: none;
-    overflow: hidden;
-    line-height: 150%;
-    padding: 15px 0;
-    border-radius: 0;
-
-    &::placeholder {
-      font-weight: 300;
-    }
-
-    &.invalid {
-      border-bottom: 2px solid $error;
-    }
-  }
-
-  .input-description-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .label-group {
-    display: flex;
-    flex-direction: row;
-    gap: 30px;
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .label {
-    display: flex;
-    flex-direction: column;
-    font-weight: 400;
-    gap: 10px;
-    width: 100%;
-  }
-}
-
-.preview {
-  display: flex;
-  flex-shrink: 0;
-  width: 100%;
-  height: 500px;
-  img {
-    box-shadow: $shadow;
-    object-fit: cover;
-    width: 100%;
-    height: 100%;
-    border-radius: $border;
-  }
 }
 
 .cooking {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  gap: 1.875rem; // 30px
   width: 100%;
   align-items: start;
 }
 
-.general-error {
-  font-size: 18px;
-  color: $error;
-  text-align: center;
-  padding: 10px;
-  background-color: rgba($error, 0.1);
-  border-radius: $border;
+// Адаптивность
+@media (max-width: 1200px) {
+  .cooking {
+    grid-template-columns: 1fr;
+    gap: 1.25rem; // 20px
+  }
 }
 
-.error-message {
-  font-size: 16px;
-  color: $error;
-  margin-top: 4px;
+@media (max-width: 768px) {
+  .cooking {
+    gap: 1rem; // 16px
+  }
+}
+
+@media (max-width: 480px) {
+  .cooking {
+    gap: 0.75rem; // 12px
+  }
 }
 </style>

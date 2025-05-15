@@ -22,19 +22,14 @@ const handleLogout = async () => {
   router.push("/");
 };
 
-const toggleMenu = () => {
-  isMenuOpen.value = !isMenuOpen.value;
-};
+const toggleMenu = () => (isMenuOpen.value = !isMenuOpen.value);
 
 const handleClickOutside = (event) => {
-  const isLoginModal = event.target.closest(".login-modal");
-  const isRegisterModal = event.target.closest(".register-modal");
-  
-  if (isMenuOpen.value && 
-      !event.target.closest(".sidebar") && 
-      !event.target.closest(".burger-btn") &&
-      !isLoginModal &&
-      !isRegisterModal) {
+  if (
+    isMenuOpen.value &&
+    !event.target.closest(".sidebar") &&
+    !event.target.closest(".burger-btn")
+  ) {
     isMenuOpen.value = false;
   }
 };
@@ -46,118 +41,78 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 <template>
   <Register :isOpen="isRegisterOpen" @close="isRegisterOpen = false" class="register-modal" />
   <Login :isOpen="isLoginOpen" @close="isLoginOpen = false" class="login-modal" />
-  
+
   <header>
     <div class="header-grid">
-      <!-- Лого и бургер -->
       <div class="header-left">
         <button class="btn-icon burger-btn" @click="toggleMenu" aria-label="Меню">
-          <BaseIcon viewBox="0 0 65 65" class="icon-white-55-2" name="burger" />
+          <BaseIcon viewBox="0 0 65 65" class="icon-white-65-2" name="burger" />
         </button>
         <router-link :to="isAdminRoute() ? '/admin' : '/'" class="logo-link">
           <BaseIcon class="logo" name="logo" />
         </router-link>
       </div>
-      
-      <!-- Основные ссылки -->
+
       <nav class="main-nav">
         <template v-if="isAdminRoute()">
-          <router-link to="/" class="nav-link">
-            <div class="label-item">На сайт</div>
-          </router-link>
+          <router-link to="/" class="nav-link">На сайт</router-link>
         </template>
         <template v-else>
-          <router-link to="/search/recipe" class="nav-link">
-            <div class="label-item">Рецепты</div>
-          </router-link>
-          <router-link to="/search/collection" class="nav-link">
-            <div class="label-item">Коллекции</div>
-          </router-link>
-          <router-link to="/search/user" class="nav-link">
-            <div class="label-item">Пользователи</div>
-          </router-link>
+          <router-link to="/search/recipe" class="nav-link">Рецепты</router-link>
+          <router-link to="/search/collection" class="nav-link">Коллекции</router-link>
+          <router-link to="/search/user" class="nav-link">Пользователи</router-link>
         </template>
       </nav>
-      
-      <!-- Поиск и профиль -->
+
       <div class="header-right">
         <Search v-if="!isAdminRoute()" class="search-bar" />
-        
         <nav class="user-nav">
           <template v-if="!authStore.isAuthenticated">
-            <button class="label-item auth-btn" @click="isRegisterOpen = true">Регистрация</button>
-            <button class="label-item auth-btn" @click="isLoginOpen = true">Вход</button>
+            <button @click="isRegisterOpen = true" class="auth-btn">Регистрация</button>
+            <button @click="isLoginOpen = true" class="auth-btn">Вход</button>
           </template>
           <template v-else>
-            <template v-if="authStore.isAdmin">
-              <router-link to="/admin" class="nav-link admin-link">
-                <div class="label-item">Админ</div>
-              </router-link>
-            </template>
-            <template v-else>
-              <router-link :to="`/profile/${authStore.user?.id}`" class="avatar-link">
-                <img :src="authStore.avatar" alt="Аватар" class="user-avatar" v-if="authStore.avatar" />
-                <BaseIcon v-else name="user" class="default-avatar" />
-              </router-link>
-            </template>
-            <button class="btn-icon logout-btn" @click="handleLogout" aria-label="Выйти">
+            <router-link v-if="authStore.isAdmin" to="/admin" class="nav-link admin-link">Админ</router-link>
+            <router-link v-else :to="`/profile/${authStore.user?.id}`" class="avatar-link">
+              <img v-if="authStore.avatar" :src="authStore.avatar" alt="Аватар" class="user-avatar" />
+              <BaseIcon v-else name="user" class="default-avatar" />
+            </router-link>
+            <button @click="handleLogout" class="btn-icon logout-btn" aria-label="Выйти">
               <BaseIcon viewBox="0 0 65 65" class="icon-white-55-2" name="logout" />
             </button>
           </template>
         </nav>
       </div>
     </div>
-    
-    <!-- Мобильное меню -->
-    <div class="sidebar-overlay" :class="{ 'open': isMenuOpen }" @click="toggleMenu">
-      <div class="sidebar" :class="{ 'open': isMenuOpen }" @click.stop>
+
+    <div class="sidebar-overlay" :class="{ open: isMenuOpen }" @click="toggleMenu">
+      <div class="sidebar" :class="{ open: isMenuOpen }" @click.stop>
         <div class="sidebar-header">
-          <router-link :to="isAdminRoute() ? '/admin' : '/'" class="logo-link" @click="toggleMenu">
-            <BaseIcon class="logo" name="logo" />
-            <h1>Рецептище</h1>
-          </router-link>
-          <button class="btn-icon close-btn" @click="toggleMenu" aria-label="Закрыть">
-            <BaseIcon viewBox="0 0 24 24" class="icon-dark-24-2" name="close" />
+          <button class="btn-icon burger-btn" @click="toggleMenu" aria-label="Закрыть">
+            <BaseIcon viewBox="0 0 65 65" class="icon-dark-75-2" name="close" />
           </button>
+          <router-link :to="isAdminRoute() ? '/admin' : '/'" class="logo-link" @click="toggleMenu">
+            <BaseIcon class="logo" name="logo" /><h1>Рецептище</h1>
+          </router-link>
         </div>
-        
         <div class="sidebar-content">
           <nav class="sidebar-nav">
-            <template v-if="isAdminRoute()">
-              <router-link to="/" class="nav-link" @click="toggleMenu">
-                <div class="label-item">На сайт</div>
-              </router-link>
-            </template>
-            <template v-else>
-              <router-link to="/search/recipe" class="nav-link" @click="toggleMenu">
-                <div class="label-item">Рецепты</div>
-              </router-link>
-              <router-link to="/search/collection" class="nav-link" @click="toggleMenu">
-                <div class="label-item">Коллекции</div>
-              </router-link>
-              <router-link to="/search/user" class="nav-link" @click="toggleMenu">
-                <div class="label-item">Пользователи</div>
-              </router-link>
-            </template>
+            <router-link v-if="isAdminRoute()" to="/" @click="toggleMenu" class="nav-link">На сайт</router-link>
+            <router-link v-else to="/search/recipe" @click="toggleMenu" class="nav-link">Рецепты</router-link>
+            <router-link v-else to="/search/collection" @click="toggleMenu" class="nav-link">Коллекции</router-link>
+            <router-link v-else to="/search/user" @click="toggleMenu" class="nav-link">Пользователи</router-link>
           </nav>
-          
           <div class="sidebar-auth">
-            <template v-if="!authStore.isAuthenticated">
-              <button class="btn-dark" @click="isRegisterOpen = true; toggleMenu()">Регистрация</button>
-              <button class="btn-dark" @click="isLoginOpen = true; toggleMenu()">Вход</button>
-            </template>
-            <template v-else>
-              <router-link :to="`/profile/${authStore.user?.id}`" class="nav-link user-profile-link" @click="toggleMenu">
-                <div class="user-profile">
-                  <img :src="authStore.avatar" alt="Аватар" class="sidebar-avatar" v-if="authStore.avatar" />
-                  <BaseIcon v-else name="user" class="sidebar-default-avatar" />
-                  <span class="label-item">Мой профиль</span>
-                </div>
-              </router-link>
-              <button class="btn-dark logout-btn" @click="handleLogout; toggleMenu()">
-                Выйти
-              </button>
-            </template>
+            <button v-if="!authStore.isAuthenticated" @click="isRegisterOpen = true; toggleMenu()" class="btn-dark">Регистрация</button>
+            <button v-if="!authStore.isAuthenticated" @click="isLoginOpen = true; toggleMenu()" class="btn-dark">Вход</button>
+            <router-link v-if="authStore.isAuthenticated" :to="`/profile/${authStore.user?.id}`" @click="toggleMenu" class="nav-link user-profile-link">
+              <div class="user-profile">
+                <img v-if="authStore.avatar" :src="authStore.avatar" alt="Аватар" class="sidebar-avatar" />
+                <BaseIcon v-else name="user" class="sidebar-default-avatar" />
+                <span>Мой профиль</span>
+              </div>
+            </router-link>
+            <button v-if="authStore.isAuthenticated" @click="handleLogout; toggleMenu()" class="btn-dark logout-btn">Выйти</button>
           </div>
         </div>
       </div>
@@ -177,152 +132,175 @@ header {
   background-color: $background-dark;
   color: $light-text;
   box-shadow: $shadow;
-  z-index: 1000;
-  
+  z-index: 100;
+
   .header-grid {
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
-    width: 100%;
     max-width: 75rem;
-    height: 100%;
     margin: 0 auto;
     padding: 0 1.5rem;
+    height: 100%;
     gap: 1rem;
-    
+
     @media (max-width: 1200px) {
       padding: 0 1rem;
       gap: 0.5rem;
     }
-    
+
     @media (max-width: 768px) {
       padding: 0 0.75rem;
     }
   }
-  
+
   .header-left {
     display: flex;
     align-items: center;
     gap: 1rem;
-    
-    .logo-link {
-      display: flex;
-      align-items: center;
-    }
-    
+
     .burger-btn {
       display: none;
-      
+
       @media (max-width: 992px) {
         display: flex;
       }
     }
+
+    .logo-link {
+      display: flex;
+      align-items: center;
+    }
   }
-  
+
   .main-nav {
     display: flex;
     align-items: center;
     gap: 2rem;
     justify-self: start;
-    
+
+    .nav-link {
+      padding: 1rem 0;
+      color: $light-text;
+      text-decoration: none;
+      font-weight: 500;
+      white-space: nowrap;
+
+      &:hover {
+        color: $accent-color-1;
+      }
+    }
+
     @media (max-width: 992px) {
       display: none;
     }
-    
-    .nav-link {
-      text-decoration: none;
-      
-      .label-item {
-        color: $light-text;
-        font-size: 1rem;
-        font-weight: 500;
-        transition: color 0.2s;
-        white-space: nowrap;
-        
-        &:hover {
-          color: $accent-color-1;
-        }
-      }
-    }
   }
-  
+
   .header-right {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: clamp(0.5rem, 2vw, 1.5rem);
     justify-self: end;
-    
-    @media (max-width: 992px) {
+
+    @media (max-width: 1200px) {
       gap: 0.75rem;
     }
-    
-    .search-bar {
-      width: 20rem;
-      
-      @media (max-width: 1200px) {
-        width: 15rem;
-      }
-      
-      @media (max-width: 992px) {
+
+    @media (max-width: 992px) {
+      gap: 0.5rem;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    @media (max-width: 768px) {
+      gap: 0.25rem;
+      .search-bar {
         display: none;
       }
     }
-    
+
+    .search-bar {
+      flex: 1 1 auto; // Растяжение с возможностью сжатия
+      max-width: 20rem;
+
+      @media (max-width: 1200px) {
+        max-width: 15rem;
+      }
+
+      @media (max-width: 992px) {
+        max-width: none; // Убираем ограничение для растяжения
+      }
+    }
+
     .user-nav {
       display: flex;
       align-items: center;
       gap: 1rem;
-      
+      flex-shrink: 0;
+
+      @media (max-width: 992px) {
+        gap: 0.5rem;
+      }
+
+      @media (max-width: 768px) {
+        gap: 0.25rem;
+      }
+
       .auth-btn {
         background: none;
         border: none;
         color: $light-text;
-        font-size: 1rem;
+        font-size: 0.875rem;
         font-weight: 500;
         cursor: pointer;
-        white-space: nowrap;
-        
+        padding: 0 0.5rem;
+
         &:hover {
           color: $accent-color-1;
         }
       }
-      
+
       .admin-link {
-        .label-item {
+        .nav-link {
           color: $light-text;
           font-weight: 500;
         }
       }
-      
+
       .avatar-link {
         display: flex;
         align-items: center;
-        
+
         .user-avatar {
-          width: 2.5rem;
-          height: 2.5rem;
+          width: 2rem;
+          height: 2rem;
           border-radius: 50%;
           object-fit: cover;
-          
+
           @media (max-width: 768px) {
-            width: 2rem;
-            height: 2rem;
+            width: 1.75rem;
+            height: 1.75rem;
           }
         }
-        
+
         .default-avatar {
           width: 2rem;
           height: 2rem;
           fill: $light-text;
+
+          @media (max-width: 768px) {
+            width: 1.75rem;
+            height: 1.75rem;
+          }
         }
       }
-      
+
       .logout-btn {
-        margin-left: 0.5rem;
+        margin-left: 0.25rem;
       }
     }
   }
-  
+
   .sidebar-overlay {
     position: fixed;
     top: 0;
@@ -334,120 +312,77 @@ header {
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
-    
+
+    @media (min-width: 992px) {
+      display: none;
+    }
+
     &.open {
       opacity: 1;
       visibility: visible;
     }
-    
+
     .sidebar {
       position: fixed;
       top: 0;
       left: -100%;
-      width: 85%;
       max-width: 22rem;
-      height: 100vh;
       background: $background;
+      min-height: 100%;
       transition: left 0.3s ease;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
 
-      .logo-link {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        
-        h1 {
-          font-weight: 500;
-          color: $dark-text;
-          margin: 0;
-          font-size: 1.25rem;
-        }
-      }
-      
       &.open {
         left: 0;
       }
-      
+
       .sidebar-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding: 1rem;
+        padding: 0.5rem;
         border-bottom: 1px solid $light;
-        flex-shrink: 0;
-        
-        .close-btn {
-          margin-left: auto;
-        }
       }
-      
+
       .sidebar-content {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
+        padding: 0 1.5rem 1.5rem;
         overflow-y: auto;
       }
-      
+
       .sidebar-nav {
-        padding: 1rem;
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-        flex-grow: 1;
-        
+
         .nav-link {
           text-decoration: none;
-          padding: 0.75rem 0;
           border-bottom: 1px solid $light;
-          
-          .label-item {
-            color: $dark-text;
-            font-weight: 500;
-            font-size: 1.125rem;
-          }
+          color: $dark-text;
+          font-weight: 500;
+          padding: 0.5rem 0;
         }
       }
-      
+
       .sidebar-auth {
-        padding: 1rem;
+        margin-top: auto;
+        padding-top: 1rem;
         border-top: 1px solid $light;
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
-        flex-shrink: 0;
-        
-        button {
-          width: 100%;
-          padding: 0.75rem;
-          border-radius: $border;
-          font-weight: 500;
-          text-align: center;
-          background: $background-dark;
-          color: $light-text;
-          border: none;
-          cursor: pointer;
-          transition: background-color 0.2s;
-          
-          &:hover {
-            background-color: lighten($background-dark, 10%);
-          }
-        }
-        
+
         .user-profile {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          margin-bottom: 1rem;
-          
+
           .sidebar-avatar {
             width: 2.5rem;
             height: 2.5rem;
             border-radius: 50%;
             object-fit: cover;
           }
-          
+
           .sidebar-default-avatar {
             width: 2.5rem;
             height: 2.5rem;
@@ -457,12 +392,11 @@ header {
       }
     }
   }
-}
 
-/* Стили для модальных окон */
-.login-modal,
-.register-modal {
-  position: fixed;
-  z-index: 1001; /* Выше чем хедер */
+  .login-modal,
+  .register-modal {
+    position: fixed;
+    z-index: 1001;
+  }
 }
 </style>
