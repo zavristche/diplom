@@ -11,20 +11,19 @@ import ReactionButton from "../../components/ReactionButton.vue";
 import DeleteButton from "../../components/DeleteButton.vue";
 import Mark from "../../components/Mark.vue";
 import Step from "../../components/Step.vue";
+import Portions from "../../components/Portions.vue";
 
 const route = useRoute();
 const recipeStore = useRecipeStore();
 const recipe = computed(() => recipeStore.currentRecipe);
 const authStore = useAuthStore();
 
-// Загружаем рецепт
 recipeStore.fetchRecipeById(route.params.id);
 
 const portions = ref(null);
 const baseIngredients = ref([]);
 const isSaveRecipeOpen = ref(false);
 
-// Проверка, является ли текущий пользователь автором
 const isAuthor = computed(() => {
   return (
     authStore.isAuthenticated &&
@@ -34,12 +33,11 @@ const isAuthor = computed(() => {
   );
 });
 
-// Инициализация данных при загрузке рецепта
 watch(
   recipe,
   (newRecipe) => {
     if (newRecipe) {
-      portions.value = newRecipe.portions;
+      portions.value = newRecipe.portions || 1; // Устанавливаем значение по умолчанию
       baseIngredients.value = newRecipe.products.map((product) => ({
         ...product,
         count: product.count,
@@ -50,7 +48,6 @@ watch(
   { immediate: true }
 );
 
-// Отладка
 watch(
   [() => authStore.userId, recipe],
   () => {
@@ -65,7 +62,7 @@ watch(
 );
 
 const adjustedIngredients = computed(() => {
-  if (!recipe.value) return [];
+  if (!recipe.value || portions.value === null) return [];
   return baseIngredients.value.map((product) => ({
     ...product,
     count:
@@ -79,14 +76,6 @@ const formatCount = (count) => {
   if (count === null) return "";
   const rounded = Number(count.toFixed(1));
   return rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(1);
-};
-
-const decreasePortions = () => {
-  if (portions.value > 1) portions.value--;
-};
-
-const increasePortions = () => {
-  portions.value++;
 };
 </script>
 
@@ -153,24 +142,7 @@ const increasePortions = () => {
   <div v-if="recipe" class="cooking">
     <div class="ingredients">
       <h2>Ингредиенты</h2>
-      <div class="portions-container">
-        <span>Порции</span>
-        <div class="portions">
-          <button type="button" @click="decreasePortions">
-            <BaseIcon viewBox="0 0 65 65" class="icon-dark-45-2" name="minus" />
-          </button>
-          <input
-            class=""
-            id="portions"
-            type="number"
-            min="1"
-            v-model="portions"
-          />
-          <button type="button" @click="increasePortions">
-            <BaseIcon viewBox="0 0 65 65" class="icon-dark-45-2" name="plus" />
-          </button>
-        </div>
-      </div>
+      <Portions v-model:portions="portions" :errors="{}" :is-editable="true" />
       <div class="items">
         <label
           v-for="(product, index) in adjustedIngredients"
@@ -401,7 +373,6 @@ const increasePortions = () => {
     gap: 1.25rem; // 20px
     position: static;
 
-
     .items {
       gap: 1rem; // 16px
 
@@ -457,7 +428,6 @@ const increasePortions = () => {
 
   .ingredients {
     gap: 1rem; // 16px
-
 
     .items {
       gap: 0.75rem; // 12px

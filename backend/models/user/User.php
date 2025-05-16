@@ -128,35 +128,80 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     public function fields()
     {
         $fields = parent::fields();
-    
-        // Удаляем ненужные поля
+
         unset($fields['auth_key']);
         unset($fields['password']);
-    
-        // Основные поля, которые всегда возвращаются
+
         $fields['status'] = fn() => $this->status;
         $fields['private'] = fn() => $this->private;
-        $fields['blocks'] = fn() => $this->getBlocks()->asArray()->all();
-        $fields['_links'] = fn() => $this->getLinks();
-    
+        // $fields['blocks'] = fn() => $this->getBlocks()->asArray()->all();
+
         return $fields;
     }
-    
+
     public function extraFields()
     {
         return [
             'recipes' => function () {
                 return $this->recipes ? array_map(function ($recipe) {
-                    return $recipe->toArray(
-                        array_diff(array_keys($recipe->fields()), ['recipes', 'collections'])
-                    );
+                    // Явно загружаем связанные данные
+                    $recipe->load('user');
+                    
+                    $data = $recipe->toArray([
+                        'id',
+                        'title',
+                        'photo',
+                        'created_at',
+                        'likes',
+                        'saved',
+                    ], ['status', 'user']);
+    
+                    // Гарантируем наличие user с минимальными полями
+                    $data['user'] = [
+                        'id' => $recipe->user->id ?? null,
+                        'login' => $recipe->user->login ?? null,
+                        'avatar' => $recipe->user->avatar ?? null,
+                    ];
+    
+                    return $data;
                 }, $this->recipes) : [];
             },
             'collections' => function () {
                 return $this->collections ? array_map(function ($collection) {
-                    return $collection->toArray(
-                        array_diff(array_keys($collection->fields()), ['recipes', 'collections'])
-                    );
+                    // Явно загружаем связанные данные
+                    $collection->load(['user', 'recipes']);
+                    
+                    $data = $collection->toArray([
+                        'id',
+                        'photo',
+                        'created_at',
+                        'likes',
+                        'title',
+                    ], ['user', 'recipes']);
+    
+                    // Гарантируем наличие user
+                    $data['user'] = [
+                        'id' => $collection->user->id ?? null,
+                        'login' => $collection->user->login ?? null,
+                        'avatar' => $collection->user->avatar ?? null,
+                    ];
+    
+                    // Формируем preview
+                    $preview = [];
+                    if (!empty($collection->recipes)) {
+                        $preview = array_slice(array_map(function ($recipe) {
+                            return $recipe->photo ?? null;
+                        }, $collection->recipes), 0, 3);
+                    }
+                    
+                    while (count($preview) < 3) {
+                        $preview[] = count($preview) === 0 ? ($data['photo'] ?? null) : null;
+                    }
+                    
+                    $data['preview'] = $preview;
+                    unset($data['recipes']);
+    
+                    return $data;
                 }, $this->collections) : [];
             },
         ];
@@ -179,23 +224,23 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
             ->where(['user_id' => $this->id, 'block_status_id' => BlockStatus::getOne('Действует')])
             ->orderBy(['id' => SORT_DESC])
             ->one();
-    
+
         if (!$block) {
             return false;
         }
-    
+
         // Если блокировка временная, проверяем, истекло ли время
         $unblockTime = strtotime($block->created_at) + $block->time_unblock;
-        
+
         if ($block->time_unblock && $unblockTime <= time()) {
             $block->block_status_id = BlockStatus::getOne('Истекла');
             $block->save();
             return false;
         }
-    
+
         return true;
     }
-    
+
 
     //identity
     public function validatePassword($password)
@@ -216,11 +261,11 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     public static function findIdentity($id)
     {
         $user = static::findOne($id);
-    
+
         if ($user && $user->isBlocked()) {
             throw new \yii\web\ForbiddenHttpException('Ваш аккаунт заблокирован');
         }
-    
+
         return $user;
     }
 
@@ -254,7 +299,7 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     {
         return $this->auth_key === $auth_key;
     }
-    
+
     public function getBlocks()
     {
         return $this->hasMany(Block::class, ['user_id' => 'id']);

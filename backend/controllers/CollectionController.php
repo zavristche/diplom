@@ -107,26 +107,52 @@ class CollectionController extends BaseApiController
 
     public function actionSearch()
     {
-        $request = Yii::$app->request;
-        $params = $request->getQueryParams();
-    
+        $params = Yii::$app->request->getQueryParams();
+        
         $searchModel = new CollectionSearch();
         $dataProvider = $searchModel->search($params);
-
+        
         $models = $dataProvider->getModels();
-
+        
         $result = array_map(function ($model) {
-
-            $data = $model->toArray([]);
-    
+            $data = $model->toArray([], [
+                'id',
+                'photo',
+                'created_at',
+                'likes',
+                'user',
+                'recipes',
+            ]);
+            
             if (isset($data['user'])) {
-                unset($data['user']['auth_key'], $data['user']['password']);
+                $data['user'] = [
+                    'id' => $data['user']['id'] ?? null,
+                    'login' => $data['user']['login'] ?? null,
+                    'avatar' => $data['user']['avatar'] ?? null,
+                ];
             }
-    
+            
+            // Формируем preview
+            $preview = [];
+            if (isset($data['recipes']) && count($data['recipes']) > 0) {
+                $preview = array_slice(array_map(function ($recipe) {
+                    return $recipe['photo'] ?? null;
+                }, $data['recipes']), 0, 3);
+            }
+            // Дополняем preview до 3 элементов, используя photo коллекции
+            while (count($preview) < 3) {
+                $preview[] = count($preview) === 0 ? ($data['photo'] ?? null) : null;
+            }
+            $data['preview'] = $preview;
+            unset($data['recipes']);
+            
             return $data;
         }, $models);
-
-        return $result;
+        
+        return [
+            'success' => true,
+            'collections' => $result,
+        ];
     }
 
     private function uploadImage($file)

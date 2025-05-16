@@ -1,7 +1,7 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue';
-import BaseIcon from './BaseIcon.vue';
-import Input from './Input.vue';
+import { defineProps, defineEmits } from "vue";
+import BaseIcon from "./BaseIcon.vue";
+import Input from "./Input.vue";
 
 const props = defineProps({
   portions: {
@@ -18,11 +18,11 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['update:portions']);
+const emit = defineEmits(["update:portions"]);
 
 const updatePortions = (delta) => {
   if (props.portions + delta >= 1) {
-    emit('update:portions', props.portions + delta);
+    emit("update:portions", props.portions + delta);
   }
 };
 </script>
@@ -53,30 +53,47 @@ const updatePortions = (delta) => {
 <style lang="scss" scoped>
 @use "../assets/styles/variables" as *;
 
-  .portions-container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.625rem; // 10px
-    font-weight: 400;
-    width: 100%;
-    justify-content: flex-end;
-  }
+.portions-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.625rem; // 10px
+  font-weight: 400;
+  width: 100%;
+  justify-content: flex-end;
+}
 
-  .portions {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    border: 1px solid $text-info;
-    border-radius: $border;
+.portions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border: 1px solid $text-info;
+  border-radius: $border;
+  font-size: 1.5rem; // 24px
+  font-weight: 400;
+
+  .input-form {
+    width: 4.375rem; // 70px
+    text-align: center;
+    border: none;
+    background: transparent;
+    padding: 0.625rem 0; // 10px
     font-size: 1.5rem; // 24px
-    font-weight: 400;
+    line-height: 1;
 
-    .input-form {
-      width: 4.375rem; // 70px
-      text-align: center;
+    &:focus {
+      outline: none;
+    }
+
+    &.invalid {
       border: none;
+      box-shadow: inset 0 0 0 2px $error;
+    }
+
+    &:disabled {
       background: transparent;
+      cursor: not-allowed;
     }
   }
+}
 </style>

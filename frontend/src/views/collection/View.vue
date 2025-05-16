@@ -70,12 +70,12 @@ watch(
       {{ collection.description }}
     </div>
     <div class="btn-group end">
-      <div v-if="isAuthor" class="btn-group">
+      <template v-if="isAuthor" class="btn-group">
         <router-link :to="`/collection/edit/${collection.id}`" class="btn-dark">
           Редактировать
         </router-link>
         <DeleteButton :entity-id="collection.id" entity-type="collection" />
-      </div>
+      </template>
       <ReactionButton :entity-type="'collection'" :entity-id="collection.id" :count="collection.likes" />
     </div>
   </div>

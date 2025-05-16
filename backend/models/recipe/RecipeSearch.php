@@ -46,12 +46,12 @@ class RecipeSearch extends Recipe
     public function search($params)
     {
         $query = Recipe::find()->with([
-            'user', 'recipeMarks', 'recipeProducts', 'steps', 'status', 'private', 'recipeReactions', 'collectionRecipes'
+            'user', 'recipeMarks', 'recipeProducts', 'steps', 'status', 'private', 'recipeReactions', 'collectionRecipes', 
         ]);
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
-            'pagination' => ['pageSize' => 20],
+            'pagination' => ['pageSize' => 10],
             'sort' => ['defaultOrder' => ['created_at' => SORT_DESC]],
         ]);
 

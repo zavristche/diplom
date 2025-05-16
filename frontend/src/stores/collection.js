@@ -110,34 +110,32 @@ export const useCollectionStore = defineStore('collection', {
         throw error;
       }
     },
-    async searchCollections(query) {
-      const cacheKey = JSON.stringify(query);
-      const cacheTTL = 5 * 60 * 1000; // 5 минут
-      const now = Date.now();
-      if (
-        this.searchCache.has(cacheKey) &&
-        this.cacheTimestamps[cacheKey] &&
-        now - this.cacheTimestamps[cacheKey] < cacheTTL
-      ) {
-        this.collections = this.searchCache.get(cacheKey);
-        return this.collections;
-      }
+    async searchCollections(query = {}) {
       try {
-        const response = await CollectionService.search(query);
-        this.collections = Array.isArray(response.data) ? response.data : [];
-        this.searchCache.set(cacheKey, this.collections);
-        this.cacheTimestamps[cacheKey] = now;
+        console.log('Searching collections with params:', query);
+        const params = {
+          title: query.title || undefined,
+          marks: query.marks || undefined, // Оставляем как массив
+          products: query.products || undefined // Оставляем как массив, исправляем баг
+        };
+        const response = await CollectionService.search(params);
+        console.log('API response for searchCollections:', response);
+        this.collections = Array.isArray(response.data) 
+          ? response.data 
+          : Array.isArray(response.data?.collections) 
+            ? response.data.collections 
+            : [];
+        console.log('Assigned collections:', this.collections);
         return this.collections;
       } catch (error) {
-        console.error('collectionStore: Error searching collections:', error);
+        console.error('collectionStore: Error searching collections:', error.response || error);
         this.collections = [];
-        throw error;
+        return [];
       }
     },
     clearCollections() {
       this.collections = [];
       this.searchCache.clear();
-      console.log('collectionStore: Collections cleared');
     },
     debouncedSearch: debounce(async function (query) {
       await this.searchCollections(query);

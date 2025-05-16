@@ -159,7 +159,7 @@ class Recipe extends \yii\db\ActiveRecord implements Linkable
         
         $fields['complexity'] = fn() => $this->complexity;
         $fields['private'] = fn() => $this->private;
-        $fields['comments'] = fn() => $this->getComments()->orderBy(['created_at' => SORT_DESC])->all();
+        $fields['comments'] = fn() => $this->getComments()->all();
             
         $fields['likes'] = fn() => count($this->getRecipeReactions()->all());
         $fields['saved'] = fn() => count($this->getCollectionRecipes()->all());

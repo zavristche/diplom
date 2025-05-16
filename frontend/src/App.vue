@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import Header from './components/Header.vue';
 import Footer from './components/Footer.vue';
@@ -15,141 +15,128 @@ const recipeStore = useRecipeStore();
 const collectionStore = useCollectionStore();
 const profileStore = useProfileStore();
 
+// Проверяем наличие ожидающих запросов только для recipeStore и collectionStore
 const hasPendingRequests = () => {
-  const pending =
-    (recipeStore.pendingRequests?.size > 0 || false) ||
-    (collectionStore.pendingRequests?.size > 0 || false) ||
-    (profileStore.pendingRequests?.size > 0 || false);
-  console.log('hasPendingRequests:', pending);
-  console.log('recipeStore.pendingRequests:', recipeStore.pendingRequests);
-  console.log('collectionStore.pendingRequests:', collectionStore.pendingRequests);
-  console.log('profileStore.pendingRequests:', profileStore.pendingRequests);
-  return pending;
+  try {
+    return (
+      recipeStore.pendingRequests?.size > 0 ||
+      collectionStore.pendingRequests?.size > 0
+    );
+  } catch (error) {
+    console.error('Error checking pending requests:', error);
+    return false;
+  }
 };
 
+// Обработчик изменения маршрута
 router.beforeEach((to, from, next) => {
-  if (to.name === 'not-found' || to.name === 'admin') {
+  // Пропускаем загрузку для этих маршрутов
+  if (['not-found', 'admin'].includes(to.name)) {
     isLoading.value = false;
     return next();
   }
 
+  // Конфигурация загрузки данных для разных маршрутов
   const routeConfig = {
-    home: { store: recipeStore, fetch: 'fetchRecipes', field: 'recipes' },
-    search: { store: recipeStore, fetch: 'searchRecipes', field: 'recipes' },
-    RecipeView: { store: recipeStore, fetch: 'fetchRecipeById', field: 'currentRecipe' },
-    ProfileView: { store: profileStore, fetch: 'fetchProfileById', field: 'currentProfile' },
-    'recipe-create': { store: recipeStore, fetch: 'fetchCreateData', field: 'createData' },
-    'recipe-edit': { store: recipeStore, fetch: 'fetchRecipeById', field: 'currentRecipe' },
-    collection: { store: collectionStore, fetch: 'fetchCollectionById', field: 'currentCollection' },
-    'collection-create': { store: collectionStore, fetch: 'fetchCreateData', field: 'createData' },
-    'collection-edit': { store: collectionStore, fetch: 'fetchCollectionById', field: 'currentCollection' },
+    home: { store: recipeStore, fetch: 'fetchRecipes' },
+    search: { store: recipeStore, fetch: 'searchRecipes' },
+    RecipeView: { store: recipeStore, fetch: 'fetchRecipeById' },
+    ProfileView: { store: profileStore, fetch: 'fetchProfileById' },
+    'recipe-create': { store: recipeStore, fetch: 'fetchCreateData' },
+    'recipe-edit': { store: recipeStore, fetch: 'fetchRecipeById' },
+    collection: { store: collectionStore, fetch: 'fetchCollectionById' },
+    'collection-create': { store: collectionStore, fetch: 'fetchCreateData' },
+    'collection-edit': { store: collectionStore, fetch: 'fetchCollectionById' },
   };
 
   const config = routeConfig[to.name];
-  if (config && (to.params.id || to.name.includes('create') || to.name === 'home' || to.name === 'search')) {
-    const store = config.store;
-    const currentItem = store[config.field];
-    const cacheKey = config.fetch === 'fetchRecipeById' || config.fetch === 'fetchCollectionById' || config.fetch === 'fetchProfileById'
-      ? `${config.fetch.split('ById')[0].toLowerCase()}_${to.params.id}`
-      : config.fetch === 'searchRecipes'
-        ? JSON.stringify(to.query)
-        : config.fetch;
-
-    const cacheTTL = 5 * 60 * 1000;
-    const now = Date.now();
-
-    if (
-      (Array.isArray(currentItem) && currentItem.length) ||
-      (currentItem?.id === to.params.id) ||
-      (store.cacheTimestamps?.[cacheKey] && now - store.cacheTimestamps[cacheKey] < cacheTTL)
-    ) {
-      isLoading.value = false;
-    } else {
-      isLoading.value = true;
-    }
-  } else {
-    isLoading.value = false;
-  }
-
+  isLoading.value = !!config; // Показываем индикатор загрузки если есть конфиг
   next();
 });
 
-router.afterEach(() => {
-  let timeoutReached = false;
-  const timeout = setTimeout(() => {
-    timeoutReached = true;
-    isLoading.value = false;
-    console.warn('Timeout reached: Forcing isLoading to false');
-  }, 5000);
+// После завершения перехода проверяем загрузку
+router.afterEach(async () => {
+  if (isLoading.value) {
+    try {
+      // Ожидаем завершения запросов или таймаута (5 сек)
+      await new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+          console.warn('Navigation timeout reached');
+          resolve();
+        }, 5000);
 
-  const checkPending = () => {
-    if (timeoutReached) return;
-    if (!hasPendingRequests()) {
-      clearTimeout(timeout);
+        const checkPending = () => {
+          if (!hasPendingRequests()) {
+            clearTimeout(timeout);
+            resolve();
+          } else {
+            setTimeout(checkPending, 100);
+          }
+        };
+
+        checkPending();
+      });
+    } finally {
       isLoading.value = false;
-    } else {
-      setTimeout(checkPending, 100);
     }
-  };
-  checkPending();
+  }
 });
 
+// Инициализация приложения
 onMounted(async () => {
-  isLoading.value = true;
-  if (router.currentRoute.value.name === 'not-found') {
-    isReady.value = true;
-    isLoading.value = false;
-    return;
-  }
-
   try {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    let timeoutReached = false;
-    const timeout = setTimeout(() => {
-      timeoutReached = true;
-      isLoading.value = false;
-      console.warn('Timeout reached on mount: Forcing isLoading to false');
-    }, 5000);
-
-    const checkPending = () => {
-      if (timeoutReached) return;
-      if (!hasPendingRequests()) {
-        clearTimeout(timeout);
-        isLoading.value = false;
+    // Имитация начальной загрузки
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Ожидаем завершения начальных запросов
+    await new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        console.warn('Initial load timeout reached');
         resolve();
-      } else {
-        setTimeout(checkPending, 100);
-      }
-    };
-    checkPending();
+      }, 5000);
+
+      const checkPending = () => {
+        if (!hasPendingRequests()) {
+          clearTimeout(timeout);
+          resolve();
+        } else {
+          setTimeout(checkPending, 100);
+        }
+      };
+
+      checkPending();
+    });
 
     isReady.value = true;
   } catch (error) {
-    console.error('App.vue: Error during initialization:', error);
+    console.error('App initialization error:', error);
     isReady.value = true;
     isLoading.value = false;
+  } finally {
+    isLoading.value = false;
   }
-});
-
-watch(isLoading, (newValue) => {
-  console.log('isLoading:', newValue);
 });
 </script>
 
 <template>
   <div class="app-container">
+    <!-- Полноэкранный лоадер при инициализации -->
     <div v-if="!isReady" class="loading-overlay">
       <div class="loader"></div>
     </div>
 
+    <!-- Основной контент -->
     <router-view v-else v-slot="{ Component }">
       <transition name="fade-slide" mode="out-in">
         <div class="content-wrapper">
           <Header />
           <main class="main-content">
+            <!-- Скелетоны во время загрузки -->
             <div v-if="isLoading" class="content-grid">
               <div v-for="n in 6" :key="n" class="skeleton-card"></div>
             </div>
+            
+            <!-- Основной контент с анимацией -->
             <transition name="fade" appear>
               <component v-if="!isLoading" :is="Component" />
             </transition>

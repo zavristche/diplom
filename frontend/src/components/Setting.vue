@@ -1,5 +1,6 @@
 <script setup>
-import { ref, defineProps, defineEmits, nextTick } from "vue";
+import { ref, watch, defineProps, defineEmits, nextTick } from "vue";
+import { useRouter } from "vue-router"; // Добавляем useRouter
 import { useAuthStore } from "../stores/auth";
 import { useProfileStore } from "../stores/profile";
 import BaseIcon from "./BaseIcon.vue";
@@ -9,25 +10,79 @@ import SettingService from "../api/SettingService";
 const props = defineProps(["isOpen", "profile"]);
 const emit = defineEmits(["close"]);
 
+const router = useRouter(); // Инициализируем router
 const authStore = useAuthStore();
 const profileStore = useProfileStore();
 
-const initialData = {
-  name: props.profile?.name || "",
-  surname: props.profile?.surname || "",
-  login: props.profile?.login || "",
-  email: props.profile?.email || "",
+const userData = ref({
+  name: "",
+  surname: "",
+  login: "",
+  email: "",
   password: "",
-  avatar: props.profile?.avatar || "",
-  photo_header: props.profile?.photo_header || "",
-  status: props.profile?.status || "", // Добавляем status
-};
-
-const userData = ref({ ...initialData });
+  avatar: "",
+  photo_header: "",
+  status: "",
+});
 const avatarInput = ref(null);
 const backgroundInput = ref(null);
-const avatarPreview = ref(userData.value.avatar);
-const backgroundPreview = ref(userData.value.photo_header);
+const avatarPreview = ref("");
+const backgroundPreview = ref("");
+
+// Реактивно обновляем userData при изменении props.profile
+watch(
+  () => props.profile,
+  (newProfile) => {
+    console.log("Profile prop updated:", newProfile);
+    if (newProfile) {
+      userData.value = {
+        name: newProfile.name || "",
+        surname: newProfile.surname || "",
+        login: newProfile.login || "",
+        email: newProfile.email || "",
+        password: "",
+        avatar: newProfile.avatar || "",
+        photo_header: newProfile.photo_header || "",
+        status: newProfile.status || "",
+      };
+      avatarPreview.value = newProfile.avatar || "";
+      backgroundPreview.value = newProfile.photo_header || "";
+      console.log("userData updated:", userData.value);
+    } else {
+      console.warn("Profile is null or undefined");
+      userData.value = {
+        name: "",
+        surname: "",
+        login: "",
+        email: "",
+        password: "",
+        avatar: "",
+        photo_header: "",
+        status: "",
+      };
+      avatarPreview.value = "";
+      backgroundPreview.value = "";
+    }
+  },
+  { immediate: true }
+);
+
+// Пробуем загрузить профиль, если props.profile пустой
+watch(
+  () => props.isOpen,
+  async (isOpen) => {
+    if (isOpen && !props.profile && authStore.user?.id) {
+      console.log("Profile is empty, fetching for ID:", authStore.user.id);
+      try {
+        await profileStore.fetchProfileById(authStore.user.id);
+        console.log("Profile fetched:", profileStore.currentProfile);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    }
+  },
+  { immediate: true }
+);
 
 const uploadFile = async (inputType) => {
   await nextTick();
@@ -55,12 +110,15 @@ const handleFileChange = (event, field) => {
 
 const submitForm = async () => {
   try {
+    const profileId = props.profile?.id || authStore.user?.id;
+    if (!profileId) throw new Error("Profile ID is missing");
+
     const formData = new FormData();
     formData.append("name", userData.value.name);
     formData.append("surname", userData.value.surname);
     formData.append("login", userData.value.login);
     formData.append("email", userData.value.email);
-    formData.append("status", userData.value.status); // Добавляем status в FormData
+    formData.append("status", userData.value.status);
     if (userData.value.password) formData.append("password", userData.value.password);
     if (avatarInput.value?.files[0]) formData.append("avatar", avatarInput.value.files[0]);
     if (backgroundInput.value?.files[0]) formData.append("photo_header", backgroundInput.value.files[0]);
@@ -70,26 +128,29 @@ const submitForm = async () => {
       console.log(`${key}: ${value instanceof File ? value.name : value}`);
     }
 
-    const response = await SettingService.update(props.profile.id, formData);
+    const response = await SettingService.update(profileId, formData);
     console.log("Server response:", response.data);
 
     // Обновляем данные в profileStore
-    await profileStore.fetchProfileById(props.profile.id);
+    await profileStore.fetchProfileById(profileId);
 
     // Если это профиль текущего пользователя, обновляем authStore
-    if (authStore.user?.id === props.profile.id) {
+    if (authStore.user?.id === profileId) {
       await authStore.updateUser({
         name: userData.value.name,
         surname: userData.value.surname,
         login: userData.value.login,
         email: userData.value.email,
-        status: userData.value.status, // Добавляем status
+        status: userData.value.status,
         avatar: response.data.avatar || userData.value.avatar,
         photo_header: response.data.photo_header || userData.value.photo_header,
       });
     }
 
+    // Закрываем модалку и перезагружаем страницу
     closeModal();
+    console.log("Reloading profile page");
+    router.go(0); // Перезагружаем страницу
   } catch (error) {
     console.error("Ошибка при сохранении настроек:", error.response?.data || error.message);
   }
@@ -98,9 +159,18 @@ const submitForm = async () => {
 const closeModal = () => {
   if (avatarPreview.value?.startsWith("blob:")) URL.revokeObjectURL(avatarPreview.value);
   if (backgroundPreview.value?.startsWith("blob:")) URL.revokeObjectURL(backgroundPreview.value);
-  userData.value = { ...initialData };
-  avatarPreview.value = initialData.avatar;
-  backgroundPreview.value = initialData.photo_header;
+  userData.value = {
+    name: "",
+    surname: "",
+    login: "",
+    email: "",
+    password: "",
+    avatar: "",
+    photo_header: "",
+    status: "",
+  };
+  avatarPreview.value = "";
+  backgroundPreview.value = "";
   [avatarInput, backgroundInput].forEach((input) => input.value && (input.value.value = ""));
   emit("close");
 };
@@ -173,7 +243,4 @@ const closeModal = () => {
 <style lang="scss" scoped>
 @use "../assets/styles/variables" as *;
 @use "../assets/styles/modal" as *;
-
-
-
 </style>

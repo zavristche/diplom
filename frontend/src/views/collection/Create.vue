@@ -3,6 +3,7 @@ import { ref, watch } from "vue";
 import { useCollectionStore } from "../../stores/collection";
 import { useProfileAuth } from "../../composables/useProfileAuth";
 import { useAuthStore } from "../../stores/auth";
+import { useProfileStore } from "../../stores/profile";
 import { useRouter } from "vue-router";
 import collectionService from "../../api/collectionService";
 import SelectMultiple from "../../components/SelectMultiple.vue";
@@ -14,6 +15,7 @@ const router = useRouter();
 const collectionStore = useCollectionStore();
 const { isAuthenticated, currentUser } = useProfileAuth();
 const authStore = useAuthStore();
+const profileStore = useProfileStore();
 const data = ref(collectionStore.createData);
 
 // Проверка авторизации и данных
@@ -55,6 +57,7 @@ const onFileSelected = (event) => {
   if (file) {
     collectionPhotoFile.value = file;
     previewUrl.value = URL.createObjectURL(file);
+    console.log("Selected collection photo:", file.name);
   }
 };
 
@@ -77,15 +80,36 @@ const normalizeServerErrors = (serverErrors) => {
   return normalized;
 };
 
+// Валидация формы
+const validateForm = () => {
+  errors.value = {};
+  if (!title.value) errors.value.title = "Укажите заголовок";
+  if (!description.value) errors.value.description = "Укажите описание";
+  if (!selectedPrivate.value) errors.value.private_id = "Выберите доступ";
+  if (!collectionPhotoFile.value && !previewUrl.value)
+    errors.value.photo = "Загрузите фото";
+  if (!selectedMarks.value.length)
+    errors.value.marks = "Выберите хотя бы одну метку";
+  console.log("Form validation errors:", errors.value);
+  return Object.keys(errors.value).length === 0;
+};
+
 // Отправка формы
 const submitForm = async (event) => {
   event.preventDefault();
 
   // Проверка авторизации
   if (!isAuthenticated.value) {
-    errors.value = { general: "Пожалуйста, войдите в систему для создания коллекции" };
+    errors.value = {
+      general: "Пожалуйста, войдите в систему для создания коллекции",
+    };
     console.error("Пользователь не авторизован");
-    router.push("/login");
+    router.push({ name: "login" });
+    return;
+  }
+
+  if (!validateForm()) {
+    console.warn("Form validation failed:", errors.value);
     return;
   }
 
@@ -104,20 +128,45 @@ const submitForm = async (event) => {
   });
 
   try {
-    console.log("Отправка запроса с authKey:", authStore.authKey);
+    console.log(
+      "Отправка запроса на создание коллекции с authKey:",
+      authStore.authKey
+    );
     const response = await collectionService.create(formData);
     if (response.data.success) {
-      const collectionId = response.data.collection.id;
-      router.push(`/collection/${collectionId}`);
+      const collectionId = response.data.id || response.data.collection?.id;
+      if (!collectionId) throw new Error("Collection ID not returned by API");
+      console.log("Collection created successfully, ID:", collectionId);
+
+      // Запускаем обновление профиля в фоновом режиме
+      if (authStore.user?.id) {
+        profileStore
+          .updateProfile(authStore.user.id)
+          .then(() => {
+            console.log("Profile updated after collection creation");
+          })
+          .catch((err) => {
+            console.error("Failed to update profile:", err);
+          });
+      } else {
+        console.warn("No user ID found for profile update");
+      }
+
+      // Перенаправляем сразу, не дожидаясь updateProfile
+      console.log("Перенаправление на collection с ID:", collectionId);
+      router.push({ name: "collection", params: { id: collectionId } });
     } else {
       throw new Error(response.data.message || "Ошибка API");
     }
   } catch (error) {
-    console.error("Ошибка при создании коллекции:", error.response?.data || error.message);
+    console.error(
+      "Ошибка при создании коллекции:",
+      error.response?.data || error.message
+    );
     if (error.response?.status === 401) {
       errors.value = { general: "Не авторизован. Пожалуйста, войдите снова." };
       authStore.clearUser();
-      router.push("/login");
+      router.push({ name: "login" });
     } else if (error.response?.data?.errors) {
       errors.value = normalizeServerErrors(error.response.data.errors);
       console.log("Normalized server errors:", errors.value);
@@ -190,21 +239,13 @@ const submitForm = async (event) => {
         />
       </div>
       <label for="marks" class="marks">
-        <SelectMultiple
-          v-model="selectedMarks"
-          name="mark"
-          :query="{}"
-        />
+        <SelectMultiple v-model="selectedMarks" name="mark" :query="{}" />
         <div v-if="errors.marks" class="error-message">
           {{ errors.marks }}
         </div>
       </label>
       <label for="products" class="marks">
-        <SelectMultiple
-          v-model="selectedProducts"
-          name="product"
-          :query="{}"
-        />
+        <SelectMultiple v-model="selectedProducts" name="product" :query="{}" />
         <div v-if="errors.products" class="error-message">
           {{ errors.products }}
         </div>
@@ -410,7 +451,7 @@ const submitForm = async (event) => {
 
   .ingredients {
     gap: 0.75rem; // 12px
-    
+
     .items {
       gap: 0.5rem; // 8px
 

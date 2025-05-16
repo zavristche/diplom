@@ -79,10 +79,12 @@ const routes = [
     async beforeEnter(to, from, next) {
       const store = useCollectionStore();
       try {
-        const [createData, collection] = await Promise.all([
-          store.createData ? Promise.resolve(store.createData) : store.fetchCreateData().then(() => store.createData),
-          store.fetchCollectionById(to.params.id),
-        ]);
+        const createDataPromise = store.createData ? Promise.resolve(store.createData) : store.fetchCreateData().then(() => store.createData);
+        const collectionPromise = store.collections[to.params.id] 
+          ? Promise.resolve(store.collections[to.params.id]) 
+          : store.fetchCollectionById(to.params.id);
+        
+        const [createData, collection] = await Promise.all([createDataPromise, collectionPromise]);
         to.meta.data = createData;
         to.meta[to.meta.itemField] = collection;
         next(createData && collection ? undefined : { name: 'not-found', replace: true });

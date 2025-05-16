@@ -90,24 +90,38 @@ class RecipeController extends BaseApiController
 
     public function actionSearch()
     {
-        $request = Yii::$app->request;
-        $params = $request->getQueryParams();
-    
+        $params = Yii::$app->request->getQueryParams();
+        
         $searchModel = new RecipeSearch();
         $dataProvider = $searchModel->search($params);
-    
+        
         $models = $dataProvider->getModels();
-    
+        
         $result = array_map(function ($model) {
-            $data = $model->toArray([], ['user', 'status', 'complexity', 'private', 'comments', 'marks', 'products', 'collections', 'calendar_recipe']);
-    
+            // Получаем данные модели с использованием fields(), но только нужные
+            $data = $model->toArray([], [
+                'id',
+                'title',
+                'photo',
+                'status',
+                'created_at',
+                'likes',
+                'saved',
+                'user',
+            ]);
+            
+            // Ограничиваем поля user до id, login, avatar
             if (isset($data['user'])) {
-                unset($data['user']['auth_key'], $data['user']['password']);
+                $data['user'] = [
+                    'id' => $data['user']['id'] ?? null,
+                    'login' => $data['user']['login'] ?? null,
+                    'avatar' => $data['user']['avatar'] ?? null,
+                ];
             }
-    
+            
             return $data;
         }, $models);
-    
+        
         return [
             'success' => true,
             'recipes' => $result,

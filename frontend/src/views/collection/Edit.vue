@@ -3,12 +3,11 @@ import { ref, watch, computed } from "vue";
 import { useCollectionStore } from "../../stores/collection";
 import { useProfileAuth } from "../../composables/useProfileAuth";
 import { useAuthStore } from "../../stores/auth";
+import { useProfileStore } from "../../stores/profile";
 import { useRouter, useRoute } from "vue-router";
-import collectionService from "../../api/collectionService";
 import apiClient from "../../api/apiClient";
 import SelectMultiple from "../../components/SelectMultiple.vue";
 import BaseIcon from "../../components/BaseIcon.vue";
-import Input from "../../components/Input.vue";
 import Select from "../../components/Select.vue";
 
 const router = useRouter();
@@ -16,10 +15,21 @@ const route = useRoute();
 const collectionStore = useCollectionStore();
 const { isAuthenticated, currentUser } = useProfileAuth();
 const authStore = useAuthStore();
+const profileStore = useProfileStore();
 
 // Данные коллекции и createData из route.meta
 const collection = ref(route.meta.collection || {});
-const data = ref(route.meta.data || { data: { marks: {}, mark_types: {}, product_types: {}, products: {}, privates: {} } });
+const data = ref(
+  route.meta.data || {
+    data: {
+      marks: {},
+      mark_types: {},
+      product_types: {},
+      products: {},
+      privates: {},
+    },
+  }
+);
 
 // Проверка авторизации и данных
 console.log("isAuthenticated:", isAuthenticated.value);
@@ -44,10 +54,10 @@ const selectedPrivate = ref(collection.value.private_id || "");
 const previewUrl = ref(collection.value.photo || null);
 const collectionPhotoFile = ref(null);
 const selectedMarks = ref(
-  collection.value.marks?.filter(mark => mark && mark.id) || []
+  collection.value.marks?.filter((mark) => mark && mark.id) || []
 );
 const selectedProducts = ref(
-  collection.value.products?.filter(product => product && product.id) || []
+  collection.value.products?.filter((product) => product && product.id) || []
 );
 const errors = ref({});
 const textareaRef = ref(null);
@@ -67,6 +77,7 @@ const onFileSelected = (event) => {
   if (file) {
     collectionPhotoFile.value = file;
     previewUrl.value = URL.createObjectURL(file);
+    console.log("Selected collection photo:", file.name);
   }
 };
 
@@ -89,13 +100,27 @@ const normalizeServerErrors = (serverErrors) => {
   return normalized;
 };
 
+// Валидация формы
+const validateForm = () => {
+  errors.value = {};
+  if (!title.value) errors.value.title = "Укажите заголовок";
+  if (!description.value) errors.value.description = "Укажите описание";
+  if (!selectedPrivate.value) errors.value.private_id = "Выберите доступ";
+  if (!selectedMarks.value.length)
+    errors.value.marks = "Выберите хотя бы одну метку";
+  console.log("Form validation errors:", errors.value);
+  return Object.keys(errors.value).length === 0;
+};
+
 // Отправка формы
 const submitForm = async (event) => {
   event.preventDefault();
 
   // Проверка авторизации
   if (!isAuthenticated.value) {
-    errors.value = { general: "Пожалуйста, войдите в систему для редактирования коллекции" };
+    errors.value = {
+      general: "Пожалуйста, войдите в систему для редактирования коллекции",
+    };
     console.error("Пользователь не авторизован");
     router.push({ name: "login" });
     return;
@@ -120,6 +145,11 @@ const submitForm = async (event) => {
     return;
   }
 
+  if (!validateForm()) {
+    console.warn("Form validation failed:", errors.value);
+    return;
+  }
+
   // Синхронизация пользователя перед отправкой
   try {
     console.log("Синхронизация пользователя...");
@@ -128,7 +158,9 @@ const submitForm = async (event) => {
     console.log("authKey после синхронизации:", authStore.authKey);
   } catch (error) {
     console.error("Ошибка синхронизации пользователя:", error);
-    errors.value = { general: "Ошибка авторизации. Пожалуйста, войдите снова." };
+    errors.value = {
+      general: "Ошибка авторизации. Пожалуйста, войдите снова.",
+    };
     authStore.clearUser();
     router.push({ name: "login" });
     return;
@@ -149,19 +181,48 @@ const submitForm = async (event) => {
   });
 
   try {
-    console.log("Отправка PATCH-запроса с authKey:", authStore.authKey);
+    console.log(
+      "Отправка PATCH-запроса на редактирование коллекции с authKey:",
+      authStore.authKey
+    );
     console.log("FormData:", [...formData.entries()]);
-    const response = await apiClient.patch(`/api/collection/${route.params.id}`, formData);
+    const response = await apiClient.patch(
+      `/api/collection/${route.params.id}`,
+      formData
+    );
     console.log("API response:", response.data);
-    
+
     if (response.data.success && response.data.collection?.id) {
-      const collectionId = response.data.collection.id;
-      router.push(`/collection/${collectionId}`);
+      const collectionId = response.data.id || response.data.collection?.id;
+      if (!collectionId) throw new Error("Collection ID not returned by API");
+      console.log("Collection created successfully, ID:", collectionId);
+
+      // Запускаем обновление профиля в фоновом режиме
+      if (authStore.user?.id) {
+        profileStore
+          .updateProfile(authStore.user.id)
+          .then(() => {
+            console.log("Profile updated after collection creation");
+          })
+          .catch((err) => {
+            console.error("Failed to update profile:", err);
+          });
+      } else {
+        console.warn("No user ID found for profile update");
+      }
+
+      console.log("Перенаправление на collection с ID:", collectionId);
+      router.push({ name: "collection", params: { id: collectionId } });
     } else {
-      throw new Error(response.data.message || "Ошибка API: некорректный ответ");
+      throw new Error(
+        response.data.message || "Ошибка API: некорректный ответ"
+      );
     }
   } catch (error) {
-    console.error("Ошибка при редактировании коллекции:", error.response?.data || error.message);
+    console.error(
+      "Ошибка при редактировании коллекции:",
+      error.response?.data || error.message
+    );
     console.log("Статус ошибки:", error.response?.status);
     console.log("Данные ошибки:", error.response?.data);
     if (error.response?.status === 401) {
@@ -169,7 +230,10 @@ const submitForm = async (event) => {
       authStore.clearUser();
       router.push({ name: "login" });
     } else if (error.response?.status === 403) {
-      errors.value = { general: "Вы не можете редактировать эту коллекцию. Возможно, неверный authKey или пользователь." };
+      errors.value = {
+        general:
+          "Вы не можете редактировать эту коллекцию. Возможно, неверный authKey или пользователь.",
+      };
       console.error("403 Forbidden:", {
         collectionUserId: collection.value.user_id,
         currentUserId: authStore.user?.id,

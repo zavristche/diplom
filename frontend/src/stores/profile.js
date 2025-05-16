@@ -4,35 +4,39 @@ import ProfileService from '../api/ProfileService';
 export const useProfileStore = defineStore('profile', {
   state: () => ({
     currentProfile: null,
-    cacheTimestamps: {},
   }),
+
   actions: {
     async fetchProfileById(id) {
-      const cacheKey = `profile_${id}`;
-      const cacheTTL = 5 * 60 * 1000; // 5 минут
-      const now = Date.now();
-      if (
-        this.currentProfile?.id === id &&
-        this.cacheTimestamps[cacheKey] &&
-        now - this.cacheTimestamps[cacheKey] < cacheTTL
-      ) {
-        return this.currentProfile;
-      }
       try {
+        console.log('Fetching profile for ID:', id);
         const response = await ProfileService.getById(id);
+        console.log('Profile fetched:', response.data);
         this.currentProfile = response.data;
-        this.cacheTimestamps[cacheKey] = now;
         return response.data;
       } catch (error) {
-        console.error('Error fetching profile by ID:', error);
-        this.currentProfile = null;
-        return null;
+        console.error('Error fetching profile:', error);
+        throw error;
       }
     },
-    clearProfile() {
-      this.currentProfile = null;
-      this.cacheTimestamps = {};
-      console.log('profileStore: Profile cleared');
+
+    async updateProfile(userId) {
+      // Проверяем, обновлялся ли профиль недавно (например, в последние 30 секунд)
+      const now = Date.now();
+      if (this.lastUpdated && now - this.lastUpdated < 30_000) {
+        console.log('Profile update skipped, using cached data');
+        return;
+      }
+
+      try {
+        const response = await apiClient.get(`/api/profile/${userId}`);
+        this.currentProfile = response.data.profile;
+        this.lastUpdated = now;
+        console.log('Profile updated:', this.currentProfile);
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        throw error;
+      }
     },
   },
 });

@@ -63,6 +63,13 @@ export const useRecipeStore = defineStore('recipe', {
       const cacheKey = `recipe_${id}`;
       const cacheTTL = 5 * 60 * 1000; // 5 минут
       const now = Date.now();
+
+      if (this.recipes[id]) {
+        console.log(`Using cached collection for ID ${id}`);
+        this.currentCollection = this.recipes[id];
+        return this.currentCollection;
+      }
+
       if (
         this.currentRecipe?.id === id &&
         this.cacheTimestamps[cacheKey] &&

@@ -7,7 +7,6 @@ import { useCollectionStore } from "../stores/collection";
 import CollectionRecipeService from "../api/CollectionRecipeService";
 import BaseIcon from "./BaseIcon.vue";
 
-// Определяем пропсы с валидацией
 const props = defineProps({
   isOpen: {
     type: Boolean,
@@ -37,20 +36,12 @@ watch(
   () => props.isOpen,
   async (newValue) => {
     if (!newValue) {
-      return; // Ничего не делаем при закрытии
-    }
-
-    // Загружаем коллекции только если их нет
-    if (collections.value.length > 0) {
       return;
     }
 
     if (!isAuthenticated.value) {
       error.value = "Пожалуйста, войдите в систему для добавления рецепта.";
-      router.push({ name: "login" }).catch(() => {
-        console.error("Маршрут /login не найден. Проверьте router.js");
-        error.value = "Ошибка: страница входа недоступна";
-      });
+      router.push({ name: "login" });
       return;
     }
 
@@ -62,9 +53,12 @@ watch(
     try {
       isLoading.value = true;
       error.value = null;
-      await collectionStore.fetchUserCollections(currentUser.value.id);
-      collections.value = collectionStore.collections || [];
-      console.log("Collections loaded:", collections.value);
+      console.log("Fetching collections for user:", currentUser.value.id);
+      const userCollections = await collectionStore.fetchUserCollections(currentUser.value.id);
+      console.log("Raw collections from store:", userCollections);
+      collections.value = Array.isArray(userCollections) ? userCollections : [];
+      console.log("Assigned collections:", collections.value);
+
       if (collections.value.length === 0) {
         error.value = "У вас нет коллекций. Создайте новую коллекцию.";
       }
@@ -74,14 +68,15 @@ watch(
     } finally {
       isLoading.value = false;
     }
-  }
+  },
+  { immediate: true }
 );
 
 const selectCollection = (id) => {
   selectedCollectionId.value = id;
+  console.log("Selected collection ID:", id);
 };
 
-// Нормализация серверных ошибок
 const normalizeServerErrors = (serverErrors) => {
   const normalized = {};
   for (const [key, value] of Object.entries(serverErrors)) {
@@ -90,14 +85,10 @@ const normalizeServerErrors = (serverErrors) => {
   return normalized;
 };
 
-// Сохранение рецепта в коллекцию
 const saveToCollection = async () => {
   if (!isAuthenticated.value) {
     error.value = "Пожалуйста, войдите в систему для добавления рецепта.";
-    router.push({ name: "login" }).catch(() => {
-      console.error("Маршрут /login не найден. Проверьте router.js");
-      error.value = "Ошибка: страница входа недоступна";
-    });
+    router.push({ name: "login" });
     return;
   }
 
@@ -109,8 +100,7 @@ const saveToCollection = async () => {
   try {
     isSaving.value = true;
     error.value = null;
-    console.log("Отправка запроса с authKey:", authStore.authKey);
-    console.log("Data:", {
+    console.log("Saving to collection:", {
       collection_id: selectedCollectionId.value,
       recipe_id: props.recipe_id,
     });
@@ -121,7 +111,7 @@ const saveToCollection = async () => {
     });
 
     if (response.data.success) {
-      alert(response.data.message || JSON.stringify(response.data));
+      alert(response.data.message || "Рецепт сохранен!");
       selectedCollectionId.value = null;
       error.value = null;
       emit("close");
@@ -133,10 +123,7 @@ const saveToCollection = async () => {
     if (err.response?.status === 401) {
       error.value = "Не авторизован. Пожалуйста, войдите снова.";
       authStore.clearUser();
-      router.push({ name: "login" }).catch(() => {
-        console.error("Маршрут /login не найден. Проверьте router.js");
-        error.value = "Ошибка: страница входа недоступна";
-      });
+      router.push({ name: "login" });
     } else if (err.response?.status === 409) {
       error.value = "Рецепт уже добавлен в эту коллекцию.";
     } else if (err.response?.data?.errors) {
@@ -152,7 +139,6 @@ const saveToCollection = async () => {
 const closeModal = () => {
   selectedCollectionId.value = null;
   error.value = null;
-  // Не сбрасываем collections, чтобы избежать повторной загрузки
   emit("close");
 };
 </script>
@@ -185,7 +171,7 @@ const closeModal = () => {
               alt="Collection preview"
             />
             <div v-else class="collection-placeholder"></div>
-            <span class="collection-name">{{ collection.title }}</span>
+            <span class="collection-name">{{ collection.title || 'Без названия' }}</span>
           </div>
           <router-link to="/collection/create" class="collection-item create-collection">
             <BaseIcon
@@ -211,5 +197,4 @@ const closeModal = () => {
 <style lang="scss" scoped>
 @use "../assets/styles/variables" as *;
 @use "../assets/styles/modal" as *;
-
 </style>

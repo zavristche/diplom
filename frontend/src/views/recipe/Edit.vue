@@ -3,6 +3,7 @@ import { ref, onMounted, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useProfileAuth } from "../../composables/useProfileAuth";
 import { useAuthStore } from "../../stores/auth";
+import { useProfileStore } from "../../stores/profile";
 import RecipeService from "../../api/RecipeService";
 import SelectMultiple from "../../components/SelectMultiple.vue";
 import BaseIcon from "../../components/BaseIcon.vue";
@@ -15,6 +16,7 @@ const route = useRoute();
 const router = useRouter();
 const { isAuthenticated } = useProfileAuth();
 const authStore = useAuthStore();
+const profileStore = useProfileStore();
 const data = route.meta.data?.data;
 const recipe = route.meta.recipe;
 const recipeId = route.params.id;
@@ -41,18 +43,24 @@ const tasteMeasureId = ref(null);
 const initializeForm = () => {
   if (!recipeId || !recipe) {
     errors.value = { general: "Рецепт не найден." };
+    console.error("Recipe ID or data missing:", { recipeId, recipe });
     router.push({ name: "home" });
     return;
   }
 
   const recipeUserId = recipe.user_id;
-  const currentUserId = authStore.userId;
+  const currentUserId = authStore.user?.id;
 
   if (currentUserId && recipeUserId !== currentUserId) {
     isEditable.value = false;
     errors.value = { general: "Вы не можете редактировать этот рецепт." };
+    console.warn("User not authorized to edit recipe:", {
+      recipeUserId,
+      currentUserId,
+    });
   } else if (!isAuthenticated.value) {
     errors.value = { general: "Пожалуйста, войдите в систему." };
+    console.error("User not authenticated");
     router.push({ name: "login" });
     return;
   }
@@ -63,6 +71,7 @@ const initializeForm = () => {
 const fillForm = async (recipe) => {
   if (!recipe) {
     errors.value = { general: "Данные рецепта недоступны." };
+    console.error("Recipe data unavailable");
     return;
   }
 
@@ -91,7 +100,14 @@ const fillForm = async (recipe) => {
   })) ?? [{ description: "", previewUrl: null, file: null }];
 
   previewUrl.value = recipe.photo ? `${recipe.photo}` : null;
-  selectedMarks.value = recipe.marks ?? [];
+  selectedMarks.value = recipe.marks?.filter((mark) => mark && mark.id) ?? [];
+
+  console.log("Form initialized with recipe data:", {
+    title: title.value,
+    ingredients: ingredients.value,
+    steps: steps.value,
+    marks: selectedMarks.value,
+  });
 };
 
 const addIngredient = () => {
@@ -102,26 +118,25 @@ const addIngredient = () => {
     count: null,
     measure_id: null,
   });
+  console.log("Added new ingredient:", ingredients.value);
 };
 
 const removeIngredient = (index) => {
   if (!isEditable.value) return;
   ingredients.value = ingredients.value.filter((_, i) => i !== index);
-};
-
-const updatePortions = (delta) => {
-  if (!isEditable.value) return;
-  portions.value = Math.max(1, portions.value + delta);
+  console.log("Removed ingredient at index:", index);
 };
 
 const addStep = () => {
   if (!isEditable.value) return;
   steps.value.push({ description: "", previewUrl: null, file: null });
+  console.log("Added new step:", steps.value);
 };
 
 const removeStep = (index) => {
   if (!isEditable.value || steps.value.length <= 1) return;
   steps.value.splice(index, 1);
+  console.log("Removed step at index:", index);
 };
 
 const onFileSelected = (event) => {
@@ -130,6 +145,7 @@ const onFileSelected = (event) => {
   if (file) {
     recipePhotoFile.value = file;
     previewUrl.value = URL.createObjectURL(file);
+    console.log("Selected recipe photo:", file.name);
   }
 };
 
@@ -139,6 +155,7 @@ const onStepFileSelected = (event, index) => {
   if (file) {
     steps.value[index].file = file;
     steps.value[index].previewUrl = URL.createObjectURL(file);
+    console.log(`Selected step photo for step ${index}:`, file.name);
   }
 };
 
@@ -234,6 +251,7 @@ const validateForm = () => {
     errors.value.imageFile = "Загрузите фото рецепта";
   if (!selectedMarks.value.length)
     errors.value.marks = "Выберите хотя бы одну метку";
+  console.log("Form validation errors:", errors.value);
   return !Object.keys(errors.value).length;
 };
 
@@ -241,14 +259,19 @@ const submitForm = async (event) => {
   event.preventDefault();
   if (!isEditable.value) {
     errors.value = { general: "Редактирование запрещено." };
+    console.error("Editing not allowed");
     return;
   }
   if (!isAuthenticated.value) {
     errors.value = { general: "Пожалуйста, войдите в систему." };
+    console.error("User not authenticated");
     router.push({ name: "login" });
     return;
   }
-  if (!validateForm()) return;
+  if (!validateForm()) {
+    console.warn("Form validation failed");
+    return;
+  }
 
   const formData = new FormData();
   formData.append("title", title.value || "");
@@ -285,19 +308,35 @@ const submitForm = async (event) => {
   });
 
   try {
+    console.log("Sending update request for recipe ID:", recipeId);
     const response = await RecipeService.update(recipeId, formData);
     if (response.data.success) {
-      router.push(`/recipe/${recipeId}`);
+      console.log("Recipe updated successfully, ID:", recipeId);
+      if (authStore.user?.id) {
+        await profileStore.updateProfile(authStore.user.id);
+        console.log("Profile updated after recipe edit");
+      } else {
+        console.warn("No user ID found for profile update");
+      }
+      router.push({ name: "RecipeView", params: { id: recipeId } });
     } else {
       throw new Error(response.data.message || "Ошибка API");
     }
   } catch (error) {
+    console.error(
+      "Ошибка при редактировании рецепта:",
+      error.response?.data || error.message
+    );
     if (error.response?.status === 401) {
       errors.value = { general: "Не авторизован. Войдите снова." };
       authStore.clearUser();
       router.push({ name: "login" });
+    } else if (error.response?.status === 403) {
+      errors.value = { general: "Вы не можете редактировать этот рецепт." };
+      router.push({ name: "home" });
     } else if (error.response?.status === 422 && error.response?.data?.errors) {
       errors.value = normalizeServerErrors(error.response.data.errors);
+      console.log("Normalized server errors:", errors.value);
     } else {
       errors.value = {
         general: error.response?.data?.message || "Произошла ошибка.",
@@ -327,7 +366,7 @@ const submitForm = async (event) => {
             @change="onFileSelected"
           />
           <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-1" name="img" />
-          Загрузить фото
+          Загрузить новое фото
         </label>
         <div v-if="errors.imageFile" class="photo-error">
           {{ errors.imageFile }}
@@ -392,10 +431,12 @@ const submitForm = async (event) => {
         />
       </div>
       <label for="marks" class="marks">
+        Метки
         <SelectMultiple
           v-model="selectedMarks"
           name="mark"
           :query="route.query"
+          :disabled="!isEditable"
         />
         <div v-if="errors.marks" class="error-message">{{ errors.marks }}</div>
       </label>
@@ -445,13 +486,13 @@ const submitForm = async (event) => {
         >
           <div class="step-actions">
             <button
-              v-if="isEditable"
-              class="btn-light btn-icon btn-small"
+              v-if="isEditable && steps.length > 1"
+              class="btn-danger btn-small btn-icon"
               @click.prevent="removeStep(index)"
             >
               <BaseIcon
-                viewBox="0 0 29 29"
-                class="icon-white-30-2"
+                viewBox="0 0 65 65"
+                class="icon-white-55-2"
                 name="close"
               />
             </button>
@@ -466,7 +507,7 @@ const submitForm = async (event) => {
                 @change="onStepFileSelected($event, index)"
               />
               <BaseIcon viewBox="0 0 29 29" class="icon-dark-30-1" name="img" />
-              Загрузить фото
+              Загрузить новое фото
             </label>
             <div v-if="errors[`step_photos_${index}`]" class="photo-error">
               {{ errors[`step_photos_${index}`] }}
@@ -514,233 +555,12 @@ const submitForm = async (event) => {
         type="submit"
         value="Сохранить изменения"
       />
-      <button
-        v-else
-        class="btn-dark"
-        @click.prevent="router.push(`/recipe/${recipeId}`)"
-      >
-        Вернуться к рецепту
-      </button>
     </div>
   </form>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss">
 @use "../../assets/styles/variables" as *;
-@use "../../assets/styles/form" as *;
-
-.create-form {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem; // 32px
-
-  .input-title {
-    width: 100%;
-    font-size: clamp(1.5rem, 5vw, 2rem); // 24-32px
-    font-weight: 600;
-    border: none;
-    padding: 0.75rem 0; // 12px
-    border-radius: 0;
-    &.invalid {
-      border-bottom: 2px solid $error;
-    }
-  }
-
-  .input-title-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem; // 4px
-  }
-
-  .input-description {
-    width: 100%;
-    font-size: clamp(1rem, 3vw, 1.25rem); // 16-20px
-    font-weight: 400;
-    border: none;
-    resize: none;
-    overflow: hidden;
-    line-height: 150%;
-    padding: 0.75rem 0; // 12px
-    border-radius: 0;
-    &::placeholder {
-      font-weight: 300;
-    }
-    &.invalid {
-      border-bottom: 2px solid $error;
-    }
-  }
-
-  .input-description-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem; // 4px
-  }
-
-  .label-group {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem; // 16px
-    width: 100%;
-
-    @media (min-width: 768px) {
-      flex-direction: row;
-      gap: 1.875rem; // 30px
-    }
-  }
-
-  .preview {
-    flex-shrink: 0;
-    width: 100%;
-    height: auto;
-    max-height: 31.25rem; // 500px
-    img {
-      box-shadow: $shadow;
-      object-fit: cover;
-      width: 100%;
-      height: 100%;
-      border-radius: $border;
-    }
-  }
-
-  .cooking {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem; // 32px
-    width: 100%;
-
-    @media (min-width: 992px) {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.875rem; // 30px
-    }
-  }
-
-  .general-error {
-    font-size: 1rem; // 16px
-    color: $error;
-    text-align: center;
-    padding: 0.625rem; // 10px
-    background: rgba($error, 0.1);
-    border-radius: $border;
-
-    @media (min-width: 768px) {
-      font-size: 1.125rem; // 18px
-    }
-  }
-
-  .photo-upload-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem; // 2px
-    width: 100%;
-  }
-
-  .step-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 0.625rem; // 10px
-  }
-
-  .btn-dark.full-width {
-    width: 100%;
-    box-sizing: border-box;
-  }
-}
-
-.marks {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9375rem; // 15px
-  font-weight: 400;
-  width: 100%;
-}
-
-.ingredients {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 1.25rem; // 20px
-  width: 100%;
-  height: auto;
-
-  @media (min-width: 992px) {
-    position: sticky;
-    top: 6.25rem; // 100px
-    gap: 1.875rem; // 30px
-  }
-
-  .items {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem; // 16px
-    width: 100%;
-
-    @media (min-width: 768px) {
-      gap: 1.25rem; // 20px
-    }
-
-    .btn-dark {
-      justify-content: center;
-      padding: 0.3125rem; // 5px
-    }
-  }
-}
-
-.error-message {
-  font-size: 0.875rem; // 14px
-  color: $error;
-  margin-top: 0.25rem; // 4px
-
-  @media (min-width: 768px) {
-    font-size: 1rem; // 16px
-  }
-}
-
-.photo-error {
-  font-size: 0.875rem; // 14px
-  color: $error;
-  margin-top: 0.125rem; // 2px
-
-  @media (min-width: 768px) {
-    font-size: 1rem; // 16px
-  }
-}
-
-// Дополнительные адаптивные стили
-.btn-group {
-  &.start,
-  &.end {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem; // 16px
-  }
-}
-
-.step {
-  margin-bottom: 1.5rem; // 24px
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-// Оптимизация для очень маленьких экранов
-@media (max-width: 480px) {
-  .create-form {
-    gap: 1.5rem; // 24px
-  }
-
-  .ingredients {
-    gap: 1rem; // 16px
-  }
-
-  .step {
-    margin-bottom: 1rem; // 16px
-  }
-}
 
 .create-form {
   display: flex;
@@ -767,6 +587,7 @@ const submitForm = async (event) => {
   }
 
   .input-description {
+    display: flex;
     width: 100%;
     font-size: 20px;
     font-weight: 400;
@@ -793,12 +614,14 @@ const submitForm = async (event) => {
 
   .label-group {
     display: flex;
+    flex-direction: row;
     gap: 30px;
     width: 100%;
     justify-content: space-between;
   }
 
   .preview {
+    display: flex;
     flex-shrink: 0;
     width: 100%;
     height: 500px;
@@ -824,7 +647,7 @@ const submitForm = async (event) => {
     color: $error;
     text-align: center;
     padding: 10px;
-    background: rgba($error, 0.1);
+    background-color: rgba($error, 0.1);
     border-radius: $border;
   }
 
@@ -860,7 +683,7 @@ const submitForm = async (event) => {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  gap: 1.875rem; // 30px
+  gap: 30px;
   width: 100%;
   height: auto;
   position: sticky;
@@ -869,12 +692,12 @@ const submitForm = async (event) => {
   .items {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem; // 20px
+    gap: 20px;
     width: 100%;
 
     .btn-dark {
       justify-content: center;
-      padding: 0.3125rem; // 5px
+      padding: 5px;
     }
   }
 }
@@ -894,40 +717,52 @@ const submitForm = async (event) => {
 @media (max-width: 1200px) {
   .cooking {
     grid-template-columns: 1fr;
-    gap: 1.25rem; // 20px
+    gap: 20px;
   }
 
   .ingredients {
-    gap: 1.25rem; // 20px
     position: static;
-
-    .items {
-      gap: 1rem; // 16px
-    }
   }
 }
 
 @media (max-width: 768px) {
-  .cooking {
-    gap: 1rem; // 16px
+  .create-form {
+    gap: 30px;
   }
 
-  .ingredients {
-    gap: 1rem; // 16px
+  .input-title {
+    font-size: 24px;
+  }
 
-    .items {
-      gap: 0.75rem; // 12px
-    }
+  .input-description {
+    font-size: 18px;
+  }
+
+  .label-group {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .preview {
+    height: 300px;
   }
 }
 
 @media (max-width: 480px) {
-  .cooking {
-    gap: 0.75rem; // 12px
+  .create-form {
+    gap: 20px;
   }
 
-  .ingredients {
-    gap: 0.75rem; // 12px
+  .input-title {
+    font-size: 20px;
+  }
+
+  .input-description {
+    font-size: 16px;
+  }
+
+  .preview {
+    height: 200px;
   }
 }
 </style>
