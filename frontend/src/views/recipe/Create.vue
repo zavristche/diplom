@@ -26,7 +26,7 @@ const selectedComplexity = ref("");
 const selectedPrivate = ref("");
 const portions = ref(1);
 const ingredients = ref([{ product_id: null, count: null, measure_id: null }]);
-const steps = ref([{ description: "", previewUrl: null, file: null }]);
+const steps = ref([{ description: "", preview: null, file: null }]);
 const previewUrl = ref(null);
 const recipePhotoFile = ref(null);
 const selectedMarks = ref([]);
@@ -157,7 +157,7 @@ const validateForm = () => {
     if (!ingredient.count && ingredient.measure_id !== tasteMeasureId.value)
       productErrors.push("Укажите количество");
     if (productErrors.length)
-      errors.value[`products[${index}]`] = productErrors.join(", ");
+      errors.value[`products[${index}]`] = productErrors;
   });
   steps.value.forEach((step, index) => {
     if (!step.description)
@@ -327,11 +327,10 @@ const submitForm = async (event) => {
           v-model="selectedComplexity"
           label="Сложность"
           name="complexity_id"
-          placeholder="Выберите слож	complexity_id"
+          placeholder="Выберите сложность"
           :options="data.complexities"
           :is-invalid="!!errors.complexity_id"
           :error-message="errors.complexity_id"
-          :disabled="!isEditable"
         />
         <Select
           v-model="selectedPrivate"
@@ -341,7 +340,6 @@ const submitForm = async (event) => {
           :options="data.privates"
           :is-invalid="!!errors.private_id"
           :error-message="errors.private_id"
-          :disabled="!isEditable"
         />
       </div>
       <label for="marks" class="marks">
@@ -457,121 +455,72 @@ const submitForm = async (event) => {
   </form>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @use "../../assets/styles/variables" as *;
+@use "../../assets/styles/form" as *;
 
 .create-form {
   display: flex;
   flex-direction: column;
-  gap: 50px;
+  gap: 3.125rem; // 50px
+  width: 100%;
+  max-width: 75rem; // 1200px
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  align-items: flex-start;
+  box-sizing: border-box;
 
-  .input-title {
-    width: 100%;
-    font-size: 32px;
+  h1 {
+    font-size: 2.25rem; // 36px
     font-weight: 600;
-    border: none;
-    padding: 15px 0;
-    border-radius: 0;
-    &.invalid {
-      border-bottom: 2px solid $error;
-    }
-  }
-
-  .input-title-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .input-description {
-    display: flex;
-    width: 100%;
-    font-size: 20px;
-    font-weight: 400;
-    border: none;
-    resize: none;
-    overflow: hidden;
-    line-height: 150%;
-    padding: 15px 0;
-    border-radius: 0;
-    &::placeholder {
-      font-weight: 300;
-    }
-    &.invalid {
-      border-bottom: 2px solid $error;
-    }
-  }
-
-  .input-description-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .label-group {
-    display: flex;
-    flex-direction: row;
-    gap: 30px;
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .preview {
-    display: flex;
-    flex-shrink: 0;
-    width: 100%;
-    height: 500px;
-    img {
-      box-shadow: $shadow;
-      object-fit: cover;
-      width: 100%;
-      height: 100%;
-      border-radius: $border;
-    }
-  }
-
-  .cooking {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    width: 100%;
-    align-items: start;
-  }
-
-  .general-error {
-    font-size: 18px;
-    color: $error;
-    text-align: center;
-    padding: 10px;
-    background-color: rgba($error, 0.1);
-    border-radius: $border;
+    margin: 0;
+    line-height: 1.2;
   }
 
   .photo-upload-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0.25rem; // 4px
     width: 100%;
   }
 
   .step-actions {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 10px;
+    margin-bottom: 0.5rem; // 8px
   }
 
-  .btn-dark.full-width {
-    width: 100%;
+  .btn-dark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem; // 8px
+    padding: 0.75rem 1.25rem; // 12px 20px
+    font-size: 1rem; // 16px
+    font-weight: 500;
+    border-radius: $border;
+    min-height: 2.75rem; // 44px
     box-sizing: border-box;
+    &.full-width {
+      width: 100%;
+    }
+  }
+
+  .btn-danger.btn-small.btn-icon {
+    padding: 0.5rem; // 8px
+    width: 2.25rem; // 36px
+    height: 2.25rem; // 36px
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $border;
   }
 }
 
 .marks {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 0.75rem; // 12px
   font-weight: 400;
   width: 100%;
 }
@@ -581,86 +530,248 @@ const submitForm = async (event) => {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  gap: 30px;
+  gap: 1.875rem; // 30px
   width: 100%;
-  height: auto;
   position: sticky;
-  top: 6.25rem;
+  top: 6.25rem; // 100px
+
+  h2 {
+    font-size: 1.75rem; // 28px
+    font-weight: 600;
+    margin: 0;
+  }
 
   .items {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 1.25rem; // 20px
     width: 100%;
 
     .btn-dark {
-      justify-content: center;
-      padding: 5px;
+      padding: 0.625rem 1rem; // 10px 16px
+      font-size: 0.9375rem; // 15px
+      max-width: 18.75rem; // 300px
+      width: 100%;
     }
   }
 }
 
-.error-message {
-  font-size: 16px;
-  color: $error;
-  margin-top: 4px;
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.875rem; // 30px
+  width: 100%;
+
+  h2 {
+    font-size: 1.75rem; // 28px
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem; // 12px
+  }
+}
+
+.cooking {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.875rem; // 30px
+  width: 100%;
+  align-items: start;
 }
 
 .photo-error {
-  font-size: 16px;
+  font-size: 1rem; // 16px
   color: $error;
-  margin-top: 2px;
+  margin-top: 0.25rem; // 4px
 }
 
 @media (max-width: 1200px) {
+  .create-form {
+    gap: 2.5rem; // 40px
+    max-width: 62.5rem; // 1000px
+    padding: 0 1.5rem;
+
+    h1 {
+      font-size: 2rem; // 32px
+    }
+  }
+
   .cooking {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 1.25rem; // 20px
   }
 
   .ingredients {
+    gap: 1.25rem; // 20px
     position: static;
+
+    h2 {
+      font-size: 1.5rem; // 24px
+    }
+
+    .items {
+      gap: 1rem; // 16px
+
+      .btn-dark {
+        max-width: 15.625rem; // 250px
+      }
+    }
+  }
+
+  .steps {
+    gap: 1.25rem; // 20px
+
+    h2 {
+      font-size: 1.5rem; // 24px
+    }
+  }
+
+  .btn-dark {
+    padding: 0.625rem 1rem; // 10px 16px
+    font-size: 0.9375rem; // 15px
+    min-height: 2.5rem; // 40px
+  }
+
+  .btn-danger.btn-small.btn-icon {
+    width: 2rem; // 32px
+    height: 2rem; // 32px
+    padding: 0.375rem; // 6px
   }
 }
 
 @media (max-width: 768px) {
   .create-form {
-    gap: 30px;
+    gap: 1.875rem; // 30px
+    padding: 0 1rem;
+
+    h1 {
+      font-size: 1.75rem; // 28px
+    }
   }
 
-  .input-title {
-    font-size: 24px;
+  .cooking {
+    gap: 1rem; // 16px
   }
 
-  .input-description {
-    font-size: 18px;
+  .ingredients {
+    gap: 1rem; // 16px
+
+    h2 {
+      font-size: 1.375rem; // 22px
+    }
+
+    .items {
+      gap: 0.75rem; // 12px
+
+      .btn-dark {
+        padding: 0.5rem 0.75rem; // 8px 12px
+        font-size: 0.875rem; // 14px
+        max-width: 12.5rem; // 200px
+      }
+    }
   }
 
-  .label-group {
-    flex-direction: column;
-    gap: 15px;
+  .steps {
+    gap: 1rem; // 16px
+
+    h2 {
+      font-size: 1.375rem; // 22px
+    }
+
+    .step {
+      gap: 0.625rem; // 10px
+    }
+
+    .btn-dark {
+      padding: 0.5rem 0.75rem; // 8px 12px
+      font-size: 0.875rem; // 14px
+    }
   }
 
-  .preview {
-    height: 300px;
+  .btn-dark {
+    padding: 0.5rem 0.75rem; // 8px 12px
+    font-size: 0.875rem; // 14px
+    min-height: 2.25rem; // 36px
+  }
+
+  .btn-danger.btn-small.btn-icon {
+    width: 1.75rem; // 28px
+    height: 1.75rem; // 28px
+    padding: 0.25rem; // 4px
+  }
+
+  .photo-error {
+    font-size: 0.875rem; // 14px
   }
 }
 
 @media (max-width: 480px) {
   .create-form {
-    gap: 20px;
+    gap: 1.25rem; // 20px
+    padding: 0 0.5rem;
+
+    h1 {
+      font-size: 1.5rem; // 24px
+    }
   }
 
-  .input-title {
-    font-size: 20px;
+  .cooking {
+    gap: 0.75rem; // 12px
   }
 
-  .input-description {
-    font-size: 16px;
+  .ingredients {
+    gap: 0.75rem; // 12px
+
+    h2 {
+      font-size: 1.25rem; // 20px
+    }
+
+    .items {
+      gap: 0.5rem; // 8px
+
+      .btn-dark {
+        padding: 0.375rem 0.625rem; // 6px 10px
+        font-size: 0.8125rem; // 13px
+        max-width: 11.25rem; // 180px
+      }
+    }
   }
 
-  .preview {
-    height: 200px;
+  .steps {
+    gap: 0.75rem; // 12px
+
+    h2 {
+      font-size: 1.25rem; // 20px
+    }
+
+    .step {
+      gap: 0.5rem; // 8px
+    }
+
+    .btn-dark {
+      padding: 0.375rem 0.625rem; // 6px 10px
+      font-size: 0.8125rem; // 13px
+    }
+  }
+
+  .btn-dark {
+    padding: 0.375rem 0.625rem; // 6px 10px
+    font-size: 0.8125rem; // 13px
+    min-height: 2rem; // 32px
+  }
+
+  .btn-danger.btn-small.btn-icon {
+    width: 1.5rem; // 24px
+    height: 1.5rem; // 24px
+    padding: 0.1875rem; // 3px
+  }
+
+  .photo-error {
+    font-size: 0.75rem; // 12px
   }
 }
 </style>

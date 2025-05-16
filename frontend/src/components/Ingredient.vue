@@ -1,8 +1,6 @@
 <script setup>
 import { defineProps, defineEmits, onMounted } from 'vue';
 import BaseIcon from './BaseIcon.vue';
-import Input from './Input.vue';
-import Select from './Select.vue';
 
 const props = defineProps({
   ingredient: {
@@ -29,6 +27,13 @@ const props = defineProps({
 
 const emit = defineEmits(['remove']);
 
+const formatErrorMessage = (message) => {
+  if (Array.isArray(message)) {
+    return message.join(', ');
+  }
+  return message;
+};
+
 // Отладка входных данных
 onMounted(() => {
   console.log('Ingredient props:', {
@@ -48,14 +53,25 @@ onMounted(() => {
     </button>
     <div class="ingredient__container" :class="{ invalid: errors[`products[${index}]`] }">
       <div class="ingredient__fields">
-        <Select
-          v-model="ingredient.product_id"
-          :name="'products[' + index + '][product_id]'"
-          placeholder="Выберите продукт"
-          :options="data.products || {}"
-          :disabled="!isEditable"
-        />
-        <Input
+        <div class="select-wrapper product-select">
+          <select
+            v-model="ingredient.product_id"
+            :name="'products[' + index + '][product_id]'"
+            :disabled="!isEditable"
+            class="custom-select"
+          >
+            <option :value="null" disabled>Выберите продукт</option>
+            <option v-for="(option, key) in data.products" :key="key" :value="key">
+              {{ option.title || option }}
+            </option>
+          </select>
+          <BaseIcon
+            viewBox="0 0 29 16"
+            class="icon-dark-25-2 select-arrow"
+            name="arrow"
+          />
+        </div>
+        <input
           v-model.number="ingredient.count"
           :name="'products[' + index + '][count]'"
           type="number"
@@ -63,16 +79,27 @@ onMounted(() => {
           :disabled="!isEditable"
           class="count-input"
         />
-        <Select
-          v-model="ingredient.measure_id"
-          :name="'products[' + index + '][measure_id]'"
-          placeholder="Ед."
-          :options="data.measures || {}"
-          :disabled="!isEditable"
-        />
+        <div class="select-wrapper measure-select">
+          <select
+            v-model="ingredient.measure_id"
+            :name="'products[' + index + '][measure_id]'"
+            :disabled="!isEditable"
+            class="custom-select"
+          >
+            <option :value="null" disabled>Ед.</option>
+            <option v-for="(option, key) in data.measures" :key="key" :value="key">
+              {{ option.title || option }}
+            </option>
+          </select>
+          <BaseIcon
+            viewBox="0 0 29 16"
+            class="icon-dark-25-2 select-arrow"
+            name="arrow"
+          />
+        </div>
       </div>
       <div v-if="errors[`products[${index}]`]" class="error-message">
-        {{ errors[`products[${index}]`] }}
+        {{ formatErrorMessage(errors[`products[${index}]`]) }}
       </div>
     </div>
   </label>
@@ -86,121 +113,132 @@ onMounted(() => {
   align-items: center;
   gap: 15px;
   width: 100%;
+}
 
-  .ingredient__container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-    border-bottom: 1px solid $text-info-light;
-    padding: 10px 0;
+.ingredient__container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  border-bottom: 1px solid $text-info-light;
+  padding: 10px 0;
 
-    &.invalid {
-      border-bottom: 2px solid $error;
-    }
+  &.invalid {
+    border-bottom: 2px solid $error;
+  }
+}
 
-    .ingredient__fields {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
+.ingredient__fields {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
 
-      .count-input {
-        padding: 15px 20px;
-        font-size: 20px;
-        font-weight: 400;
-        border: none;
-        border-bottom: 1px solid $text-info-light;
-        flex-shrink: 0;
-        min-width: 80px;
-        max-width: 120px;
-        text-align: center;
+.select-wrapper {
+  position: relative;
+}
 
-        &:disabled {
-          background: $background;
-          cursor: not-allowed;
-        }
+.product-select {
+  flex: 3 1 auto;
+  min-width: 200px;
+}
 
-        @media (max-width: 768px) {
-          padding: 12px 16px;
-          font-size: 18px;
-          min-width: 60px;
-          max-width: 100px;
-        }
+.measure-select {
+  flex: 1 1 auto;
+  min-width: 100px;
+}
 
-        @media (max-width: 480px) {
-          padding: 10px 14px;
-          font-size: 16px;
-          min-width: 50px;
-          max-width: 80px;
-        }
-      }
+.custom-select {
+  width: 100%;
+  padding: 10px 40px 10px 10px;
+  font-size: 20px;
+  font-weight: 400;
+  border: none;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 
-      .custom-select {
-        padding-right: 40px;
-      }
+  &:disabled {
+    background: $background;
+    cursor: not-allowed;
+  }
 
-      .select-arrow {
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-      }
+  @media (max-width: 768px) {
+    font-size: 18px;
+    padding: 8px 36px 8px 8px;
+  }
 
-      > *:first-child {
-        flex: 3 1 200px; // Основной селект растягивается больше
-        min-width: 200px;
-      }
+  @media (max-width: 480px) {
+    font-size: 16px;
+    padding: 6px 32px 6px 6px;
+  }
+}
 
-      > *:nth-child(2) {
-        flex: 1 1 80px; // Инпут для количества
-        min-width: 80px;
-        max-width: 120px;
-      }
+.select-arrow {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
 
-      > *:last-child {
-        flex: 2 1 120px; // Селект для меры
-        min-width: 120px;
-        max-width: 150px;
-      }
+  @media (max-width: 768px) {
+    right: 8px;
+    width: 22px;
+    height: 22px;
+  }
 
-      @media (max-width: 768px) {
-        > *:first-child {
-          flex: 3 1 150px;
-          min-width: 150px;
-        }
+  @media (max-width: 480px) {
+    right: 6px;
+    width: 20px;
+    height: 20px;
+  }
+}
 
-        > *:nth-child(2) {
-          flex: 1 1 60px;
-          min-width: 60px;
-          max-width: 100px;
-        }
+.count-input {
+  flex: 0 0 60px;
+  text-align: center;
+  border: none;
+  padding: 10px 0;
+  font-size: 20px;
+  font-weight: 400;
+  background: transparent;
+  width: 30px;
 
-        > *:last-child {
-          flex: 2 1 100px;
-          min-width: 100px;
-          max-width: 130px;
-        }
-      }
+  &:disabled {
+    background: $background;
+    cursor: not-allowed;
+  }
 
-      @media (max-width: 480px) {
-        > *:first-child {
-          flex: 3 1 120px;
-          min-width: 120px;
-        }
+  &::placeholder {
+    font-weight: 300;
+  }
 
-        > *:nth-child(2) {
-          flex: 1 1 50px;
-          min-width: 50px;
-          max-width: 80px;
-        }
+  @media (max-width: 768px) {
+    flex: 0 0 50px;
+    font-size: 18px;
+    padding: 8px 0;
+  }
 
-        > *:last-child {
-          flex: 2 1 80px;
-          min-width: 80px;
-          max-width: 110px;
-        }
-      }
-    }
+  @media (max-width: 480px) {
+    flex: 0 0 40px;
+    font-size: 16px;
+    padding: 6px 0;
+  }
+}
+
+.error-message {
+  font-size: 16px;
+  color: $error;
+  margin-top: 4px;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 13px;
   }
 }
 </style>
